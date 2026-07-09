@@ -123,26 +123,18 @@
   <div class="grid" id="mainGrid">
     <!-- LEFT: 데이터 입력 -->
     <div id="uploadCol">
-      <input type="text" id="apiKey" placeholder="Anthropic API Key (선택, 자동 정리에 사용)" style="font-size:11px;padding:5px 8px;margin-bottom:10px;opacity:.75;" />
-
       <div class="card">
         <h2>📥 정산/매출 데이터 불러오기</h2>
-        <div class="btn-row">
-          <input type="file" id="csvFile" accept=".csv,.txt,.xlsx" style="flex:1;min-width:0;" />
-          <button type="button" class="btn-ghost" id="salesCleanBtn" onclick="autoCleanAndDownload('sales')">🧹 자동 데이터 정리</button>
-        </div>
+        <input type="file" id="csvFile" accept=".csv,.txt,.xlsx" />
         <div class="btn-row">
           <button class="btn-ghost" onclick="loadSample()">샘플 데이터로 체험하기</button>
+          <button class="btn-ghost" onclick="downloadTemplate('sales')">샘플 양식 다운로드</button>
         </div>
 
         <div id="mapSection" style="display:none;">
-          <div class="map-row">
-            <div style="grid-column:1/-1;">
-              <select id="salesPresetSelect" onchange="applyFormatPreset('sales')"></select>
-            </div>
-          </div>
           <div class="btn-row">
-            <button type="button" class="btn-ghost" id="salesAutoMapBtn" onclick="autoMapWithAI('sales')">✨ 매핑만 채우기</button>
+            <select id="salesPresetSelect" onchange="applyFormatPreset('sales')" style="flex:1;"></select>
+            <button type="button" class="btn-ghost" onclick="deleteFormatPreset('sales')" title="선택한 프리셋 삭제">🗑</button>
           </div>
           <div class="map-row">
             <div><label>날짜 컬럼</label><select id="mapDate"></select></div>
@@ -166,26 +158,37 @@
             <div><button class="btn-ghost" style="width:100%;" onclick="saveFormatPreset('sales')">현재 매핑을 프리셋으로 저장</button></div>
           </div>
         </div>
+
+        <details style="margin-top:10px;">
+          <summary style="cursor:pointer;color:var(--muted);font-size:12px;">파일 없이 직접 입력해서 추가</summary>
+          <div class="map-row" style="margin-top:8px;">
+            <div><label>날짜</label><input type="date" id="manualSalesDate" /></div>
+            <div><label>상품명</label><input type="text" id="manualSalesProduct" /></div>
+          </div>
+          <div class="map-row">
+            <div><label>매출액</label><input type="number" id="manualSalesAmount" /></div>
+            <div><label>수량 (선택)</label><input type="number" id="manualSalesQty" value="1" /></div>
+          </div>
+          <div class="map-row">
+            <div><label>구매자 (선택)</label><input type="text" id="manualSalesCustomer" /></div>
+            <div></div>
+          </div>
+          <div class="btn-row"><button class="btn-primary" onclick="addManualSalesRecord()">추가</button></div>
+        </details>
       </div>
 
       <div class="card">
         <h2>📢 광고비 데이터 불러오기 <span class="n">(선택 · ROAS 계산용)</span></h2>
-        <div class="btn-row">
-          <input type="file" id="adCsvFile" accept=".csv,.txt,.xlsx" style="flex:1;min-width:0;" />
-          <button type="button" class="btn-ghost" id="adCleanBtn" onclick="autoCleanAndDownload('ad')">🧹 자동 데이터 정리</button>
-        </div>
+        <input type="file" id="adCsvFile" accept=".csv,.txt,.xlsx" />
         <div class="btn-row">
           <button class="btn-ghost" onclick="loadAdSample()">샘플 광고비 데이터로 체험하기</button>
+          <button class="btn-ghost" onclick="downloadTemplate('ad')">샘플 양식 다운로드</button>
         </div>
 
         <div id="adMapSection" style="display:none;">
-          <div class="map-row">
-            <div style="grid-column:1/-1;">
-              <select id="adPresetSelect" onchange="applyFormatPreset('ad')"></select>
-            </div>
-          </div>
           <div class="btn-row">
-            <button type="button" class="btn-ghost" id="adAutoMapBtn" onclick="autoMapWithAI('ad')">✨ 매핑만 채우기</button>
+            <select id="adPresetSelect" onchange="applyFormatPreset('ad')" style="flex:1;"></select>
+            <button type="button" class="btn-ghost" onclick="deleteFormatPreset('ad')" title="선택한 프리셋 삭제">🗑</button>
           </div>
           <div class="map-row">
             <div><label>날짜 컬럼</label><select id="mapAdDate"></select></div>
@@ -201,26 +204,33 @@
             <div><button class="btn-ghost" style="width:100%;" onclick="saveFormatPreset('ad')">현재 매핑을 프리셋으로 저장</button></div>
           </div>
         </div>
+
+        <details style="margin-top:10px;">
+          <summary style="cursor:pointer;color:var(--muted);font-size:12px;">파일 없이 직접 입력해서 추가</summary>
+          <div class="map-row" style="margin-top:8px;">
+            <div><label>날짜</label><input type="date" id="manualAdDate" /></div>
+            <div><label>광고비</label><input type="number" id="manualAdAmount" /></div>
+          </div>
+          <div class="map-row">
+            <div><label>채널 (선택)</label><input type="text" id="manualAdChannel" /></div>
+            <div><label>상품명 (선택)</label><input type="text" id="manualAdProduct" /></div>
+          </div>
+          <div class="btn-row"><button class="btn-primary" onclick="addManualAdRecord()">추가</button></div>
+        </details>
       </div>
 
       <div class="card">
         <h2>🏷️ 원가 데이터 불러오기 <span class="n">(선택 · 이익 계산용)</span></h2>
-        <div class="btn-row">
-          <input type="file" id="costCsvFile" accept=".csv,.txt,.xlsx" style="flex:1;min-width:0;" />
-          <button type="button" class="btn-ghost" id="costCleanBtn" onclick="autoCleanAndDownload('cost')">🧹 자동 데이터 정리</button>
-        </div>
+        <input type="file" id="costCsvFile" accept=".csv,.txt,.xlsx" />
         <div class="btn-row">
           <button class="btn-ghost" onclick="loadCostSample()">샘플 원가 데이터로 체험하기</button>
+          <button class="btn-ghost" onclick="downloadTemplate('cost')">샘플 양식 다운로드</button>
         </div>
 
         <div id="costMapSection" style="display:none;">
-          <div class="map-row">
-            <div style="grid-column:1/-1;">
-              <select id="costPresetSelect" onchange="applyFormatPreset('cost')"></select>
-            </div>
-          </div>
           <div class="btn-row">
-            <button type="button" class="btn-ghost" id="costAutoMapBtn" onclick="autoMapWithAI('cost')">✨ 매핑만 채우기</button>
+            <select id="costPresetSelect" onchange="applyFormatPreset('cost')" style="flex:1;"></select>
+            <button type="button" class="btn-ghost" onclick="deleteFormatPreset('cost')" title="선택한 프리셋 삭제">🗑</button>
           </div>
           <div class="map-row">
             <div><label>상품명 컬럼</label><select id="mapCostProduct"></select></div>
@@ -232,9 +242,17 @@
             <div><button class="btn-ghost" style="width:100%;" onclick="saveFormatPreset('cost')">현재 매핑을 프리셋으로 저장</button></div>
           </div>
         </div>
+
+        <details style="margin-top:10px;">
+          <summary style="cursor:pointer;color:var(--muted);font-size:12px;">파일 없이 직접 입력해서 추가</summary>
+          <div class="map-row" style="margin-top:8px;">
+            <div><label>상품명</label><input type="text" id="manualCostProduct" /></div>
+            <div><label>개당 원가</label><input type="number" id="manualCostAmount" /></div>
+          </div>
+          <div class="btn-row"><button class="btn-primary" onclick="addManualCostRecord()">추가</button></div>
+        </details>
       </div>
 
-      <button type="button" class="btn-ghost" id="cleanAllBtn" onclick="autoCleanAllAndDownload()" style="font-size:11px;padding:5px 10px;opacity:.75;margin-top:2px;">🧹 전체 데이터 정리 + 다운로드</button>
     </div>
 
     <!-- RIGHT: 리포트 -->
@@ -466,8 +484,16 @@ const BUILTIN_PRESETS = {
     { name: '쿠팡 (Wing 주문/매출내역)', roles: { date:'주문일자', product:'상품명', amount:'판매가', qty:'수량', status:'주문상태', excludeStatuses:'취소,반품,환불', customer:'구매자ID' } },
     { name: '네이버 스마트스토어 (주문 다운로드, 추정)', roles: { date:'주문일시', product:'상품명', amount:'상품주문금액', qty:'수량', status:'상품주문상태', excludeStatuses:'취소,반품,교환,구매취소', customer:'구매자명' } }
   ],
-  ad: [],
-  cost: []
+  ad: [
+    { name: '쿠팡 광고관리자 (추정)', roles: { date:'날짜', amount:'광고비', channel:'', product:'상품명' } },
+    { name: '네이버 검색광고 (추정)', roles: { date:'일자', amount:'총비용', channel:'캠페인명', product:'' } },
+    { name: '메타 광고관리자 (추정)', roles: { date:'일', amount:'지출 금액 (KRW)', channel:'캠페인 이름', product:'' } }
+  ],
+  cost: [
+    { name: '기본 (상품명 · 원가)', roles: { product:'상품명', amount:'원가' } },
+    { name: '매입가 기준 (상품명 · 매입가)', roles: { product:'상품명', amount:'매입가' } },
+    { name: '제조원가 기준 (상품명 · 제조원가)', roles: { product:'상품명', amount:'제조원가' } }
+  ]
 };
 const savedPresets = {
   sales: JSON.parse(localStorage.getItem('salesai_presets_sales') || '[]'),
@@ -520,155 +546,79 @@ function applyFormatPreset(type){
   applyRoleMapping(type, preset.roles);
 }
 
-// ---------- AI(Claude)로 컬럼 자동 매핑 ----------
-const AI_MAP_ROLE_HINTS = {
-  sales: { date:'날짜/주문일자', product:'상품명/품목명', amount:'매출액/판매금액(옵션당 합계 금액)', qty:'수량 (해당 컬럼이 없으면 null)', status:'주문상태 — 취소/반품 등 (해당 컬럼이 없으면 null)', customer:'구매자명/회원명/구매자ID (해당 컬럼이 없으면 null)' },
-  ad: { date:'날짜', amount:'광고비/지출금액', channel:'광고 채널/매체명 (해당 컬럼이 없으면 null)', product:'상품명 (해당 컬럼이 없으면 null)' },
-  cost: { product:'상품명', amount:'개당 원가/매입가/제조원가' }
+function deleteFormatPreset(type){
+  const sel = document.getElementById(type + 'PresetSelect');
+  if(sel.value === ''){ alert('삭제할 프리셋을 먼저 선택해주세요.'); return; }
+  const idx = Number(sel.value);
+  const builtinCount = BUILTIN_PRESETS[type].length;
+  if(idx < builtinCount){ alert('기본 제공 프리셋은 삭제할 수 없습니다.'); return; }
+  const preset = savedPresets[type][idx - builtinCount];
+  if(!preset) return;
+  if(!confirm(`"${preset.name}" 프리셋을 삭제할까요? 되돌릴 수 없습니다.`)) return;
+  savedPresets[type].splice(idx - builtinCount, 1);
+  localStorage.setItem('salesai_presets_' + type, JSON.stringify(savedPresets[type]));
+  renderPresetSelect(type);
+}
+
+// ---------- 샘플 양식 다운로드 (우리가 쓰는 컬럼 구성을 담은 빈 CSV) ----------
+const FILE_TEMPLATES = {
+  sales: { headers: ['날짜','상품명','매출액','수량','구매자'], rows: [['2026-06-06','예시 상품명','98730','1','홍길동']], fileName: '매출데이터_양식.csv' },
+  ad: { headers: ['날짜','광고비','채널','상품명'], rows: [['2026-06-06','146329','메타(인스타/페북)','예시 상품명']], fileName: '광고비데이터_양식.csv' },
+  cost: { headers: ['상품명','원가'], rows: [['예시 상품명','12000']], fileName: '원가데이터_양식.csv' }
 };
 
-// AI에 헤더+샘플 행을 보내 역할별 매핑을 받아옵니다. 반환값은 검증을 거친 { role: 헤더명 } 객체입니다.
-async function getAIColumnMapping(type, table, apiKey){
-  const roles = AI_MAP_ROLE_HINTS[type];
-  const system = `당신은 스프레드시트 컬럼을 분석하는 도우미입니다. 주어진 헤더 목록과 샘플 행(데이터 일부)을 보고, 요청된 각 역할에 가장 알맞은 헤더를 "헤더 목록"에 있는 문자열 그대로 정확히 골라주세요. 알맞은 컬럼이 없으면 null로 표시하세요. 반드시 JSON 객체 하나만 출력하고, 다른 설명이나 코드블록 기호(\`\`\`)는 절대 포함하지 마세요.`;
-  const userContent = JSON.stringify({
-    헤더_목록: table.headers,
-    샘플_행: table.rows.slice(0, 5),
-    찾아야_할_역할: roles
-  });
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json', 'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true'
-    },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001', max_tokens: 300, system,
-      messages: [{ role: 'user', content: userContent }]
-    })
-  });
-  if(!res.ok) throw new Error('API 호출 실패: ' + res.status);
-  const data = await res.json();
-  let text = (data.content?.[0]?.text || '').trim();
-  text = text.replace(/^```(json)?\s*/i, '').replace(/```\s*$/,'').trim();
-  const mapping = JSON.parse(text);
-  // AI가 지어낸 헤더명을 그대로 믿지 않고, 실제 파일에 있는 헤더인지 한 번 더 확인합니다.
-  const cleaned = {};
-  Object.keys(mapping).forEach(k => {
-    const v = mapping[k];
-    cleaned[k] = (typeof v === 'string' && table.headers.includes(v)) ? v : '';
-  });
-  return cleaned;
-}
-
-async function autoMapWithAI(type){
-  const apiKey = document.getElementById('apiKey').value.trim();
-  if(!apiKey){
-    alert('먼저 위쪽 Anthropic API Key 입력란에 키를 입력해주세요.');
-    return;
-  }
-  const table = type === 'sales' ? rawTable : type === 'ad' ? adRawTable : costRawTable;
-  if(!table){ alert('먼저 파일을 업로드해주세요.'); return; }
-
-  const btn = document.getElementById(type + 'AutoMapBtn');
-  const originalLabel = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = '파일 정리 중...';
-  try{
-    applyRoleMapping(type, await getAIColumnMapping(type, table, apiKey));
-  }catch(err){
-    alert('AI 자동 매핑에 실패했습니다: ' + err.message + '\n\n직접 매핑해주세요.');
-  }finally{
-    btn.disabled = false;
-    btn.textContent = originalLabel;
-  }
-}
-
-// ---------- AI 자동 정리 + 정리된 파일 다운로드 (매핑 → 적용 → 표준 CSV 내보내기를 한 번에) ----------
-function exportCleanedFile(type){
-  let headers, rows;
-  if(type === 'sales'){
-    headers = ['날짜','상품명','매출액','수량','구매자'];
-    rows = records.map(r => [r.date, r.product, r.amount, r.qty, r.customer || '']);
-  } else if(type === 'ad'){
-    headers = ['날짜','광고비','채널','상품명'];
-    rows = adRecords.map(a => [a.date, a.amount, a.channel || '', a.product || '']);
-  } else {
-    headers = ['상품명','원가'];
-    rows = Object.entries(costMap).map(([p, c]) => [p, c]);
-  }
-  if(!rows.length){ alert('정리할 데이터가 없습니다. 먼저 파일을 올리고 매핑을 적용해주세요.'); return; }
+function downloadTemplate(type){
+  const t = FILE_TEMPLATES[type];
   const escapeCsv = (v) => {
     const s = String(v == null ? '' : v);
     return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
   };
-  const lines = [headers.map(escapeCsv).join(',')].concat(rows.map(r => r.map(escapeCsv).join(',')));
+  const lines = [t.headers.map(escapeCsv).join(',')].concat(t.rows.map(r => r.map(escapeCsv).join(',')));
   const csv = '﻿' + lines.join('\r\n'); // BOM 포함 — 엑셀에서 한글 깨짐 방지
-  const fileNames = { sales: '정리된_매출데이터.csv', ad: '정리된_광고비데이터.csv', cost: '정리된_원가데이터.csv' };
-  download(fileNames[type], csv, 'text/csv;charset=utf-8');
+  download(t.fileName, csv, 'text/csv;charset=utf-8');
 }
 
-async function autoCleanAndDownload(type){
-  const apiKey = document.getElementById('apiKey').value.trim();
-  if(!apiKey){
-    alert('먼저 위쪽 Anthropic API Key 입력란에 키를 입력해주세요.');
-    return;
-  }
-  const table = type === 'sales' ? rawTable : type === 'ad' ? adRawTable : costRawTable;
-  if(!table){ alert('먼저 파일을 업로드해주세요.'); return; }
+// ---------- 파일 없이 직접 한 건씩 입력해서 추가 ----------
+function addManualSalesRecord(){
   if(activePlatformId === '__all__'){ alert('전체보기에서는 데이터를 추가할 수 없습니다. 플랫폼 탭을 선택하거나 새로 추가해주세요.'); return; }
-
-  const btn = document.getElementById(type + 'CleanBtn');
-  const originalLabel = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = '데이터 정리 중...';
-  try{
-    const cleaned = await getAIColumnMapping(type, table, apiKey);
-    // 날짜/상품명/매출액처럼 반드시 있어야 하는 항목을 AI가 못 찾았으면, 매핑이
-    // 엉뚱한 기본값으로 적용되어 잘못된 파일이 만들어지지 않도록 여기서 멈춥니다.
-    const REQUIRED_ROLES = { sales: ['date','product','amount'], ad: ['date','amount'], cost: ['product','amount'] };
-    const missing = REQUIRED_ROLES[type].filter(r => !cleaned[r]);
-    if(missing.length){
-      throw new Error(`필수 항목(${missing.join(', ')})에 맞는 컬럼을 자동으로 찾지 못했습니다.`);
-    }
-    applyRoleMapping(type, cleaned);
-    if(type === 'sales') applyMapping();
-    else if(type === 'ad') applyAdMapping();
-    else applyCostMapping();
-    exportCleanedFile(type);
-  }catch(err){
-    alert('자동 정리에 실패했습니다: ' + err.message + '\n\n직접 매핑 후 "데이터 적용"을 눌러주세요.');
-  }finally{
-    btn.disabled = false;
-    btn.textContent = originalLabel;
-  }
+  const date = document.getElementById('manualSalesDate').value;
+  const product = document.getElementById('manualSalesProduct').value.trim();
+  const amount = toNumber(document.getElementById('manualSalesAmount').value);
+  const qty = toNumber(document.getElementById('manualSalesQty').value) || 1;
+  const customer = document.getElementById('manualSalesCustomer').value.trim();
+  if(!date || !product || isNaN(amount)){ alert('날짜, 상품명, 매출액은 필수입니다.'); return; }
+  records.push({ date, product, amount, qty, customer });
+  document.getElementById('manualSalesProduct').value = '';
+  document.getElementById('manualSalesAmount').value = '';
+  document.getElementById('manualSalesCustomer').value = '';
+  buildReport();
 }
 
-async function autoCleanAllAndDownload(){
-  const apiKey = document.getElementById('apiKey').value.trim();
-  if(!apiKey){
-    alert('먼저 위쪽 Anthropic API Key 입력란에 키를 입력해주세요.');
-    return;
-  }
+function addManualAdRecord(){
   if(activePlatformId === '__all__'){ alert('전체보기에서는 데이터를 추가할 수 없습니다. 플랫폼 탭을 선택하거나 새로 추가해주세요.'); return; }
+  const date = document.getElementById('manualAdDate').value;
+  const amount = toNumber(document.getElementById('manualAdAmount').value);
+  const channel = document.getElementById('manualAdChannel').value.trim();
+  const product = document.getElementById('manualAdProduct').value.trim();
+  if(!date || isNaN(amount)){ alert('날짜와 광고비는 필수입니다.'); return; }
+  adRecords.push({ date, amount, channel: channel || '(채널없음)', product });
+  document.getElementById('manualAdAmount').value = '';
+  document.getElementById('manualAdChannel').value = '';
+  document.getElementById('manualAdProduct').value = '';
+  if(!records.length){ alert('광고비를 추가했습니다. 매출 데이터를 불러오면 ROAS가 함께 계산됩니다.'); return; }
+  buildReport();
+}
 
-  const targets = [
-    ['sales', rawTable],
-    ['ad', adRawTable],
-    ['cost', costRawTable]
-  ].filter(([, table]) => !!table).map(([type]) => type);
-  if(!targets.length){ alert('정리할 데이터가 없습니다. 먼저 파일을 업로드해주세요.'); return; }
-
-  const btn = document.getElementById('cleanAllBtn');
-  const originalLabel = btn.textContent;
-  const typeLabel = { sales: '매출', ad: '광고비', cost: '원가' };
-  btn.disabled = true;
-  for(const type of targets){
-    btn.textContent = `${typeLabel[type]} 데이터 정리 중...`;
-    await autoCleanAndDownload(type);
-  }
-  btn.disabled = false;
-  btn.textContent = originalLabel;
+function addManualCostRecord(){
+  if(activePlatformId === '__all__'){ alert('전체보기에서는 데이터를 추가할 수 없습니다. 플랫폼 탭을 선택하거나 새로 추가해주세요.'); return; }
+  const product = document.getElementById('manualCostProduct').value.trim();
+  const amount = toNumber(document.getElementById('manualCostAmount').value);
+  if(!product || isNaN(amount)){ alert('상품명과 원가는 필수입니다.'); return; }
+  costMap[product] = amount;
+  document.getElementById('manualCostProduct').value = '';
+  document.getElementById('manualCostAmount').value = '';
+  if(!records.length){ alert('원가를 추가했습니다. 매출 데이터를 불러오면 이익이 함께 계산됩니다.'); return; }
+  buildReport();
 }
 
 function saveFormatPreset(type){
