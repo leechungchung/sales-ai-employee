@@ -89,12 +89,14 @@
   .suggest-item.type-product{border-left-color:var(--accent);}
   .suggest-item.type-customer{border-left-color:var(--green);}
   .suggest-item.type-date{border-left-color:var(--yellow);}
+  .suggest-item.type-platform{border-left-color:var(--accent2);}
   .keyword-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center;}
   .keyword-chip{display:inline-flex;align-items:center;gap:5px;background:var(--chip);border:1px solid var(--border);border-left:3px solid var(--muted);color:var(--text);font-size:11.5px;padding:3px 6px 3px 8px;border-radius:999px;cursor:pointer;}
   .keyword-chip:hover{background:var(--panel2);}
   .keyword-chip.type-product{border-left-color:var(--accent);}
   .keyword-chip.type-customer{border-left-color:var(--green);}
   .keyword-chip.type-date{border-left-color:var(--yellow);}
+  .keyword-chip.type-platform{border-left-color:var(--accent2);}
   .keyword-chip button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:0 2px;line-height:1;font-family:inherit;}
   .keyword-chip button:hover{color:var(--red);}
 </style>
@@ -1337,19 +1339,21 @@ function renderLogs(){
 let activeSearchKeywords = new Set();
 
 function getSearchableValues(){
-  const products = new Set(), customers = new Set(), dates = new Set();
+  const products = new Set(), customers = new Set(), dates = new Set(), platformNames = new Set();
   records.forEach(r => {
     if(r.product) products.add(r.product);
     if(r.customer) customers.add(r.customer);
     if(r.date) dates.add(r.date);
+    if(r.platformName) platformNames.add(r.platformName);
   });
-  return { products, customers, dates };
+  return { products, customers, dates, platformNames };
 }
 
-function keywordType(value, { products, customers, dates }){
+function keywordType(value, { products, customers, dates, platformNames }){
   if(products.has(value)) return 'product';
   if(customers.has(value)) return 'customer';
   if(dates.has(value)) return 'date';
+  if(platformNames.has(value)) return 'platform';
   return '';
 }
 
@@ -1373,7 +1377,7 @@ function onSearchInput(){
     box.innerHTML = '';
   } else {
     const vals = getSearchableValues();
-    const candidates = [...vals.products, ...vals.customers, ...vals.dates];
+    const candidates = [...vals.products, ...vals.customers, ...vals.dates, ...vals.platformNames];
     const matched = [...new Set(candidates)]
       .filter(v => !activeSearchKeywords.has(v) && v.toLowerCase().includes(term))
       .slice(0, 20);
@@ -1489,29 +1493,32 @@ function renderSearchResults(){
   const productKeywords = [...activeSearchKeywords].filter(k => vals.products.has(k));
   const customerKeywords = [...activeSearchKeywords].filter(k => vals.customers.has(k));
   const dateKeywords = [...activeSearchKeywords].filter(k => vals.dates.has(k));
+  const platformKeywords = [...activeSearchKeywords].filter(k => vals.platformNames.has(k));
 
   let matches = records;
-  if(productKeywords.length || customerKeywords.length || dateKeywords.length){
+  if(productKeywords.length || customerKeywords.length || dateKeywords.length || platformKeywords.length){
     matches = matches.filter(r =>
       (productKeywords.length === 0 || productKeywords.includes(r.product)) &&
       (customerKeywords.length === 0 || customerKeywords.includes(r.customer)) &&
-      (dateKeywords.length === 0 || dateKeywords.includes(r.date))
+      (dateKeywords.length === 0 || dateKeywords.includes(r.date)) &&
+      (platformKeywords.length === 0 || platformKeywords.includes(r.platformName))
     );
   }
   if(term){
-    matches = matches.filter(r => r.product.toLowerCase().includes(term) || (r.customer||'').toLowerCase().includes(term) || r.date.includes(term));
+    matches = matches.filter(r => r.product.toLowerCase().includes(term) || (r.customer||'').toLowerCase().includes(term) || r.date.includes(term) || (r.platformName||'').toLowerCase().includes(term));
   }
   if(!activeSearchKeywords.size && !term){ el.innerHTML = ''; return; }
   if(!matches.length){ el.innerHTML = '<div class="empty">일치하는 데이터가 없습니다.</div>'; return; }
   const totalAmount = matches.reduce((s,r)=>s+r.amount,0);
   const MAX_ROWS = 200;
   const shown = matches.slice(0, MAX_ROWS);
+  const showPlatform = vals.platformNames.size > 0;
   el.innerHTML = `
     <p class="note">${matches.length}건 일치 · 합계 ${won(totalAmount)}${matches.length > MAX_ROWS ? ` (최근 ${MAX_ROWS}건만 표시)` : ''}</p>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>날짜</th><th>상품명</th><th>구매자</th><th>매출액</th></tr></thead>
-        <tbody>${shown.map(r=>`<tr><td>${r.date}</td><td>${escapeHtml(r.product)}</td><td>${escapeHtml(r.customer||'-')}</td><td>${won(r.amount)}</td></tr>`).join('')}</tbody>
+        <thead><tr>${showPlatform ? '<th>플랫폼</th>' : ''}<th>날짜</th><th>상품명</th><th>구매자</th><th>매출액</th></tr></thead>
+        <tbody>${shown.map(r=>`<tr>${showPlatform ? `<td>${escapeHtml(r.platformName||'-')}</td>` : ''}<td>${r.date}</td><td>${escapeHtml(r.product)}</td><td>${escapeHtml(r.customer||'-')}</td><td>${won(r.amount)}</td></tr>`).join('')}</tbody>
       </table>
     </div>
   `;
