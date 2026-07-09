@@ -59,12 +59,8 @@
   th,td{text-align:left;padding:8px 8px;border-bottom:1px solid var(--border);vertical-align:top;}
   th{color:var(--muted);font-weight:600;font-size:11.5px;}
   .empty{color:var(--muted);font-size:12.5px;text-align:center;padding:20px 0;}
-  details.adv{margin-top:6px;}
-  details.adv summary{cursor:pointer;color:var(--muted);font-size:12px;}
-  .adv-body{margin-top:8px;padding:10px;background:var(--panel2);border-radius:10px;border:1px solid var(--border);}
   .note{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.5;}
   .table-wrap{overflow-x:auto;}
-  .file-hint{font-size:11.5px;color:var(--muted);margin-top:4px;}
   .prod-item{border:1px solid var(--border);border-radius:10px;margin-bottom:8px;overflow:hidden;}
   .prod-item summary{cursor:pointer;list-style:none;padding:10px 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--panel2);}
   .prod-item summary::-webkit-details-marker{display:none;}
@@ -127,27 +123,27 @@
   <div class="grid" id="mainGrid">
     <!-- LEFT: 데이터 입력 -->
     <div id="uploadCol">
+      <input type="text" id="apiKey" placeholder="Anthropic API Key (선택, 자동 정리에 사용)" style="font-size:11px;padding:5px 8px;margin-bottom:10px;opacity:.75;" />
+
       <div class="card">
         <h2>📥 정산/매출 데이터 불러오기</h2>
-        <label>쿠팡 Wing에서 다운로드한 정산내역/매출내역 CSV 업로드</label>
-        <input type="file" id="csvFile" accept=".csv,.txt,.xlsx" />
-        <div class="file-hint">쿠팡 Wing → 정산 → 매출내역 다운로드 파일을 그대로 올리면 됩니다. CSV, 엑셀(.xlsx) 모두 지원합니다.</div>
+        <div class="btn-row">
+          <input type="file" id="csvFile" accept=".csv,.txt,.xlsx" style="flex:1;min-width:0;" />
+          <button type="button" class="btn-ghost" id="salesCleanBtn" onclick="autoCleanAndDownload('sales')">🧹 자동 데이터 정리</button>
+        </div>
         <div class="btn-row">
           <button class="btn-ghost" onclick="loadSample()">샘플 데이터로 체험하기</button>
         </div>
 
         <div id="mapSection" style="display:none;">
-          <label style="margin-top:16px;">— 포맷 프리셋 (플랫폼별 컬럼 구성을 저장해두고 재사용) —</label>
           <div class="map-row">
             <div style="grid-column:1/-1;">
               <select id="salesPresetSelect" onchange="applyFormatPreset('sales')"></select>
             </div>
           </div>
           <div class="btn-row">
-            <button type="button" class="btn-ghost" id="salesAutoMapBtn" onclick="autoMapWithAI('sales')">✨ AI로 자동 매핑</button>
-            <button type="button" class="btn-ghost" id="salesCleanBtn" onclick="autoCleanAndDownload('sales')">🧹 AI로 자동 정리 + 다운로드</button>
+            <button type="button" class="btn-ghost" id="salesAutoMapBtn" onclick="autoMapWithAI('sales')">✨ 매핑만 채우기</button>
           </div>
-          <label style="margin-top:16px;">— 열 매핑 (내 파일의 컬럼을 선택하세요) —</label>
           <div class="map-row">
             <div><label>날짜 컬럼</label><select id="mapDate"></select></div>
             <div><label>상품명 컬럼</label><select id="mapProduct"></select></div>
@@ -158,16 +154,15 @@
           </div>
           <div class="map-row">
             <div><label>주문상태 컬럼 (선택)</label><select id="mapStatus"><option value="">- 없음 -</option></select></div>
-            <div><label>매출에서 제외할 상태값 (쉼표 구분)</label><input type="text" id="excludeStatus" value="취소,반품,환불" /></div>
+            <div><label>매출에서 제외할 상태값</label><input type="text" id="excludeStatus" value="취소,반품,환불" /></div>
           </div>
           <div class="map-row">
-            <div><label>구매자명/회원명 컬럼 (선택 · 검색용)</label><select id="mapCustomer"><option value="">- 없음 -</option></select></div>
+            <div><label>구매자명/회원명 컬럼 (선택)</label><select id="mapCustomer"><option value="">- 없음 -</option></select></div>
             <div></div>
           </div>
-          <p class="note">쿠팡 주문 데이터에는 취소/반품 건도 함께 들어있는 경우가 많습니다. 주문상태 컬럼을 지정하면 해당 건은 매출 집계에서 자동으로 제외되어 매출이 부풀려지지 않습니다.</p>
           <div class="btn-row"><button class="btn-primary" onclick="applyMapping()">데이터 적용 · 리포트 생성</button></div>
           <div class="map-row" style="margin-top:10px;">
-            <div><input type="text" id="salesPresetName" placeholder="새 포맷 이름 (예: 우리회사 자체양식)" /></div>
+            <div><input type="text" id="salesPresetName" placeholder="새 포맷 이름" /></div>
             <div><button class="btn-ghost" style="width:100%;" onclick="saveFormatPreset('sales')">현재 매핑을 프리셋으로 저장</button></div>
           </div>
         </div>
@@ -175,25 +170,23 @@
 
       <div class="card">
         <h2>📢 광고비 데이터 불러오기 <span class="n">(선택 · ROAS 계산용)</span></h2>
-        <label>광고 플랫폼(쿠팡 광고관리자, 네이버 검색광고, 메타 광고관리자 등)에서 다운로드한 일별 광고비 CSV 업로드</label>
-        <input type="file" id="adCsvFile" accept=".csv,.txt,.xlsx" />
-        <div class="file-hint">날짜별 집행 광고비만 있으면 됩니다. 채널이 여러 개면 합계를 한 파일로 만들어 올려도 됩니다. CSV, 엑셀(.xlsx) 모두 지원합니다.</div>
+        <div class="btn-row">
+          <input type="file" id="adCsvFile" accept=".csv,.txt,.xlsx" style="flex:1;min-width:0;" />
+          <button type="button" class="btn-ghost" id="adCleanBtn" onclick="autoCleanAndDownload('ad')">🧹 자동 데이터 정리</button>
+        </div>
         <div class="btn-row">
           <button class="btn-ghost" onclick="loadAdSample()">샘플 광고비 데이터로 체험하기</button>
         </div>
 
         <div id="adMapSection" style="display:none;">
-          <label style="margin-top:16px;">— 포맷 프리셋 —</label>
           <div class="map-row">
             <div style="grid-column:1/-1;">
               <select id="adPresetSelect" onchange="applyFormatPreset('ad')"></select>
             </div>
           </div>
           <div class="btn-row">
-            <button type="button" class="btn-ghost" id="adAutoMapBtn" onclick="autoMapWithAI('ad')">✨ AI로 자동 매핑</button>
-            <button type="button" class="btn-ghost" id="adCleanBtn" onclick="autoCleanAndDownload('ad')">🧹 AI로 자동 정리 + 다운로드</button>
+            <button type="button" class="btn-ghost" id="adAutoMapBtn" onclick="autoMapWithAI('ad')">✨ 매핑만 채우기</button>
           </div>
-          <label style="margin-top:16px;">— 열 매핑 —</label>
           <div class="map-row">
             <div><label>날짜 컬럼</label><select id="mapAdDate"></select></div>
             <div><label>광고비 컬럼</label><select id="mapAdAmount"></select></div>
@@ -202,10 +195,9 @@
             <div><label>채널 컬럼 (선택)</label><select id="mapAdChannel"><option value="">- 없음 -</option></select></div>
             <div><label>상품명 컬럼 (선택 · 품목별 ON/OFF 비교용)</label><select id="mapAdProduct"><option value="">- 없음 -</option></select></div>
           </div>
-          <p class="note">상품명 컬럼을 지정하면 품목별로 광고를 켠 달/끈 달을 구분해 효과를 비교합니다. 지정하지 않으면 전체 합계로만 ROAS를 계산합니다. 매출 데이터를 먼저 불러온 뒤 광고비를 적용해주세요.</p>
           <div class="btn-row"><button class="btn-primary" onclick="applyAdMapping()">광고비 적용 · 리포트 갱신</button></div>
           <div class="map-row" style="margin-top:10px;">
-            <div><input type="text" id="adPresetName" placeholder="새 포맷 이름 (예: 메타 광고관리자)" /></div>
+            <div><input type="text" id="adPresetName" placeholder="새 포맷 이름" /></div>
             <div><button class="btn-ghost" style="width:100%;" onclick="saveFormatPreset('ad')">현재 매핑을 프리셋으로 저장</button></div>
           </div>
         </div>
@@ -213,30 +205,27 @@
 
       <div class="card">
         <h2>🏷️ 원가 데이터 불러오기 <span class="n">(선택 · 이익 계산용)</span></h2>
-        <label>상품별 개당 원가(매입가/제조원가) CSV 업로드</label>
-        <input type="file" id="costCsvFile" accept=".csv,.txt,.xlsx" />
-        <div class="file-hint">상품명과 개당 원가만 있으면 됩니다. 상품별로 1행씩만 있으면 되고, 날짜는 필요 없습니다. CSV, 엑셀(.xlsx) 모두 지원합니다.</div>
+        <div class="btn-row">
+          <input type="file" id="costCsvFile" accept=".csv,.txt,.xlsx" style="flex:1;min-width:0;" />
+          <button type="button" class="btn-ghost" id="costCleanBtn" onclick="autoCleanAndDownload('cost')">🧹 자동 데이터 정리</button>
+        </div>
         <div class="btn-row">
           <button class="btn-ghost" onclick="loadCostSample()">샘플 원가 데이터로 체험하기</button>
         </div>
 
         <div id="costMapSection" style="display:none;">
-          <label style="margin-top:16px;">— 포맷 프리셋 —</label>
           <div class="map-row">
             <div style="grid-column:1/-1;">
               <select id="costPresetSelect" onchange="applyFormatPreset('cost')"></select>
             </div>
           </div>
           <div class="btn-row">
-            <button type="button" class="btn-ghost" id="costAutoMapBtn" onclick="autoMapWithAI('cost')">✨ AI로 자동 매핑</button>
-            <button type="button" class="btn-ghost" id="costCleanBtn" onclick="autoCleanAndDownload('cost')">🧹 AI로 자동 정리 + 다운로드</button>
+            <button type="button" class="btn-ghost" id="costAutoMapBtn" onclick="autoMapWithAI('cost')">✨ 매핑만 채우기</button>
           </div>
-          <label style="margin-top:16px;">— 열 매핑 —</label>
           <div class="map-row">
             <div><label>상품명 컬럼</label><select id="mapCostProduct"></select></div>
             <div><label>개당 원가 컬럼</label><select id="mapCostAmount"></select></div>
           </div>
-          <p class="note">매출 데이터의 상품명과 정확히 일치해야 매칭됩니다. 매출 데이터를 먼저 불러온 뒤 원가를 적용해주세요.</p>
           <div class="btn-row"><button class="btn-primary" onclick="applyCostMapping()">원가 적용 · 리포트 갱신</button></div>
           <div class="map-row" style="margin-top:10px;">
             <div><input type="text" id="costPresetName" placeholder="새 포맷 이름" /></div>
@@ -245,17 +234,7 @@
         </div>
       </div>
 
-      <details class="adv">
-        <summary>고급 설정 · Claude API로 AI 코멘트·자동 매핑 (선택)</summary>
-        <div class="adv-body">
-          <label>Anthropic API Key (브라우저 메모리에만 보관, 저장되지 않음)</label>
-          <input type="text" id="apiKey" placeholder="sk-ant-..." />
-          <label style="display:flex;align-items:center;gap:6px;margin-top:8px;">
-            <input type="checkbox" id="useApi" style="width:auto;" /> 리포트 생성 시 Claude가 경영진 보고용 코멘트 작성
-          </label>
-          <p class="note">여기 입력한 키는 각 업로드 카드의 "✨ AI로 자동 매핑" · "🧹 AI로 자동 정리" 버튼에도 함께 쓰입니다(파일 헤더와 샘플 몇 줄만 전송, 전체 데이터는 보내지 않습니다). 키가 없어도 규칙 기반 AI 코멘트와 직접 매핑으로 전체 흐름을 체험할 수 있습니다.</p>
-        </div>
-      </details>
+      <button type="button" class="btn-ghost" id="cleanAllBtn" onclick="autoCleanAllAndDownload()" style="font-size:11px;padding:5px 10px;opacity:.75;margin-top:2px;">🧹 전체 데이터 정리 + 다운로드</button>
     </div>
 
     <!-- RIGHT: 리포트 -->
@@ -319,7 +298,7 @@
       </div>
 
       <div class="card">
-        <h2>🤖 AI 코멘트</h2>
+        <h2>📝 코멘트</h2>
         <div id="aiComment" class="ai-comment">데이터를 불러오면 자동으로 요약 코멘트를 작성합니다.</div>
       </div>
 
@@ -585,7 +564,7 @@ async function getAIColumnMapping(type, table, apiKey){
 async function autoMapWithAI(type){
   const apiKey = document.getElementById('apiKey').value.trim();
   if(!apiKey){
-    alert('먼저 아래 "고급 설정 · Claude API로 AI 코멘트·자동 매핑"에서 Anthropic API Key를 입력해주세요.');
+    alert('먼저 위쪽 Anthropic API Key 입력란에 키를 입력해주세요.');
     return;
   }
   const table = type === 'sales' ? rawTable : type === 'ad' ? adRawTable : costRawTable;
@@ -632,7 +611,7 @@ function exportCleanedFile(type){
 async function autoCleanAndDownload(type){
   const apiKey = document.getElementById('apiKey').value.trim();
   if(!apiKey){
-    alert('먼저 아래 "고급 설정 · Claude API로 AI 코멘트·자동 매핑"에서 Anthropic API Key를 입력해주세요.');
+    alert('먼저 위쪽 Anthropic API Key 입력란에 키를 입력해주세요.');
     return;
   }
   const table = type === 'sales' ? rawTable : type === 'ad' ? adRawTable : costRawTable;
@@ -663,6 +642,33 @@ async function autoCleanAndDownload(type){
     btn.disabled = false;
     btn.textContent = originalLabel;
   }
+}
+
+async function autoCleanAllAndDownload(){
+  const apiKey = document.getElementById('apiKey').value.trim();
+  if(!apiKey){
+    alert('먼저 위쪽 Anthropic API Key 입력란에 키를 입력해주세요.');
+    return;
+  }
+  if(activePlatformId === '__all__'){ alert('전체보기에서는 데이터를 추가할 수 없습니다. 플랫폼 탭을 선택하거나 새로 추가해주세요.'); return; }
+
+  const targets = [
+    ['sales', rawTable],
+    ['ad', adRawTable],
+    ['cost', costRawTable]
+  ].filter(([, table]) => !!table).map(([type]) => type);
+  if(!targets.length){ alert('정리할 데이터가 없습니다. 먼저 파일을 업로드해주세요.'); return; }
+
+  const btn = document.getElementById('cleanAllBtn');
+  const originalLabel = btn.textContent;
+  const typeLabel = { sales: '매출', ad: '광고비', cost: '원가' };
+  btn.disabled = true;
+  for(const type of targets){
+    btn.textContent = `${typeLabel[type]} 데이터 정리 중...`;
+    await autoCleanAndDownload(type);
+  }
+  btn.disabled = false;
+  btn.textContent = originalLabel;
 }
 
 function saveFormatPreset(type){
@@ -1572,58 +1578,8 @@ function ruleBasedComment(r){
   return lines.join('\n');
 }
 
-async function callClaudeComment(r, apiKey){
-  const summary = {
-    period: `${r.dates[0]}~${r.dates[r.dates.length-1]}`,
-    totalAmount: r.totalAmount, totalOrders: r.totalOrders, avgOrder: Math.round(r.avgOrder),
-    trendPct: r.trendPct, topProducts: r.topProducts.slice(0,5).map(([n,a])=>({name:n, amount:a})),
-    anomalies: r.anomalies,
-    adSpend: r.hasAdData ? {
-      totalAdSpend: r.totalAdSpend, roas: r.roas===null?null:Number(r.roas.toFixed(2)),
-      adRatioPct: r.adRatio===null?null:Number(r.adRatio.toFixed(1)),
-      netAmount: r.netAmount, roasTrendPct: r.roasTrendPct, alerts: r.adAlerts
-    } : null,
-    profit: r.hasCostData ? {
-      totalCost: r.totalCost, grossProfit: r.grossProfit, operatingProfit: r.operatingProfit,
-      missingCostProducts: r.missingCostProducts
-    } : null,
-    adOnOffByProduct: (r.monthly?.perProduct || []).filter(p=>p.onOff).map(p=>({
-      product: p.product, avgRevenueWhenOn: Math.round(p.onOff.avgOn), avgRevenueWhenOff: Math.round(p.onOff.avgOff),
-      diffPct: p.onOff.diffPct===null?null:Number(p.onOff.diffPct.toFixed(1))
-    }))
-  };
-  const system = `당신은 Commerce AI Company의 매출관리 AI 직원입니다. 회사 규칙을 지키세요: 데이터 기반(아래 집계 데이터만 근거로 사용), 거짓말 금지(데이터에 없는 사실은 추측하지 말 것), 근거 제시, 신뢰도 표시. 아래 매출/광고비/원가/품목별 광고 ON-OFF 집계 데이터를 근거로 경영진 보고용 코멘트를 한국어로 4~6문장 작성하세요. 마지막 줄에는 대표가 취할 수 있는 실행 제안 1~2가지를 포함하세요.`;
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method:'POST',
-    headers:{
-      'content-type':'application/json', 'x-api-key': apiKey,
-      'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true'
-    },
-    body: JSON.stringify({
-      model:'claude-haiku-4-5-20251001', max_tokens:500, system,
-      messages:[{role:'user', content: JSON.stringify(summary)}]
-    })
-  });
-  if(!res.ok) throw new Error('API 호출 실패: ' + res.status);
-  const data = await res.json();
-  return data.content?.[0]?.text?.trim() || '';
-}
-
-async function buildAiComment(){
-  const el = document.getElementById('aiComment');
-  const baseline = ruleBasedComment(lastReport);
-  el.textContent = baseline;
-  const useApi = document.getElementById('useApi').checked;
-  const apiKey = document.getElementById('apiKey').value.trim();
-  if(useApi && apiKey){
-    el.textContent = baseline + '\n\n(Claude로 코멘트 생성 중...)';
-    try{
-      const aiText = await callClaudeComment(lastReport, apiKey);
-      el.textContent = aiText + '\n\n— Claude API 생성 코멘트 (신뢰도: 검토 권장)';
-    }catch(e){
-      el.textContent = baseline + `\n\n(API 호출 실패: ${e.message} — 규칙 기반 코멘트로 대체)`;
-    }
-  }
+function buildAiComment(){
+  document.getElementById('aiComment').textContent = ruleBasedComment(lastReport);
 }
 
 function logEntry(){
@@ -1875,7 +1831,7 @@ ${(r.monthly && r.monthly.perProduct.length) ? `| 품목 | 월 | 매출 | 원가
   r.monthly.perProduct.flatMap(p => p.monthly.map(x => `| ${p.product} | ${x.month} | ${won(x.revenue)} | ${x.cost===null?'-':won(x.cost)} | ${x.adSpend===null?'-':won(x.adSpend)} | ${(x.cost!==null||x.adSpend!==null)?won(x.profit):'-'} | ${x.adOn===null?'-':(x.adOn?'ON':'OFF')} |`)).join('\n')
   : '데이터 없음'}
 
-## AI 코멘트
+## 코멘트
 ${document.getElementById('aiComment').textContent}
 `;
   download(`매출리포트_${r.dates[r.dates.length-1]}.md`, md, 'text/markdown;charset=utf-8');
