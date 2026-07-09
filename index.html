@@ -130,8 +130,8 @@
       <div class="card">
         <h2>📥 정산/매출 데이터 불러오기</h2>
         <label>쿠팡 Wing에서 다운로드한 정산내역/매출내역 CSV 업로드</label>
-        <input type="file" id="csvFile" accept=".csv,.txt" />
-        <div class="file-hint">쿠팡 Wing → 정산 → 매출내역 다운로드(CSV) 파일을 그대로 올리면 됩니다.</div>
+        <input type="file" id="csvFile" accept=".csv,.txt,.xlsx" />
+        <div class="file-hint">쿠팡 Wing → 정산 → 매출내역 다운로드 파일을 그대로 올리면 됩니다. CSV, 엑셀(.xlsx) 모두 지원합니다.</div>
         <div class="btn-row">
           <button class="btn-ghost" onclick="loadSample()">샘플 데이터로 체험하기</button>
         </div>
@@ -154,6 +154,9 @@
             <div style="grid-column:1/-1;">
               <select id="salesPresetSelect" onchange="applyFormatPreset('sales')"></select>
             </div>
+          </div>
+          <div class="btn-row">
+            <button type="button" class="btn-ghost" id="salesAutoMapBtn" onclick="autoMapWithAI('sales')">✨ AI로 자동 매핑</button>
           </div>
           <label style="margin-top:16px;">— 열 매핑 (내 파일의 컬럼을 선택하세요) —</label>
           <div class="map-row">
@@ -184,8 +187,8 @@
       <div class="card">
         <h2>📢 광고비 데이터 불러오기 <span class="n">(선택 · ROAS 계산용)</span></h2>
         <label>광고 플랫폼(쿠팡 광고관리자, 네이버 검색광고, 메타 광고관리자 등)에서 다운로드한 일별 광고비 CSV 업로드</label>
-        <input type="file" id="adCsvFile" accept=".csv,.txt" />
-        <div class="file-hint">날짜별 집행 광고비만 있으면 됩니다. 채널이 여러 개면 합계를 한 파일로 만들어 올려도 됩니다.</div>
+        <input type="file" id="adCsvFile" accept=".csv,.txt,.xlsx" />
+        <div class="file-hint">날짜별 집행 광고비만 있으면 됩니다. 채널이 여러 개면 합계를 한 파일로 만들어 올려도 됩니다. CSV, 엑셀(.xlsx) 모두 지원합니다.</div>
         <div class="btn-row">
           <button class="btn-ghost" onclick="loadAdSample()">샘플 광고비 데이터로 체험하기</button>
         </div>
@@ -196,6 +199,9 @@
             <div style="grid-column:1/-1;">
               <select id="adPresetSelect" onchange="applyFormatPreset('ad')"></select>
             </div>
+          </div>
+          <div class="btn-row">
+            <button type="button" class="btn-ghost" id="adAutoMapBtn" onclick="autoMapWithAI('ad')">✨ AI로 자동 매핑</button>
           </div>
           <label style="margin-top:16px;">— 열 매핑 —</label>
           <div class="map-row">
@@ -218,8 +224,8 @@
       <div class="card">
         <h2>🏷️ 원가 데이터 불러오기 <span class="n">(선택 · 이익 계산용)</span></h2>
         <label>상품별 개당 원가(매입가/제조원가) CSV 업로드</label>
-        <input type="file" id="costCsvFile" accept=".csv,.txt" />
-        <div class="file-hint">상품명과 개당 원가만 있으면 됩니다. 상품별로 1행씩만 있으면 되고, 날짜는 필요 없습니다.</div>
+        <input type="file" id="costCsvFile" accept=".csv,.txt,.xlsx" />
+        <div class="file-hint">상품명과 개당 원가만 있으면 됩니다. 상품별로 1행씩만 있으면 되고, 날짜는 필요 없습니다. CSV, 엑셀(.xlsx) 모두 지원합니다.</div>
         <div class="btn-row">
           <button class="btn-ghost" onclick="loadCostSample()">샘플 원가 데이터로 체험하기</button>
         </div>
@@ -230,6 +236,9 @@
             <div style="grid-column:1/-1;">
               <select id="costPresetSelect" onchange="applyFormatPreset('cost')"></select>
             </div>
+          </div>
+          <div class="btn-row">
+            <button type="button" class="btn-ghost" id="costAutoMapBtn" onclick="autoMapWithAI('cost')">✨ AI로 자동 매핑</button>
           </div>
           <label style="margin-top:16px;">— 열 매핑 —</label>
           <div class="map-row">
@@ -246,14 +255,14 @@
       </div>
 
       <details class="adv">
-        <summary>고급 설정 · Claude API로 AI 코멘트 강화 (선택)</summary>
+        <summary>고급 설정 · Claude API로 AI 코멘트·자동 매핑 (선택)</summary>
         <div class="adv-body">
           <label>Anthropic API Key (브라우저 메모리에만 보관, 저장되지 않음)</label>
           <input type="text" id="apiKey" placeholder="sk-ant-..." />
           <label style="display:flex;align-items:center;gap:6px;margin-top:8px;">
             <input type="checkbox" id="useApi" style="width:auto;" /> 리포트 생성 시 Claude가 경영진 보고용 코멘트 작성
           </label>
-          <p class="note">키가 없어도 규칙 기반 AI 코멘트로 전체 흐름을 체험할 수 있습니다. 쿠팡 Open API를 코드로 직접 연동하는 방법은 같은 폴더의 README.md를 참고하세요.</p>
+          <p class="note">여기 입력한 키는 각 업로드 카드의 "✨ AI로 자동 매핑" 버튼에도 함께 쓰입니다(파일 헤더와 샘플 몇 줄만 전송, 전체 데이터는 보내지 않습니다). 키가 없어도 규칙 기반 AI 코멘트와 직접 매핑으로 전체 흐름을 체험할 수 있습니다. 쿠팡 Open API를 코드로 직접 연동하는 방법은 같은 폴더의 README.md를 참고하세요.</p>
         </div>
       </details>
     </div>
@@ -507,11 +516,7 @@ function renderPresetSelect(type){
 }
 ['sales','ad','cost'].forEach(renderPresetSelect);
 
-function applyFormatPreset(type){
-  const sel = document.getElementById(type + 'PresetSelect');
-  if(sel.value === '') return;
-  const preset = getPresetList(type)[Number(sel.value)];
-  if(!preset) return;
+function applyRoleMapping(type, roles){
   const table = type === 'sales' ? rawTable : type === 'ad' ? adRawTable : costRawTable;
   if(!table) return;
   const setSelect = (id, headerName) => {
@@ -519,21 +524,89 @@ function applyFormatPreset(type){
     if(el && headerName && table.headers.includes(headerName)) el.value = headerName;
   };
   if(type === 'sales'){
-    setSelect('mapDate', preset.roles.date);
-    setSelect('mapProduct', preset.roles.product);
-    setSelect('mapAmount', preset.roles.amount);
-    setSelect('mapQty', preset.roles.qty);
-    setSelect('mapStatus', preset.roles.status);
-    setSelect('mapCustomer', preset.roles.customer);
-    if(preset.roles.excludeStatuses) document.getElementById('excludeStatus').value = preset.roles.excludeStatuses;
+    setSelect('mapDate', roles.date);
+    setSelect('mapProduct', roles.product);
+    setSelect('mapAmount', roles.amount);
+    setSelect('mapQty', roles.qty);
+    setSelect('mapStatus', roles.status);
+    setSelect('mapCustomer', roles.customer);
+    if(roles.excludeStatuses) document.getElementById('excludeStatus').value = roles.excludeStatuses;
   } else if(type === 'ad'){
-    setSelect('mapAdDate', preset.roles.date);
-    setSelect('mapAdAmount', preset.roles.amount);
-    setSelect('mapAdChannel', preset.roles.channel);
-    setSelect('mapAdProduct', preset.roles.product);
+    setSelect('mapAdDate', roles.date);
+    setSelect('mapAdAmount', roles.amount);
+    setSelect('mapAdChannel', roles.channel);
+    setSelect('mapAdProduct', roles.product);
   } else {
-    setSelect('mapCostProduct', preset.roles.product);
-    setSelect('mapCostAmount', preset.roles.amount);
+    setSelect('mapCostProduct', roles.product);
+    setSelect('mapCostAmount', roles.amount);
+  }
+}
+
+function applyFormatPreset(type){
+  const sel = document.getElementById(type + 'PresetSelect');
+  if(sel.value === '') return;
+  const preset = getPresetList(type)[Number(sel.value)];
+  if(!preset) return;
+  applyRoleMapping(type, preset.roles);
+}
+
+// ---------- AI(Claude)로 컬럼 자동 매핑 ----------
+const AI_MAP_ROLE_HINTS = {
+  sales: { date:'날짜/주문일자', product:'상품명/품목명', amount:'매출액/판매금액(옵션당 합계 금액)', qty:'수량 (해당 컬럼이 없으면 null)', status:'주문상태 — 취소/반품 등 (해당 컬럼이 없으면 null)', customer:'구매자명/회원명/구매자ID (해당 컬럼이 없으면 null)' },
+  ad: { date:'날짜', amount:'광고비/지출금액', channel:'광고 채널/매체명 (해당 컬럼이 없으면 null)', product:'상품명 (해당 컬럼이 없으면 null)' },
+  cost: { product:'상품명', amount:'개당 원가/매입가/제조원가' }
+};
+
+async function autoMapWithAI(type){
+  const apiKey = document.getElementById('apiKey').value.trim();
+  if(!apiKey){
+    alert('먼저 아래 "고급 설정 · Claude API로 AI 코멘트·자동 매핑"에서 Anthropic API Key를 입력해주세요.');
+    return;
+  }
+  const table = type === 'sales' ? rawTable : type === 'ad' ? adRawTable : costRawTable;
+  if(!table){ alert('먼저 파일을 업로드해주세요.'); return; }
+
+  const btn = document.getElementById(type + 'AutoMapBtn');
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '파일 정리 중...';
+
+  try{
+    const roles = AI_MAP_ROLE_HINTS[type];
+    const system = `당신은 스프레드시트 컬럼을 분석하는 도우미입니다. 주어진 헤더 목록과 샘플 행(데이터 일부)을 보고, 요청된 각 역할에 가장 알맞은 헤더를 "헤더 목록"에 있는 문자열 그대로 정확히 골라주세요. 알맞은 컬럼이 없으면 null로 표시하세요. 반드시 JSON 객체 하나만 출력하고, 다른 설명이나 코드블록 기호(\`\`\`)는 절대 포함하지 마세요.`;
+      const userContent = JSON.stringify({
+      헤더_목록: table.headers,
+      샘플_행: table.rows.slice(0, 5),
+      찾아야_할_역할: roles
+    });
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json', 'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001', max_tokens: 300, system,
+        messages: [{ role: 'user', content: userContent }]
+      })
+    });
+    if(!res.ok) throw new Error('API 호출 실패: ' + res.status);
+    const data = await res.json();
+    let text = (data.content?.[0]?.text || '').trim();
+    text = text.replace(/^```(json)?\s*/i, '').replace(/```\s*$/,'').trim();
+    const mapping = JSON.parse(text);
+    // AI가 지어낸 헤더명을 그대로 믿지 않고, 실제 파일에 있는 헤더인지 한 번 더 확인합니다.
+    const cleaned = {};
+    Object.keys(mapping).forEach(k => {
+      const v = mapping[k];
+      cleaned[k] = (typeof v === 'string' && table.headers.includes(v)) ? v : '';
+    });
+    applyRoleMapping(type, cleaned);
+  }catch(err){
+    alert('AI 자동 매핑에 실패했습니다: ' + err.message + '\n\n직접 매핑해주세요.');
+  }finally{
+    btn.disabled = false;
+    btn.textContent = originalLabel;
   }
 }
 
@@ -616,15 +689,187 @@ function parseCsvText(text){
   return { headers, rows };
 }
 
-document.getElementById('csvFile').addEventListener('change', (e) => {
-  const file = e.target.files[0];
+// ---------- XLSX 파싱 (외부 라이브러리 없이 브라우저 내장 기능만 사용) ----------
+// xlsx는 사실 zip 압축 파일이며, 안에 xml로 시트 데이터가 들어있습니다.
+// ZIP 목차(Central Directory)를 직접 읽고, 압축은 브라우저 내장 DecompressionStream으로 풉니다.
+function readZipCentralDirectory(buf){
+  const dv = new DataView(buf);
+  const bytes = new Uint8Array(buf);
+  let eocdOffset = -1;
+  const scanStart = Math.max(0, bytes.length - 65557);
+  for(let i = bytes.length - 22; i >= scanStart; i--){
+    if(dv.getUint32(i, true) === 0x06054b50){ eocdOffset = i; break; }
+  }
+  if(eocdOffset < 0) throw new Error('ZIP 목차를 찾을 수 없습니다 (손상되었거나 xlsx가 아닌 파일일 수 있습니다).');
+  const cdOffset = dv.getUint32(eocdOffset + 16, true);
+  const cdEntries = dv.getUint16(eocdOffset + 10, true);
+  const entries = {};
+  let p = cdOffset;
+  for(let i = 0; i < cdEntries; i++){
+    if(dv.getUint32(p, true) !== 0x02014b50) break;
+    const compressionMethod = dv.getUint16(p + 10, true);
+    const compressedSize = dv.getUint32(p + 20, true);
+    const fileNameLen = dv.getUint16(p + 28, true);
+    const extraLen = dv.getUint16(p + 30, true);
+    const commentLen = dv.getUint16(p + 32, true);
+    const localHeaderOffset = dv.getUint32(p + 42, true);
+    const nameBytes = bytes.subarray(p + 46, p + 46 + fileNameLen);
+    const fileName = new TextDecoder('utf-8').decode(nameBytes);
+    entries[fileName] = { compressionMethod, compressedSize, localHeaderOffset };
+    p += 46 + fileNameLen + extraLen + commentLen;
+  }
+  return entries;
+}
+
+async function extractZipEntry(buf, entry){
+  const dv = new DataView(buf);
+  const bytes = new Uint8Array(buf);
+  const lp = entry.localHeaderOffset;
+  if(dv.getUint32(lp, true) !== 0x04034b50) throw new Error('ZIP 로컬 헤더가 올바르지 않습니다.');
+  const nameLen = dv.getUint16(lp + 26, true);
+  const extraLen = dv.getUint16(lp + 28, true);
+  const dataStart = lp + 30 + nameLen + extraLen;
+  const compressed = bytes.subarray(dataStart, dataStart + entry.compressedSize);
+  if(entry.compressionMethod === 0) return compressed;
+  if(entry.compressionMethod === 8){
+    const stream = new Blob([compressed]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  }
+  throw new Error('지원하지 않는 압축 방식입니다 (method ' + entry.compressionMethod + ').');
+}
+
+async function readZipText(buf, entries, fileName){
+  const entry = entries[fileName];
+  if(!entry) return null;
+  return new TextDecoder('utf-8').decode(await extractZipEntry(buf, entry));
+}
+
+function xlsxColLettersToIndex(letters){
+  let n = 0;
+  for(let i = 0; i < letters.length; i++) n = n * 26 + (letters.charCodeAt(i) - 64);
+  return n - 1;
+}
+
+function parseSharedStringsXml(xmlText){
+  if(!xmlText) return [];
+  const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+  const siNodes = doc.getElementsByTagName('si');
+  const out = [];
+  for(let i = 0; i < siNodes.length; i++){
+    const tNodes = siNodes[i].getElementsByTagName('t');
+    let text = '';
+    for(let j = 0; j < tNodes.length; j++) text += tNodes[j].textContent;
+    out.push(text);
+  }
+  return out;
+}
+
+function parseWorksheetXml(xmlText, sharedStrings){
+  const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+  const rowNodes = doc.getElementsByTagName('row');
+  const grid = [];
+  let maxCol = 0;
+  for(let i = 0; i < rowNodes.length; i++){
+    const rowNode = rowNodes[i];
+    const rAttr = rowNode.getAttribute('r');
+    const rowIndex = rAttr ? (parseInt(rAttr, 10) - 1) : i;
+    const cellNodes = rowNode.getElementsByTagName('c');
+    const rowArr = grid[rowIndex] || (grid[rowIndex] = []);
+    for(let j = 0; j < cellNodes.length; j++){
+      const c = cellNodes[j];
+      const ref = c.getAttribute('r') || '';
+      const colLetters = ref.replace(/[0-9]/g, '');
+      const colIndex = colLetters ? xlsxColLettersToIndex(colLetters) : j;
+      const type = c.getAttribute('t');
+      let value = '';
+      if(type === 'inlineStr'){
+        const isNode = c.getElementsByTagName('is')[0];
+        value = isNode ? isNode.textContent : '';
+      } else {
+        const vNode = c.getElementsByTagName('v')[0];
+        const raw = vNode ? vNode.textContent : '';
+        if(type === 's'){
+          const idx = parseInt(raw, 10);
+          value = sharedStrings[idx] != null ? sharedStrings[idx] : '';
+        } else if(type === 'b'){
+          value = raw === '1' ? 'TRUE' : 'FALSE';
+        } else {
+          value = raw; // 숫자(엑셀 날짜 일련번호 포함) 또는 수식 결과 문자열
+        }
+      }
+      rowArr[colIndex] = value;
+      if(colIndex > maxCol) maxCol = colIndex;
+    }
+  }
+  const width = maxCol + 1;
+  const normalized = [];
+  for(let i = 0; i < grid.length; i++){
+    const src = grid[i] || [];
+    const row = new Array(width);
+    for(let c = 0; c < width; c++) row[c] = src[c] != null ? String(src[c]).trim() : '';
+    normalized.push(row);
+  }
+  return normalized.filter(row => row.some(v => v !== '')); // 완전히 빈 행 제거
+}
+
+async function parseXlsxArrayBuffer(buf){
+  const entries = readZipCentralDirectory(buf);
+
+  // 시트 순서가 바뀌었을 수 있으므로 workbook.xml + rels로 "첫 번째 시트"의 실제 파일을 찾습니다.
+  let sheetTarget = 'xl/worksheets/sheet1.xml';
+  const workbookXml = await readZipText(buf, entries, 'xl/workbook.xml');
+  const relsXml = await readZipText(buf, entries, 'xl/_rels/workbook.xml.rels');
+  if(workbookXml && relsXml){
+    const wbDoc = new DOMParser().parseFromString(workbookXml, 'application/xml');
+    const firstSheet = wbDoc.getElementsByTagName('sheet')[0];
+    const rId = firstSheet && (firstSheet.getAttribute('r:id') || firstSheet.getAttribute('rId'));
+    if(rId){
+      const relsDoc = new DOMParser().parseFromString(relsXml, 'application/xml');
+      const relNodes = relsDoc.getElementsByTagName('Relationship');
+      for(let i = 0; i < relNodes.length; i++){
+        if(relNodes[i].getAttribute('Id') === rId){
+          const target = (relNodes[i].getAttribute('Target') || '').replace(/^\.?\//, '');
+          sheetTarget = target.startsWith('xl/') ? target : ('xl/' + target);
+          break;
+        }
+      }
+    }
+  }
+
+  const sharedStrings = parseSharedStringsXml(await readZipText(buf, entries, 'xl/sharedStrings.xml'));
+  const sheetXml = (await readZipText(buf, entries, sheetTarget)) || (await readZipText(buf, entries, 'xl/worksheets/sheet1.xml'));
+  if(!sheetXml) throw new Error('엑셀 파일에서 시트를 찾을 수 없습니다.');
+
+  const grid = parseWorksheetXml(sheetXml, sharedStrings);
+  if(!grid.length) return { headers: [], rows: [] };
+  return { headers: grid[0], rows: grid.slice(1) };
+}
+
+// ---------- 파일 업로드 공통 처리 (CSV/XLSX 모두 지원) ----------
+async function handleFileUpload(file, onParsed){
   if(!file) return;
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  if(ext === 'xls'){
+    alert('.xls(구버전 엑셀) 형식은 지원하지 않습니다. 엑셀에서 "다른 이름으로 저장" → .xlsx 또는 CSV로 저장한 뒤 다시 올려주세요.');
+    return;
+  }
+  if(ext === 'xlsx'){
+    try{
+      const table = await parseXlsxArrayBuffer(await file.arrayBuffer());
+      if(!table.headers.length){ alert('엑셀 파일에서 데이터를 찾지 못했습니다. 첫 번째 시트에 표 형태 데이터가 있는지 확인해주세요.'); return; }
+      onParsed(table);
+    }catch(err){
+      alert('엑셀 파일을 읽는 중 문제가 발생했습니다: ' + err.message);
+    }
+    return;
+  }
   const reader = new FileReader();
-  reader.onload = (ev) => {
-    rawTable = parseCsvText(ev.target.result);
-    showMapping();
-  };
+  reader.onload = (ev) => onParsed(parseCsvText(ev.target.result));
   reader.readAsText(file, 'utf-8');
+}
+
+document.getElementById('csvFile').addEventListener('change', (e) => {
+  handleFileUpload(e.target.files[0], (table) => { rawTable = table; showMapping(); });
 });
 
 function showMapping(){
@@ -652,6 +897,15 @@ function toNumber(v){
 }
 function toISODate(v){
   const s = String(v).trim();
+  // 엑셀은 날짜를 "1900-01-01부터 며칠째"인 일련번호로 저장합니다(예: 46000).
+  // 문자열 패턴이 아니라 순수 숫자이고 그럴듯한 날짜 범위일 때만 일련번호로 간주해 변환합니다.
+  if(/^\d+(\.\d+)?$/.test(s)){
+    const n = Number(s);
+    if(n > 20000 && n < 80000){
+      const ms = Math.round((n - 25569) * 86400 * 1000);
+      return new Date(ms).toISOString().slice(0, 10);
+    }
+  }
   const m = s.match(/(\d{4})[.\-\/](\d{1,2})[.\-\/](\d{1,2})/);
   if(m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
   return s.slice(0,10);
@@ -693,14 +947,7 @@ function applyMapping(){
 
 // ---------- 광고비 CSV ----------
 document.getElementById('adCsvFile').addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = (ev) => {
-    adRawTable = parseCsvText(ev.target.result);
-    showAdMapping();
-  };
-  reader.readAsText(file, 'utf-8');
+  handleFileUpload(e.target.files[0], (table) => { adRawTable = table; showAdMapping(); });
 });
 
 function showAdMapping(){
@@ -777,14 +1024,7 @@ function loadAdSample(){
 
 // ---------- 원가 CSV ----------
 document.getElementById('costCsvFile').addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = (ev) => {
-    costRawTable = parseCsvText(ev.target.result);
-    showCostMapping();
-  };
-  reader.readAsText(file, 'utf-8');
+  handleFileUpload(e.target.files[0], (table) => { costRawTable = table; showCostMapping(); });
 });
 
 function showCostMapping(){
