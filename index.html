@@ -20,6 +20,8 @@
   .brand p{margin:2px 0 0;color:var(--muted);font-size:12.5px;}
   .grid{display:grid;grid-template-columns:340px 1fr;gap:20px;}
   @media (max-width:920px){.grid{grid-template-columns:1fr;}}
+  .grid.all-view{grid-template-columns:1fr;}
+  .grid.all-view #uploadCol{display:none;}
   .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:18px;}
   .card h2{font-size:15px;margin:0 0 12px;display:flex;align-items:center;gap:8px;}
   .card h2 .n{color:var(--muted);font-weight:400;font-size:12px;}
@@ -88,7 +90,8 @@
   .suggest-item.type-customer{border-left-color:var(--green);}
   .suggest-item.type-date{border-left-color:var(--yellow);}
   .keyword-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center;}
-  .keyword-chip{display:inline-flex;align-items:center;gap:5px;background:var(--chip);border:1px solid var(--border);border-left:3px solid var(--muted);color:var(--text);font-size:11.5px;padding:3px 6px 3px 8px;border-radius:999px;}
+  .keyword-chip{display:inline-flex;align-items:center;gap:5px;background:var(--chip);border:1px solid var(--border);border-left:3px solid var(--muted);color:var(--text);font-size:11.5px;padding:3px 6px 3px 8px;border-radius:999px;cursor:pointer;}
+  .keyword-chip:hover{background:var(--panel2);}
   .keyword-chip.type-product{border-left-color:var(--accent);}
   .keyword-chip.type-customer{border-left-color:var(--green);}
   .keyword-chip.type-date{border-left-color:var(--yellow);}
@@ -112,9 +115,9 @@
   <div class="platform-tabs" id="platformTabs"></div>
   <div id="allViewNotice" class="note" style="display:none;margin:-8px 0 16px;">전체보기는 모든 플랫폼 탭의 데이터를 합산해서 보여줍니다. 새 데이터를 추가하려면 플랫폼 탭을 선택하거나 "+ 플랫폼 추가"로 새 탭을 만드세요.</div>
 
-  <div class="grid">
+  <div class="grid" id="mainGrid">
     <!-- LEFT: 데이터 입력 -->
-    <div>
+    <div id="uploadCol">
       <div class="card">
         <h2>📥 정산/매출 데이터 불러오기</h2>
         <label>쿠팡 Wing에서 다운로드한 정산내역/매출내역 CSV 업로드</label>
@@ -383,6 +386,7 @@ function renderPlatformTabs(){
     `<button type="button" class="platform-tab ${t.id === activePlatformId ? 'active' : ''}" onclick="switchPlatform('${t.id}')">${escapeHtml(t.name)}</button>`
   ).join('') + `<button type="button" class="platform-tab-add" onclick="addPlatform()">+ 플랫폼 추가</button>`;
   document.getElementById('allViewNotice').style.display = activePlatformId === '__all__' ? 'block' : 'none';
+  document.getElementById('mainGrid').classList.toggle('all-view', activePlatformId === '__all__');
 }
 
 function clearReportUI(){
@@ -1358,9 +1362,12 @@ function resetSearchState(){
   document.getElementById('searchResults').innerHTML = '';
 }
 
+let suggestHighlightIndex = -1;
+
 function onSearchInput(){
   const term = document.getElementById('searchInput').value.trim().toLowerCase();
   const box = document.getElementById('searchSuggestBox');
+  suggestHighlightIndex = -1;
   if(!term){
     box.style.display = 'none';
     box.innerHTML = '';
@@ -1383,11 +1390,43 @@ function onSearchInput(){
   renderSearchResults();
 }
 
+function setSuggestHighlight(box, index){
+  const items = [...box.querySelectorAll('.suggest-item')];
+  items.forEach(el => el.classList.remove('active'));
+  if(index >= 0 && index < items.length){
+    items[index].classList.add('active');
+    items[index].scrollIntoView({ block: 'nearest' });
+  }
+  suggestHighlightIndex = index;
+}
+
 function onSearchKeydown(e){
+  const box = document.getElementById('searchSuggestBox');
+  const items = box.style.display !== 'none' ? [...box.querySelectorAll('.suggest-item')] : [];
+
+  if(e.key === 'ArrowDown'){
+    if(!items.length) return;
+    e.preventDefault();
+    setSuggestHighlight(box, suggestHighlightIndex < items.length - 1 ? suggestHighlightIndex + 1 : 0);
+    return;
+  }
+  if(e.key === 'ArrowUp'){
+    if(!items.length) return;
+    e.preventDefault();
+    setSuggestHighlight(box, suggestHighlightIndex > 0 ? suggestHighlightIndex - 1 : items.length - 1);
+    return;
+  }
+  if(e.key === 'Escape'){
+    box.style.display = 'none';
+    return;
+  }
   if(e.key !== 'Enter') return;
   e.preventDefault();
-  const box = document.getElementById('searchSuggestBox');
-  const first = box.querySelector('.suggest-item');
+  if(suggestHighlightIndex >= 0 && items[suggestHighlightIndex]){
+    addSearchKeyword(items[suggestHighlightIndex].dataset.value);
+    return;
+  }
+  const first = items[0];
   if(first){ addSearchKeyword(first.dataset.value); return; }
   const term = document.getElementById('searchInput').value.trim();
   const vals = getSearchableValues();
@@ -1429,9 +1468,9 @@ function removeSearchKeyword(value){
 }
 
 document.getElementById('searchKeywords').addEventListener('click', (e) => {
-  const btn = e.target.closest('button[data-kw]');
-  if(!btn) return;
-  removeSearchKeyword(btn.dataset.kw);
+  const chip = e.target.closest('.keyword-chip');
+  if(!chip) return;
+  removeSearchKeyword(chip.dataset.kw);
 });
 
 function renderSearchKeywords(){
@@ -1439,7 +1478,7 @@ function renderSearchKeywords(){
   if(!activeSearchKeywords.size){ el.innerHTML = ''; return; }
   const vals = getSearchableValues();
   el.innerHTML = `<span class="note" style="margin:0 2px 0 0;">선택된 키워드:</span>` + [...activeSearchKeywords].map(k =>
-    `<span class="keyword-chip type-${keywordType(k, vals)}">${escapeHtml(k)}<button type="button" data-kw="${escapeHtml(k)}" title="필터 해제">×</button></span>`
+    `<span class="keyword-chip type-${keywordType(k, vals)}" data-kw="${escapeHtml(k)}" title="클릭해서 필터 해제">${escapeHtml(k)}<button type="button" data-kw="${escapeHtml(k)}" title="필터 해제">×</button></span>`
   ).join('');
 }
 
