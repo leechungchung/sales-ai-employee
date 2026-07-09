@@ -83,6 +83,13 @@
   .platform-tab{padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:var(--panel2);color:var(--muted);cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;}
   .platform-tab.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-color:transparent;}
   .platform-tab-add{padding:8px 14px;border-radius:10px;border:1px dashed var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:13px;font-family:inherit;}
+  .platform-tab-wrap{display:inline-flex;align-items:center;gap:1px;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:2px;}
+  .platform-tab-wrap .platform-tab{border:none;background:transparent;}
+  .platform-tab-wrap .platform-tab.active{border-radius:8px;}
+  .platform-tab-wrap .platform-tab.inactive{opacity:.5;text-decoration:line-through;}
+  .platform-tab-toggle, .platform-tab-del{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:5px 7px;border-radius:6px;font-family:inherit;}
+  .platform-tab-toggle:hover{background:var(--panel);color:var(--text);}
+  .platform-tab-del:hover{background:var(--panel);color:var(--red);}
   .suggest-box{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--panel2);border:1px solid var(--border);border-radius:8px;max-height:180px;overflow-y:auto;z-index:10;box-shadow:0 8px 20px rgba(0,0,0,.35);}
   .suggest-item{padding:8px 10px 8px 12px;font-size:12.5px;cursor:pointer;border-left:3px solid transparent;}
   .suggest-item:hover, .suggest-item.active{background:var(--panel);}
@@ -354,6 +361,7 @@ let activePlatformId = localStorage.getItem('salesai_active_platform') || platfo
 if(activePlatformId !== '__all__' && !platforms.some(p=>p.id===activePlatformId)) activePlatformId = platforms[0].id;
 
 function platformDataKey(id){ return 'salesai_platform_data_' + id; }
+function isPlatformActive(p){ return p.active !== false; }
 
 function savePlatformData(){
   if(!activePlatformId || activePlatformId === '__all__') return;
@@ -363,7 +371,7 @@ function savePlatformData(){
 function loadPlatformData(id){
   if(id === '__all__'){
     records = []; adRecords = []; costMap = {}; lastExcluded = { count: 0, statuses: [] };
-    platforms.forEach(p => {
+    platforms.filter(isPlatformActive).forEach(p => {
       const raw = localStorage.getItem(platformDataKey(p.id));
       if(!raw) return;
       const d = JSON.parse(raw);
@@ -383,12 +391,42 @@ function loadPlatformData(id){
 
 function renderPlatformTabs(){
   const el = document.getElementById('platformTabs');
-  const tabs = [{ id: '__all__', name: '전체' }].concat(platforms);
-  el.innerHTML = tabs.map(t =>
-    `<button type="button" class="platform-tab ${t.id === activePlatformId ? 'active' : ''}" onclick="switchPlatform('${t.id}')">${escapeHtml(t.name)}</button>`
-  ).join('') + `<button type="button" class="platform-tab-add" onclick="addPlatform()">+ 플랫폼 추가</button>`;
+  let html = `<button type="button" class="platform-tab ${activePlatformId === '__all__' ? 'active' : ''}" onclick="switchPlatform('__all__')">전체</button>`;
+  html += platforms.map(p => {
+    const active = isPlatformActive(p);
+    return `
+      <span class="platform-tab-wrap">
+        <button type="button" class="platform-tab ${p.id === activePlatformId ? 'active' : ''} ${active ? '' : 'inactive'}" onclick="switchPlatform('${p.id}')" title="${active ? '전체 보기에 포함됨' : '전체 보기에서 제외됨 (탭 자체는 그대로 사용 가능)'}">${escapeHtml(p.name)}</button>
+        <button type="button" class="platform-tab-toggle" onclick="togglePlatformActive('${p.id}')" title="${active ? '전체에서 제외 (비활성화)' : '전체에 포함 (활성화)'}">${active ? '👁' : '🚫'}</button>
+        <button type="button" class="platform-tab-del" onclick="deletePlatform('${p.id}')" title="플랫폼과 저장된 데이터 삭제">×</button>
+      </span>`;
+  }).join('');
+  html += `<button type="button" class="platform-tab-add" onclick="addPlatform()">+ 플랫폼 추가</button>`;
+  el.innerHTML = html;
   document.getElementById('allViewNotice').style.display = activePlatformId === '__all__' ? 'block' : 'none';
   document.getElementById('mainGrid').classList.toggle('all-view', activePlatformId === '__all__');
+}
+
+function togglePlatformActive(id){
+  const p = platforms.find(x => x.id === id);
+  if(!p) return;
+  p.active = !isPlatformActive(p);
+  localStorage.setItem('salesai_platforms', JSON.stringify(platforms));
+  if(activePlatformId === '__all__') switchPlatform('__all__');
+  else renderPlatformTabs();
+}
+
+function deletePlatform(id){
+  const p = platforms.find(x => x.id === id);
+  if(!p) return;
+  if(platforms.length <= 1){ alert('플랫폼은 최소 1개는 있어야 합니다.'); return; }
+  if(!confirm(`"${p.name}" 플랫폼과 여기에 저장된 매출·광고비·원가 데이터를 완전히 삭제할까요?\n이 작업은 되돌릴 수 없습니다.`)) return;
+  platforms = platforms.filter(x => x.id !== id);
+  localStorage.removeItem(platformDataKey(id));
+  localStorage.setItem('salesai_platforms', JSON.stringify(platforms));
+  if(activePlatformId === id) switchPlatform(platforms[0].id);
+  else if(activePlatformId === '__all__') switchPlatform('__all__');
+  else renderPlatformTabs();
 }
 
 function clearReportUI(){
@@ -433,7 +471,7 @@ function addPlatform(){
   const name = prompt('추가할 플랫폼/스토어 이름을 입력하세요 (예: 옥션, 11번가, 자사몰)');
   if(!name || !name.trim()) return;
   const id = 'p_' + Date.now();
-  platforms.push({ id, name: name.trim() });
+  platforms.push({ id, name: name.trim(), active: true });
   localStorage.setItem('salesai_platforms', JSON.stringify(platforms));
   switchPlatform(id);
 }
