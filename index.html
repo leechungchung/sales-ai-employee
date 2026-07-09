@@ -1,0 +1,1582 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>매출관리 AI 직원 · Commerce AI Company</title>
+<style>
+  :root{
+    --bg:#0f1420; --panel:#171f30; --panel2:#1d2740; --border:#2a3550;
+    --text:#e7ecf7; --muted:#93a0bd; --accent:#5b8cff; --accent2:#7c5bff;
+    --green:#33c481; --yellow:#e8b73f; --red:#ef5d6a; --chip:#243252;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo",sans-serif;background:var(--bg);color:var(--text);}
+  .wrap{max-width:1280px;margin:0 auto;padding:24px 20px 60px;}
+  header.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px;}
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand .logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:20px;}
+  .brand h1{font-size:19px;margin:0;}
+  .brand p{margin:2px 0 0;color:var(--muted);font-size:12.5px;}
+  .grid{display:grid;grid-template-columns:340px 1fr;gap:20px;}
+  @media (max-width:920px){.grid{grid-template-columns:1fr;}}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:18px;}
+  .card h2{font-size:15px;margin:0 0 12px;display:flex;align-items:center;gap:8px;}
+  .card h2 .n{color:var(--muted);font-weight:400;font-size:12px;}
+  label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px;}
+  input[type=text], input[type=file], input[type=number], textarea, select{
+    width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:8px;
+    color:var(--text);padding:9px 10px;font-size:13px;font-family:inherit;resize:vertical;
+  }
+  textarea{min-height:70px;}
+  button{cursor:pointer;border:none;border-radius:9px;padding:9px 14px;font-size:13px;font-weight:600;font-family:inherit;}
+  .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;}
+  .btn-ghost{background:var(--panel2);color:var(--text);border:1px solid var(--border);}
+  .btn-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  .map-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+  @media (max-width:700px){.kpis{grid-template-columns:repeat(2,1fr);}}
+  .kpi{background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;}
+  .kpi .v{font-size:20px;font-weight:700;}
+  .kpi .v.up{color:var(--green);} .kpi .v.down{color:var(--red);}
+  .kpi .l{font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .kpis.ad{grid-template-columns:repeat(4,1fr);}
+  @media (max-width:700px){.kpis.ad{grid-template-columns:repeat(2,1fr);}}
+  .chart-wrap{overflow-x:auto;}
+  svg text{fill:var(--muted);font-size:10px;}
+  .bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .bar-row .rank{width:20px;flex-shrink:0;text-align:right;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;}
+  .bar-row .name{width:150px;font-size:12.5px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bar-track{flex:1;height:14px;background:var(--panel2);border-radius:99px;overflow:hidden;}
+  .bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:99px;}
+  .bar-val{width:110px;text-align:right;font-size:12px;color:var(--muted);flex-shrink:0;}
+  .alert{background:rgba(239,93,106,.08);border:1px solid rgba(239,93,106,.35);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:13px;}
+  .alert.none{background:rgba(51,196,129,.08);border-color:rgba(51,196,129,.35);color:var(--green);}
+  .ai-comment{font-size:13.5px;line-height:1.7;white-space:pre-wrap;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:14px;}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  th,td{text-align:left;padding:8px 8px;border-bottom:1px solid var(--border);vertical-align:top;}
+  th{color:var(--muted);font-weight:600;font-size:11.5px;}
+  .empty{color:var(--muted);font-size:12.5px;text-align:center;padding:20px 0;}
+  details.adv{margin-top:6px;}
+  details.adv summary{cursor:pointer;color:var(--muted);font-size:12px;}
+  .adv-body{margin-top:8px;padding:10px;background:var(--panel2);border-radius:10px;border:1px solid var(--border);}
+  .note{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.5;}
+  .table-wrap{overflow-x:auto;}
+  .file-hint{font-size:11.5px;color:var(--muted);margin-top:4px;}
+  .prod-item{border:1px solid var(--border);border-radius:10px;margin-bottom:8px;overflow:hidden;}
+  .prod-item summary{cursor:pointer;list-style:none;padding:10px 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--panel2);}
+  .prod-item summary::-webkit-details-marker{display:none;}
+  .prod-item summary .pname{font-size:13px;font-weight:600;flex:1;min-width:140px;}
+  .prod-item summary .prev{font-size:12.5px;color:var(--muted);}
+  .prod-item .prod-body{padding:10px 12px;}
+  .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;}
+  .pill.pos{background:rgba(51,196,129,.15);color:var(--green);}
+  .pill.neg{background:rgba(239,93,106,.15);color:var(--red);}
+  .pill.on{background:rgba(91,140,255,.15);color:var(--accent);}
+  .pill.off{background:rgba(147,160,189,.15);color:var(--muted);}
+  .pill.unset{background:transparent;color:var(--muted);border:1px dashed var(--border);}
+  button.ad-status-btn{font-family:inherit;cursor:pointer;}
+  button.ad-status-btn:hover{filter:brightness(1.25);}
+  .platform-tabs{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0 16px;}
+  .platform-tab{padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:var(--panel2);color:var(--muted);cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;}
+  .platform-tab.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-color:transparent;}
+  .platform-tab-add{padding:8px 14px;border-radius:10px;border:1px dashed var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:13px;font-family:inherit;}
+  .suggest-box{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--panel2);border:1px solid var(--border);border-radius:8px;max-height:180px;overflow-y:auto;z-index:10;box-shadow:0 8px 20px rgba(0,0,0,.35);}
+  .suggest-item{padding:8px 10px 8px 12px;font-size:12.5px;cursor:pointer;border-left:3px solid transparent;}
+  .suggest-item:hover, .suggest-item.active{background:var(--panel);}
+  .suggest-item.type-product{border-left-color:var(--accent);}
+  .suggest-item.type-customer{border-left-color:var(--green);}
+  .suggest-item.type-date{border-left-color:var(--yellow);}
+  .keyword-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center;}
+  .keyword-chip{display:inline-flex;align-items:center;gap:5px;background:var(--chip);border:1px solid var(--border);border-left:3px solid var(--muted);color:var(--text);font-size:11.5px;padding:3px 6px 3px 8px;border-radius:999px;}
+  .keyword-chip.type-product{border-left-color:var(--accent);}
+  .keyword-chip.type-customer{border-left-color:var(--green);}
+  .keyword-chip.type-date{border-left-color:var(--yellow);}
+  .keyword-chip button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:0 2px;line-height:1;font-family:inherit;}
+  .keyword-chip button:hover{color:var(--red);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="logo">📈</div>
+      <div>
+        <h1>매출관리 AI 직원</h1>
+        <p>Commerce AI Company · 운영팀 · 담당업무: 매출·광고비 데이터 분석 및 리포트</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="platform-tabs" id="platformTabs"></div>
+  <div id="allViewNotice" class="note" style="display:none;margin:-8px 0 16px;">전체보기는 모든 플랫폼 탭의 데이터를 합산해서 보여줍니다. 새 데이터를 추가하려면 플랫폼 탭을 선택하거나 "+ 플랫폼 추가"로 새 탭을 만드세요.</div>
+
+  <div class="grid">
+    <!-- LEFT: 데이터 입력 -->
+    <div>
+      <div class="card">
+        <h2>📥 정산/매출 데이터 불러오기</h2>
+        <label>쿠팡 Wing에서 다운로드한 정산내역/매출내역 CSV 업로드</label>
+        <input type="file" id="csvFile" accept=".csv,.txt" />
+        <div class="file-hint">쿠팡 Wing → 정산 → 매출내역 다운로드(CSV) 파일을 그대로 올리면 됩니다.</div>
+        <div class="btn-row">
+          <button class="btn-ghost" onclick="loadSample()">샘플 데이터로 체험하기</button>
+        </div>
+
+        <details class="adv">
+          <summary>🔌 실제 쿠팡 매출 데이터 연동 (로컬 서버 실행 시)</summary>
+          <div class="adv-body">
+            <p class="note">같은 폴더의 server.js를 <code>node server.js</code>로 실행하면(사전에 .env에 쿠팡 Open API 키 입력) 아래에서 실제 매출 데이터를 바로 가져올 수 있습니다.</p>
+            <div class="map-row">
+              <div><label>시작일</label><input type="text" id="apiFrom" placeholder="2026-06-01" /></div>
+              <div><label>종료일</label><input type="text" id="apiTo" placeholder="2026-07-06" /></div>
+            </div>
+            <div class="btn-row"><button class="btn-primary" onclick="fetchFromLocalServer()">로컬 서버에서 가져오기</button></div>
+          </div>
+        </details>
+
+        <div id="mapSection" style="display:none;">
+          <label style="margin-top:16px;">— 포맷 프리셋 (플랫폼별 컬럼 구성을 저장해두고 재사용) —</label>
+          <div class="map-row">
+            <div style="grid-column:1/-1;">
+              <select id="salesPresetSelect" onchange="applyFormatPreset('sales')"></select>
+            </div>
+          </div>
+          <label style="margin-top:16px;">— 열 매핑 (내 파일의 컬럼을 선택하세요) —</label>
+          <div class="map-row">
+            <div><label>날짜 컬럼</label><select id="mapDate"></select></div>
+            <div><label>상품명 컬럼</label><select id="mapProduct"></select></div>
+          </div>
+          <div class="map-row">
+            <div><label>매출액 컬럼</label><select id="mapAmount"></select></div>
+            <div><label>수량 컬럼 (선택)</label><select id="mapQty"><option value="">- 없음 -</option></select></div>
+          </div>
+          <div class="map-row">
+            <div><label>주문상태 컬럼 (선택)</label><select id="mapStatus"><option value="">- 없음 -</option></select></div>
+            <div><label>매출에서 제외할 상태값 (쉼표 구분)</label><input type="text" id="excludeStatus" value="취소,반품,환불" /></div>
+          </div>
+          <div class="map-row">
+            <div><label>구매자명/회원명 컬럼 (선택 · 검색용)</label><select id="mapCustomer"><option value="">- 없음 -</option></select></div>
+            <div></div>
+          </div>
+          <p class="note">쿠팡 주문 데이터에는 취소/반품 건도 함께 들어있는 경우가 많습니다. 주문상태 컬럼을 지정하면 해당 건은 매출 집계에서 자동으로 제외되어 매출이 부풀려지지 않습니다.</p>
+          <div class="btn-row"><button class="btn-primary" onclick="applyMapping()">데이터 적용 · 리포트 생성</button></div>
+          <div class="map-row" style="margin-top:10px;">
+            <div><input type="text" id="salesPresetName" placeholder="새 포맷 이름 (예: 우리회사 자체양식)" /></div>
+            <div><button class="btn-ghost" style="width:100%;" onclick="saveFormatPreset('sales')">현재 매핑을 프리셋으로 저장</button></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>📢 광고비 데이터 불러오기 <span class="n">(선택 · ROAS 계산용)</span></h2>
+        <label>광고 플랫폼(쿠팡 광고관리자, 네이버 검색광고, 메타 광고관리자 등)에서 다운로드한 일별 광고비 CSV 업로드</label>
+        <input type="file" id="adCsvFile" accept=".csv,.txt" />
+        <div class="file-hint">날짜별 집행 광고비만 있으면 됩니다. 채널이 여러 개면 합계를 한 파일로 만들어 올려도 됩니다.</div>
+        <div class="btn-row">
+          <button class="btn-ghost" onclick="loadAdSample()">샘플 광고비 데이터로 체험하기</button>
+        </div>
+
+        <div id="adMapSection" style="display:none;">
+          <label style="margin-top:16px;">— 포맷 프리셋 —</label>
+          <div class="map-row">
+            <div style="grid-column:1/-1;">
+              <select id="adPresetSelect" onchange="applyFormatPreset('ad')"></select>
+            </div>
+          </div>
+          <label style="margin-top:16px;">— 열 매핑 —</label>
+          <div class="map-row">
+            <div><label>날짜 컬럼</label><select id="mapAdDate"></select></div>
+            <div><label>광고비 컬럼</label><select id="mapAdAmount"></select></div>
+          </div>
+          <div class="map-row">
+            <div><label>채널 컬럼 (선택)</label><select id="mapAdChannel"><option value="">- 없음 -</option></select></div>
+            <div><label>상품명 컬럼 (선택 · 품목별 ON/OFF 비교용)</label><select id="mapAdProduct"><option value="">- 없음 -</option></select></div>
+          </div>
+          <p class="note">상품명 컬럼을 지정하면 품목별로 광고를 켠 달/끈 달을 구분해 효과를 비교합니다. 지정하지 않으면 전체 합계로만 ROAS를 계산합니다. 매출 데이터를 먼저 불러온 뒤 광고비를 적용해주세요.</p>
+          <div class="btn-row"><button class="btn-primary" onclick="applyAdMapping()">광고비 적용 · 리포트 갱신</button></div>
+          <div class="map-row" style="margin-top:10px;">
+            <div><input type="text" id="adPresetName" placeholder="새 포맷 이름 (예: 메타 광고관리자)" /></div>
+            <div><button class="btn-ghost" style="width:100%;" onclick="saveFormatPreset('ad')">현재 매핑을 프리셋으로 저장</button></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>🏷️ 원가 데이터 불러오기 <span class="n">(선택 · 이익 계산용)</span></h2>
+        <label>상품별 개당 원가(매입가/제조원가) CSV 업로드</label>
+        <input type="file" id="costCsvFile" accept=".csv,.txt" />
+        <div class="file-hint">상품명과 개당 원가만 있으면 됩니다. 상품별로 1행씩만 있으면 되고, 날짜는 필요 없습니다.</div>
+        <div class="btn-row">
+          <button class="btn-ghost" onclick="loadCostSample()">샘플 원가 데이터로 체험하기</button>
+        </div>
+
+        <div id="costMapSection" style="display:none;">
+          <label style="margin-top:16px;">— 포맷 프리셋 —</label>
+          <div class="map-row">
+            <div style="grid-column:1/-1;">
+              <select id="costPresetSelect" onchange="applyFormatPreset('cost')"></select>
+            </div>
+          </div>
+          <label style="margin-top:16px;">— 열 매핑 —</label>
+          <div class="map-row">
+            <div><label>상품명 컬럼</label><select id="mapCostProduct"></select></div>
+            <div><label>개당 원가 컬럼</label><select id="mapCostAmount"></select></div>
+          </div>
+          <p class="note">매출 데이터의 상품명과 정확히 일치해야 매칭됩니다. 매출 데이터를 먼저 불러온 뒤 원가를 적용해주세요.</p>
+          <div class="btn-row"><button class="btn-primary" onclick="applyCostMapping()">원가 적용 · 리포트 갱신</button></div>
+          <div class="map-row" style="margin-top:10px;">
+            <div><input type="text" id="costPresetName" placeholder="새 포맷 이름" /></div>
+            <div><button class="btn-ghost" style="width:100%;" onclick="saveFormatPreset('cost')">현재 매핑을 프리셋으로 저장</button></div>
+          </div>
+        </div>
+      </div>
+
+      <details class="adv">
+        <summary>고급 설정 · Claude API로 AI 코멘트 강화 (선택)</summary>
+        <div class="adv-body">
+          <label>Anthropic API Key (브라우저 메모리에만 보관, 저장되지 않음)</label>
+          <input type="text" id="apiKey" placeholder="sk-ant-..." />
+          <label style="display:flex;align-items:center;gap:6px;margin-top:8px;">
+            <input type="checkbox" id="useApi" style="width:auto;" /> 리포트 생성 시 Claude가 경영진 보고용 코멘트 작성
+          </label>
+          <p class="note">키가 없어도 규칙 기반 AI 코멘트로 전체 흐름을 체험할 수 있습니다. 쿠팡 Open API를 코드로 직접 연동하는 방법은 같은 폴더의 README.md를 참고하세요.</p>
+        </div>
+      </details>
+    </div>
+
+    <!-- RIGHT: 리포트 -->
+    <div>
+      <div class="card">
+        <h2>📊 매출 KPI <span class="n" id="periodLabel"></span></h2>
+        <div class="kpis">
+          <div class="kpi"><div class="v" id="kTotal">-</div><div class="l">총 매출</div></div>
+          <div class="kpi"><div class="v" id="kOrders">-</div><div class="l">총 주문(라인) 수</div></div>
+          <div class="kpi"><div class="v" id="kAvg">-</div><div class="l">평균 객단가</div></div>
+          <div class="kpi"><div class="v" id="kTrend">-</div><div class="l">직전 기간 대비</div></div>
+        </div>
+        <div id="chartArea" class="chart-wrap"></div>
+      </div>
+
+      <div class="card">
+        <h2>🔍 데이터 검색 <span class="n">(품목명 · 구매자명 등)</span></h2>
+        <div style="position:relative;">
+          <input type="text" id="searchInput" placeholder="검색어 입력 후 아래 목록에서 클릭하세요 (예: 반팔티, 홍길동, 2026-06)" oninput="onSearchInput()" onkeydown="onSearchKeydown(event)" autocomplete="off" />
+          <div id="searchSuggestBox" class="suggest-box" style="display:none;"></div>
+        </div>
+        <div id="searchKeywords" class="keyword-chips"></div>
+        <div id="searchResults" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="card">
+        <h2>📢 광고비 & ROAS <span class="n">(광고 대비 매출 효율)</span></h2>
+        <div class="kpis ad" id="adKpis">
+          <div class="kpi"><div class="v" id="kAdSpend">-</div><div class="l">광고비 합계</div></div>
+          <div class="kpi"><div class="v" id="kRoas">-</div><div class="l">ROAS (매출÷광고비)</div></div>
+          <div class="kpi"><div class="v" id="kAdRatio">-</div><div class="l">광고비율 (광고비÷매출)</div></div>
+          <div class="kpi"><div class="v" id="kNetAmount">-</div><div class="l">광고비 차감 순매출</div></div>
+        </div>
+        <div id="adAlertBox"><div class="empty">광고비 데이터를 불러오면 ROAS와 효율 경고가 표시됩니다.</div></div>
+      </div>
+
+      <div class="card">
+        <h2>💰 원가 & 손익 <span class="n">(원가 데이터 기반)</span></h2>
+        <div class="kpis ad" id="costKpis">
+          <div class="kpi"><div class="v" id="kTotalCost">-</div><div class="l">총 원가</div></div>
+          <div class="kpi"><div class="v" id="kGrossProfit">-</div><div class="l">매출총이익 (매출-원가)</div></div>
+          <div class="kpi"><div class="v" id="kOperatingProfit">-</div><div class="l">영업이익 (-광고비)</div></div>
+          <div class="kpi"><div class="v" id="kOperatingMargin">-</div><div class="l">영업이익률</div></div>
+        </div>
+        <div id="costAlertBox"><div class="empty">원가 데이터를 불러오면 매출총이익·영업이익이 표시됩니다.</div></div>
+      </div>
+
+      <div class="card">
+        <h2>🏆 상품별 매출 순위 <span class="n" id="topProductsCount"></span></h2>
+        <div id="topProducts"><div class="empty">데이터를 불러오면 표시됩니다.</div></div>
+      </div>
+
+      <div class="card">
+        <h2>📅 품목별 월별 상세</h2>
+        <div id="monthlyDetail"><div class="empty">데이터를 불러오면 표시됩니다.</div></div>
+      </div>
+
+      <div class="card">
+        <h2>⚠️ 이상 징후 탐지</h2>
+        <div id="anomalyBox"><div class="empty">데이터를 불러오면 표시됩니다.</div></div>
+      </div>
+
+      <div class="card">
+        <h2>🤖 AI 코멘트</h2>
+        <div id="aiComment" class="ai-comment">데이터를 불러오면 자동으로 요약 코멘트를 작성합니다.</div>
+      </div>
+
+      <div class="card">
+        <h2>📒 업무일지 <span class="n">(자동 기록)</span></h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>시간</th><th>분석 기간</th><th>총매출</th><th>증감</th><th>ROAS</th><th>이상징후</th></tr></thead>
+            <tbody id="logBody"><tr><td colspan="6" class="empty">아직 생성된 리포트가 없습니다.</td></tr></tbody>
+          </table>
+        </div>
+        <div class="btn-row">
+          <button class="btn-ghost" onclick="exportMarkdown()">리포트 Markdown 내보내기</button>
+          <button class="btn-ghost" onclick="exportHandoff()">handoff.json 내보내기</button>
+          <button class="btn-ghost" onclick="resetAll()">전체 초기화</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let rawTable = null;   // {headers:[], rows:[[...]]}
+let records = [];      // normalized [{date, product, amount, qty}]
+let adRawTable = null; // {headers:[], rows:[[...]]}
+let adRecords = [];    // normalized [{date, amount, channel, product}]
+let costRawTable = null; // {headers:[], rows:[[...]]}
+let costMap = {};      // { product: unitCost }
+let manualAdStatus = JSON.parse(localStorage.getItem('salesai_manual_ad_status') || '{}'); // { "product||YYYY-MM": 'on'|'off' }
+let openMonthlyDetails = new Set(); // 펼쳐진 품목별 월별 상세 <details>의 상품명 (재렌더링 시에도 펼침 상태 유지)
+
+// ---------- 플랫폼 탭 (쿠팡/네이버 등 소스별 데이터 관리, 새 탭 계속 추가 가능) ----------
+let platforms = JSON.parse(localStorage.getItem('salesai_platforms') || 'null') || [
+  { id: 'coupang', name: '쿠팡' },
+  { id: 'naver', name: '네이버' }
+];
+localStorage.setItem('salesai_platforms', JSON.stringify(platforms));
+let activePlatformId = localStorage.getItem('salesai_active_platform') || platforms[0].id;
+if(activePlatformId !== '__all__' && !platforms.some(p=>p.id===activePlatformId)) activePlatformId = platforms[0].id;
+
+function platformDataKey(id){ return 'salesai_platform_data_' + id; }
+
+function savePlatformData(){
+  if(!activePlatformId || activePlatformId === '__all__') return;
+  localStorage.setItem(platformDataKey(activePlatformId), JSON.stringify({ records, adRecords, costMap, lastExcluded }));
+}
+
+function loadPlatformData(id){
+  if(id === '__all__'){
+    records = []; adRecords = []; costMap = {}; lastExcluded = { count: 0, statuses: [] };
+    platforms.forEach(p => {
+      const raw = localStorage.getItem(platformDataKey(p.id));
+      if(!raw) return;
+      const d = JSON.parse(raw);
+      records = records.concat((d.records || []).map(r => ({ ...r, platformName: p.name })));
+      adRecords = adRecords.concat((d.adRecords || []).map(a => ({ ...a, platformName: p.name })));
+      Object.assign(costMap, d.costMap || {});
+    });
+  } else {
+    const raw = localStorage.getItem(platformDataKey(id));
+    const d = raw ? JSON.parse(raw) : null;
+    records = d?.records || [];
+    adRecords = d?.adRecords || [];
+    costMap = d?.costMap || {};
+    lastExcluded = d?.lastExcluded || { count: 0, statuses: [] };
+  }
+}
+
+function renderPlatformTabs(){
+  const el = document.getElementById('platformTabs');
+  const tabs = [{ id: '__all__', name: '전체' }].concat(platforms);
+  el.innerHTML = tabs.map(t =>
+    `<button type="button" class="platform-tab ${t.id === activePlatformId ? 'active' : ''}" onclick="switchPlatform('${t.id}')">${escapeHtml(t.name)}</button>`
+  ).join('') + `<button type="button" class="platform-tab-add" onclick="addPlatform()">+ 플랫폼 추가</button>`;
+  document.getElementById('allViewNotice').style.display = activePlatformId === '__all__' ? 'block' : 'none';
+}
+
+function clearReportUI(){
+  lastReport = null;
+  document.getElementById('periodLabel').textContent = '';
+  document.getElementById('kTotal').textContent = '-';
+  document.getElementById('kOrders').textContent = '-';
+  document.getElementById('kAvg').textContent = '-';
+  document.getElementById('kTrend').textContent = '-';
+  document.getElementById('chartArea').innerHTML = '';
+  resetSearchState();
+  document.getElementById('kAdSpend').textContent = '-';
+  document.getElementById('kRoas').textContent = '-';
+  document.getElementById('kAdRatio').textContent = '-';
+  document.getElementById('kNetAmount').textContent = '-';
+  document.getElementById('adAlertBox').innerHTML = '<div class="empty">광고비 데이터를 불러오면 ROAS와 효율 경고가 표시됩니다.</div>';
+  document.getElementById('kTotalCost').textContent = '-';
+  document.getElementById('kGrossProfit').textContent = '-';
+  document.getElementById('kOperatingProfit').textContent = '-';
+  document.getElementById('kOperatingMargin').textContent = '-';
+  document.getElementById('costAlertBox').innerHTML = '<div class="empty">원가 데이터를 불러오면 매출총이익·영업이익이 표시됩니다.</div>';
+  document.getElementById('topProductsCount').textContent = '';
+  document.getElementById('topProducts').innerHTML = '<div class="empty">데이터를 불러오면 표시됩니다.</div>';
+  document.getElementById('monthlyDetail').innerHTML = '<div class="empty">데이터를 불러오면 표시됩니다.</div>';
+  document.getElementById('anomalyBox').innerHTML = '<div class="empty">데이터를 불러오면 표시됩니다.</div>';
+  document.getElementById('aiComment').textContent = '데이터를 불러오면 자동으로 요약 코멘트를 작성합니다.';
+}
+
+function switchPlatform(id){
+  savePlatformData();
+  activePlatformId = id;
+  localStorage.setItem('salesai_active_platform', id);
+  loadPlatformData(id);
+  renderPlatformTabs();
+  document.getElementById('mapSection').style.display = 'none';
+  document.getElementById('adMapSection').style.display = 'none';
+  document.getElementById('costMapSection').style.display = 'none';
+  if(records.length){ resetReportUiState(); computeAndRenderReport(); } else clearReportUI();
+}
+
+function addPlatform(){
+  const name = prompt('추가할 플랫폼/스토어 이름을 입력하세요 (예: 옥션, 11번가, 자사몰)');
+  if(!name || !name.trim()) return;
+  const id = 'p_' + Date.now();
+  platforms.push({ id, name: name.trim() });
+  localStorage.setItem('salesai_platforms', JSON.stringify(platforms));
+  switchPlatform(id);
+}
+let logs = JSON.parse(localStorage.getItem('salesai_logs') || '[]');
+let lastReport = null;
+
+// ---------- 포맷 프리셋 (플랫폼별 컬럼 매핑 저장/재사용) ----------
+// 쿠팡 프리셋은 이 프로젝트의 쿠팡주문.csv 샘플(실제 쿠팡 Wing 주문 다운로드 구조)과 동일하게 검증된 값입니다.
+// 네이버 프리셋은 스마트스토어센터의 일반적인 주문 다운로드 컬럼명을 기준으로 한 추정값이므로,
+// 실제 파일과 다르면 자동 매핑이 되지 않을 뿐 잘못된 값이 채워지지는 않습니다 — 직접 선택 후 프리셋으로 다시 저장하세요.
+const BUILTIN_PRESETS = {
+  sales: [
+    { name: '쿠팡 (Wing 주문/매출내역)', roles: { date:'주문일자', product:'상품명', amount:'판매가', qty:'수량', status:'주문상태', excludeStatuses:'취소,반품,환불', customer:'구매자ID' } },
+    { name: '네이버 스마트스토어 (주문 다운로드, 추정)', roles: { date:'주문일시', product:'상품명', amount:'상품주문금액', qty:'수량', status:'상품주문상태', excludeStatuses:'취소,반품,교환,구매취소', customer:'구매자명' } }
+  ],
+  ad: [],
+  cost: []
+};
+const savedPresets = {
+  sales: JSON.parse(localStorage.getItem('salesai_presets_sales') || '[]'),
+  ad: JSON.parse(localStorage.getItem('salesai_presets_ad') || '[]'),
+  cost: JSON.parse(localStorage.getItem('salesai_presets_cost') || '[]')
+};
+
+function getPresetList(type){ return BUILTIN_PRESETS[type].concat(savedPresets[type]); }
+
+function renderPresetSelect(type){
+  const sel = document.getElementById(type + 'PresetSelect');
+  if(!sel) return;
+  const list = getPresetList(type);
+  sel.innerHTML = '<option value="">직접 선택 (프리셋 사용 안 함)</option>' +
+    list.map((p,i)=>`<option value="${i}">${escapeHtml(p.name)}</option>`).join('');
+}
+['sales','ad','cost'].forEach(renderPresetSelect);
+
+function applyFormatPreset(type){
+  const sel = document.getElementById(type + 'PresetSelect');
+  if(sel.value === '') return;
+  const preset = getPresetList(type)[Number(sel.value)];
+  if(!preset) return;
+  const table = type === 'sales' ? rawTable : type === 'ad' ? adRawTable : costRawTable;
+  if(!table) return;
+  const setSelect = (id, headerName) => {
+    const el = document.getElementById(id);
+    if(el && headerName && table.headers.includes(headerName)) el.value = headerName;
+  };
+  if(type === 'sales'){
+    setSelect('mapDate', preset.roles.date);
+    setSelect('mapProduct', preset.roles.product);
+    setSelect('mapAmount', preset.roles.amount);
+    setSelect('mapQty', preset.roles.qty);
+    setSelect('mapStatus', preset.roles.status);
+    setSelect('mapCustomer', preset.roles.customer);
+    if(preset.roles.excludeStatuses) document.getElementById('excludeStatus').value = preset.roles.excludeStatuses;
+  } else if(type === 'ad'){
+    setSelect('mapAdDate', preset.roles.date);
+    setSelect('mapAdAmount', preset.roles.amount);
+    setSelect('mapAdChannel', preset.roles.channel);
+    setSelect('mapAdProduct', preset.roles.product);
+  } else {
+    setSelect('mapCostProduct', preset.roles.product);
+    setSelect('mapCostAmount', preset.roles.amount);
+  }
+}
+
+function saveFormatPreset(type){
+  const nameInput = document.getElementById(type + 'PresetName');
+  const name = nameInput.value.trim();
+  if(!name){ alert('프리셋 이름을 입력해주세요.'); return; }
+  let roles;
+  if(type === 'sales'){
+    roles = {
+      date: document.getElementById('mapDate').value,
+      product: document.getElementById('mapProduct').value,
+      amount: document.getElementById('mapAmount').value,
+      qty: document.getElementById('mapQty').value,
+      status: document.getElementById('mapStatus').value,
+      excludeStatuses: document.getElementById('excludeStatus').value,
+      customer: document.getElementById('mapCustomer').value
+    };
+  } else if(type === 'ad'){
+    roles = {
+      date: document.getElementById('mapAdDate').value,
+      amount: document.getElementById('mapAdAmount').value,
+      channel: document.getElementById('mapAdChannel').value,
+      product: document.getElementById('mapAdProduct').value
+    };
+  } else {
+    roles = {
+      product: document.getElementById('mapCostProduct').value,
+      amount: document.getElementById('mapCostAmount').value
+    };
+  }
+  savedPresets[type].push({ name, roles });
+  localStorage.setItem('salesai_presets_' + type, JSON.stringify(savedPresets[type]));
+  nameInput.value = '';
+  renderPresetSelect(type);
+  alert(`"${name}" 포맷을 저장했습니다. 다음에 이 플랫폼 파일을 올릴 때 프리셋에서 바로 선택하면 자동으로 매핑됩니다.`);
+}
+
+document.getElementById('monthlyDetail').addEventListener('click', (e) => {
+  const btn = e.target.closest('.ad-status-btn');
+  if(!btn) return;
+  toggleAdStatus(btn.dataset.product, btn.dataset.month);
+});
+// details의 toggle 이벤트는 버블링되지 않으므로 capture 단계에서 위임 처리
+document.getElementById('monthlyDetail').addEventListener('toggle', (e) => {
+  const details = e.target.closest ? e.target.closest('.prod-item') : null;
+  if(!details || !details.dataset.product) return;
+  if(details.open) openMonthlyDetails.add(details.dataset.product);
+  else openMonthlyDetails.delete(details.dataset.product);
+}, true);
+
+renderLogs();
+
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function won(n){ return Math.round(n).toLocaleString('ko-KR') + '원'; }
+
+// ---------- CSV parsing ----------
+function parseCsvText(text){
+  text = text.replace(/^﻿/, '');
+  const delim = text.indexOf('\t') > -1 && text.indexOf(',') === -1 ? '\t' : ',';
+  const lines = text.split(/\r\n|\n/).filter(l => l.length > 0);
+  const parseLine = (line) => {
+    const out = []; let cur=''; let inQ=false;
+    for(let i=0;i<line.length;i++){
+      const c = line[i];
+      if(inQ){
+        if(c === '"'){ if(line[i+1] === '"'){ cur+='"'; i++; } else inQ=false; }
+        else cur += c;
+      } else {
+        if(c === '"') inQ = true;
+        else if(c === delim){ out.push(cur); cur=''; }
+        else cur += c;
+      }
+    }
+    out.push(cur);
+    return out.map(s=>s.trim());
+  };
+  const headers = parseLine(lines[0]);
+  const rows = lines.slice(1).map(parseLine);
+  return { headers, rows };
+}
+
+document.getElementById('csvFile').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    rawTable = parseCsvText(ev.target.result);
+    showMapping();
+  };
+  reader.readAsText(file, 'utf-8');
+});
+
+function showMapping(){
+  const sel = (id) => document.getElementById(id);
+  ['mapDate','mapProduct','mapAmount'].forEach(id=>{
+    sel(id).innerHTML = rawTable.headers.map(h=>`<option value="${escapeHtml(h)}">${escapeHtml(h)}</option>`).join('');
+  });
+  sel('mapQty').innerHTML = '<option value="">- 없음 -</option>' + rawTable.headers.map(h=>`<option value="${escapeHtml(h)}">${escapeHtml(h)}</option>`).join('');
+  sel('mapStatus').innerHTML = '<option value="">- 없음 -</option>' + rawTable.headers.map(h=>`<option value="${escapeHtml(h)}">${escapeHtml(h)}</option>`).join('');
+  sel('mapCustomer').innerHTML = '<option value="">- 없음 -</option>' + rawTable.headers.map(h=>`<option value="${escapeHtml(h)}">${escapeHtml(h)}</option>`).join('');
+  // 흔한 컬럼명 자동 추정
+  const guess = (cands) => rawTable.headers.find(h => cands.some(c => h.includes(c)));
+  if(guess(['날짜','일자','date'])) sel('mapDate').value = guess(['날짜','일자','date']);
+  if(guess(['상품','품목','product','item'])) sel('mapProduct').value = guess(['상품','품목','product','item']);
+  if(guess(['매출','정산금액','금액','판매가','단가','amount'])) sel('mapAmount').value = guess(['매출','정산금액','금액','판매가','단가','amount']);
+  if(guess(['수량','qty'])) sel('mapQty').value = guess(['수량','qty']);
+  if(guess(['상태','주문상태','status'])) sel('mapStatus').value = guess(['상태','주문상태','status']);
+  if(guess(['구매자','회원','고객','customer','buyer'])) sel('mapCustomer').value = guess(['구매자','회원','고객','customer','buyer']);
+  document.getElementById('mapSection').style.display = 'block';
+}
+
+function toNumber(v){
+  const n = parseFloat(String(v).replace(/[^0-9.\-]/g,''));
+  return isNaN(n) ? 0 : n;
+}
+function toISODate(v){
+  const s = String(v).trim();
+  const m = s.match(/(\d{4})[.\-\/](\d{1,2})[.\-\/](\d{1,2})/);
+  if(m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+  return s.slice(0,10);
+}
+
+let lastExcluded = { count: 0, statuses: [] };
+
+function applyMapping(){
+  if(activePlatformId === '__all__'){ alert('전체보기에서는 데이터를 추가할 수 없습니다. 플랫폼 탭을 선택하거나 새로 추가해주세요.'); return; }
+  const dCol = document.getElementById('mapDate').value;
+  const pCol = document.getElementById('mapProduct').value;
+  const aCol = document.getElementById('mapAmount').value;
+  const qCol = document.getElementById('mapQty').value;
+  const sCol = document.getElementById('mapStatus').value;
+  const cCol = document.getElementById('mapCustomer').value;
+  const excludeList = document.getElementById('excludeStatus').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const hi = rawTable.headers.indexOf.bind(rawTable.headers);
+  const di = hi(dCol), pi = hi(pCol), ai = hi(aCol), qi = qCol ? hi(qCol) : -1, si = sCol ? hi(sCol) : -1, cui = cCol ? hi(cCol) : -1;
+
+  let excludedCount = 0;
+  const excludedStatuses = new Set();
+  records = rawTable.rows.filter(r => r.length > 1).filter(r => {
+    if(si < 0) return true;
+    const status = (r[si] || '').trim();
+    const isExcluded = excludeList.some(ex => ex && status.includes(ex));
+    if(isExcluded){ excludedCount++; excludedStatuses.add(status); return false; }
+    return true;
+  }).map(r => ({
+    date: toISODate(r[di]),
+    product: r[pi] || '(상품명없음)',
+    amount: toNumber(r[ai]),
+    qty: qi > -1 ? toNumber(r[qi]) : 1,
+    customer: cui > -1 ? (r[cui] || '') : ''
+  })).filter(r => r.date && !isNaN(r.amount));
+
+  lastExcluded = { count: excludedCount, statuses: [...excludedStatuses] };
+  buildReport();
+}
+
+// ---------- 광고비 CSV ----------
+document.getElementById('adCsvFile').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    adRawTable = parseCsvText(ev.target.result);
+    showAdMapping();
+  };
+  reader.readAsText(file, 'utf-8');
+});
+
+function showAdMapping(){
+  const sel = (id) => document.getElementById(id);
+  ['mapAdDate','mapAdAmount'].forEach(id=>{
+    sel(id).innerHTML = adRawTable.headers.map(h=>`<option value="${escapeHtml(h)}">${escapeHtml(h)}</option>`).join('');
+  });
+  sel('mapAdChannel').innerHTML = '<option value="">- 없음 -</option>' + adRawTable.headers.map(h=>`<option value="${escapeHtml(h)}">${escapeHtml(h)}</option>`).join('');
+  sel('mapAdProduct').innerHTML = '<option value="">- 없음 -</option>' + adRawTable.headers.map(h=>`<option value="${escapeHtml(h)}">${escapeHtml(h)}</option>`).join('');
+  const guess = (cands) => adRawTable.headers.find(h => cands.some(c => h.includes(c)));
+  if(guess(['날짜','일자','date'])) sel('mapAdDate').value = guess(['날짜','일자','date']);
+  if(guess(['광고비','비용','지출','금액','amount','cost','spend'])) sel('mapAdAmount').value = guess(['광고비','비용','지출','금액','amount','cost','spend']);
+  if(guess(['채널','매체','channel'])) sel('mapAdChannel').value = guess(['채널','매체','channel']);
+  if(guess(['상품','품목','캠페인','product','item','campaign'])) sel('mapAdProduct').value = guess(['상품','품목','캠페인','product','item','campaign']);
+  document.getElementById('adMapSection').style.display = 'block';
+}
+
+function applyAdMapping(){
+  if(activePlatformId === '__all__'){ alert('전체보기에서는 데이터를 추가할 수 없습니다. 플랫폼 탭을 선택하거나 새로 추가해주세요.'); return; }
+  const dCol = document.getElementById('mapAdDate').value;
+  const aCol = document.getElementById('mapAdAmount').value;
+  const cCol = document.getElementById('mapAdChannel').value;
+  const pCol = document.getElementById('mapAdProduct').value;
+  const hi = adRawTable.headers.indexOf.bind(adRawTable.headers);
+  const di = hi(dCol), ai = hi(aCol), ci = cCol ? hi(cCol) : -1, pi = pCol ? hi(pCol) : -1;
+
+  adRecords = adRawTable.rows.filter(r => r.length > 1).map(r => ({
+    date: toISODate(r[di]),
+    amount: toNumber(r[ai]),
+    channel: ci > -1 ? (r[ci] || '(채널없음)') : '(채널없음)',
+    product: pi > -1 ? (r[pi] || '') : ''
+  })).filter(r => r.date && !isNaN(r.amount));
+
+  if(!records.length){
+    alert('광고비를 적용했습니다. 매출 데이터를 불러오면 ROAS가 함께 계산됩니다.');
+    return;
+  }
+  buildReport();
+}
+
+function loadAdSample(){
+  if(activePlatformId === '__all__'){ alert('전체보기에서는 데이터를 추가할 수 없습니다. 플랫폼 탭을 선택하거나 새로 추가해주세요.'); return; }
+  // 매출 샘플과 같은 상품명을 사용해 품목별 광고 ON/OFF 비교를 데모합니다.
+  // - 여름 반팔티: 두 달 내내 광고 집행 (항상 ON)
+  // - 냉감 이불커버 세트: 6월엔 광고, 7월엔 광고 중단 (ON→OFF 비교 데모)
+  // - 나머지 상품: 광고비 없음 (자연 판매)
+  const today = { y:2026, m:7, d:6 }; // 매출 샘플과 동일한 데모 기준일
+  const rows = [];
+  let seedCounter = 7;
+  function pseudoRand(){ seedCounter = (seedCounter*9301+49297) % 233280; return seedCounter/233280; }
+  for(let day=29; day>=0; day--){
+    const dt = new Date(today.y, today.m-1, today.d - day);
+    const iso = dt.toISOString().slice(0,10);
+    const month = iso.slice(0,7);
+    rows.push({
+      date: iso, amount: Math.round(140000*(0.8+pseudoRand()*0.5)),
+      channel: '메타(인스타/페북)', product: '여름 반팔티 (화이트)'
+    });
+    if(month === '2026-06'){
+      rows.push({
+        date: iso, amount: Math.round(110000*(0.8+pseudoRand()*0.5)),
+        channel: '쿠팡 광고', product: '냉감 이불커버 세트'
+      });
+    }
+  }
+  adRecords = rows;
+  document.getElementById('adMapSection').style.display = 'none';
+  if(!records.length){
+    alert('샘플 광고비 데이터를 불러왔습니다. "샘플 데이터로 체험하기"로 매출 데이터도 불러오면 ROAS가 함께 계산됩니다.');
+    return;
+  }
+  buildReport();
+}
+
+// ---------- 원가 CSV ----------
+document.getElementById('costCsvFile').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    costRawTable = parseCsvText(ev.target.result);
+    showCostMapping();
+  };
+  reader.readAsText(file, 'utf-8');
+});
+
+function showCostMapping(){
+  const sel = (id) => document.getElementById(id);
+  ['mapCostProduct','mapCostAmount'].forEach(id=>{
+    sel(id).innerHTML = costRawTable.headers.map(h=>`<option value="${escapeHtml(h)}">${escapeHtml(h)}</option>`).join('');
+  });
+  const guess = (cands) => costRawTable.headers.find(h => cands.some(c => h.includes(c)));
+  if(guess(['상품','품목','product','item'])) sel('mapCostProduct').value = guess(['상품','품목','product','item']);
+  if(guess(['원가','매입가','제조원가','cost'])) sel('mapCostAmount').value = guess(['원가','매입가','제조원가','cost']);
+  document.getElementById('costMapSection').style.display = 'block';
+}
+
+function applyCostMapping(){
+  if(activePlatformId === '__all__'){ alert('전체보기에서는 데이터를 추가할 수 없습니다. 플랫폼 탭을 선택하거나 새로 추가해주세요.'); return; }
+  const pCol = document.getElementById('mapCostProduct').value;
+  const aCol = document.getElementById('mapCostAmount').value;
+  const hi = costRawTable.headers.indexOf.bind(costRawTable.headers);
+  const pi = hi(pCol), ai = hi(aCol);
+
+  costMap = {};
+  costRawTable.rows.filter(r => r.length > 1).forEach(r => {
+    const product = r[pi];
+    const unitCost = toNumber(r[ai]);
+    if(product) costMap[product] = unitCost;
+  });
+
+  if(!records.length){
+    alert('원가를 적용했습니다. 매출 데이터를 불러오면 이익이 함께 계산됩니다.');
+    return;
+  }
+  buildReport();
+}
+
+function loadCostSample(){
+  if(activePlatformId === '__all__'){ alert('전체보기에서는 데이터를 추가할 수 없습니다. 플랫폼 탭을 선택하거나 새로 추가해주세요.'); return; }
+  const costs = {
+    '여름 반팔티 (화이트)': 12000,
+    '접이식 미니 선풍기': 9500,
+    '스포츠 물병 1L': 4000,
+    '캠핑 감성 랜턴': 8000,
+    '냉감 이불커버 세트': 15000,
+    '휴대용 목선풍기': 3000
+  };
+  costMap = costs;
+  document.getElementById('costMapSection').style.display = 'none';
+  if(!records.length){
+    alert('샘플 원가 데이터를 불러왔습니다. "샘플 데이터로 체험하기"로 매출 데이터도 불러오면 이익이 함께 계산됩니다.');
+    return;
+  }
+  buildReport();
+}
+
+// ---------- 로컬 프록시 서버(server.js)에서 실제 쿠팡 데이터 가져오기 ----------
+async function fetchFromLocalServer(){
+  if(activePlatformId === '__all__'){ alert('전체보기에서는 데이터를 추가할 수 없습니다. 플랫폼 탭을 선택하거나 새로 추가해주세요.'); return; }
+  const from = document.getElementById('apiFrom').value.trim();
+  const to = document.getElementById('apiTo').value.trim();
+  if(!from || !to){ alert('시작일/종료일을 입력하세요 (예: 2026-06-01)'); return; }
+  try{
+    const res = await fetch(`http://localhost:5500/api/revenue?from=${from}&to=${to}`);
+    if(!res.ok) throw new Error('서버 응답 오류: ' + res.status);
+    const data = await res.json();
+    if(!Array.isArray(data) || !data.length){ alert('가져온 데이터가 없습니다. 기간을 확인해주세요.'); return; }
+    records = data;
+    lastExcluded = { count: 0, statuses: [] };
+    document.getElementById('mapSection').style.display = 'none';
+    buildReport();
+  }catch(e){
+    alert('로컬 서버 연결에 실패했습니다: ' + e.message + '\n\nREADME.md를 참고해 server.js를 먼저 실행했는지 확인해주세요 (node server.js).');
+  }
+}
+
+// ---------- 샘플 데이터 ----------
+function loadSample(){
+  if(activePlatformId === '__all__'){ alert('전체보기에서는 데이터를 추가할 수 없습니다. 플랫폼 탭을 선택하거나 새로 추가해주세요.'); return; }
+  const products = ['여름 반팔티 (화이트)','접이식 미니 선풍기','스포츠 물병 1L','캠핑 감성 랜턴','냉감 이불커버 세트','휴대용 목선풍기'];
+  const base = [3200000, 1800000, 900000, 1400000, 2600000, 700000];
+  const customers = ['홍길동','김영희','이철수','박민수','최지은'];
+  const today = { y:2026, m:7, d:6 }; // 데모용 고정 기준일 (오늘: 2026-07-06)
+  const rows = [];
+  let seedCounter = 1;
+  function pseudoRand(){ seedCounter = (seedCounter*9301+49297) % 233280; return seedCounter/233280; }
+  for(let day=29; day>=0; day--){
+    const dt = new Date(today.y, today.m-1, today.d - day);
+    const iso = dt.toISOString().slice(0,10);
+    products.forEach((p,idx)=>{
+      let factor = 0.8 + pseudoRand()*0.5;
+      if(idx===5 && day<=4) factor *= 0.25; // 최근 급감 시나리오 (이상탐지 데모용)
+      if(idx===0 && day<=6) factor *= 1.4;  // 최근 급상승(여름 성수기) 시나리오
+      const amount = Math.round(base[idx] * factor / 30);
+      const customer = customers[Math.floor(pseudoRand()*customers.length)];
+      rows.push({date: iso, product: p, amount, qty: Math.max(1, Math.round(amount/25000)), customer});
+    });
+  }
+  records = rows;
+  lastExcluded = { count: 0, statuses: [] };
+  document.getElementById('mapSection').style.display = 'none';
+  buildReport();
+}
+
+// ---------- 리포트 생성 ----------
+function resetReportUiState(){
+  topProductsExpanded = false;
+  openMonthlyDetails = new Set();
+  resetSearchState();
+}
+
+function buildReport(){
+  if(!records.length){ alert('불러온 데이터가 없습니다.'); return; }
+  resetReportUiState();
+  computeAndRenderReport();
+  logEntry();
+  savePlatformData();
+}
+
+function computeAndRenderReport(){
+  const byDate = {};
+  records.forEach(r => { byDate[r.date] = (byDate[r.date]||0) + r.amount; });
+  const dates = Object.keys(byDate).sort();
+  const totalAmount = records.reduce((s,r)=>s+r.amount,0);
+  const totalOrders = records.length;
+  const avgOrder = totalAmount/totalOrders;
+
+  // 기간 비교: 최근 N일 vs 그 직전 N일 (N = 최대 7일, 데이터가 적으면 절반)
+  let trendPct = null, recentDates = [], prevDates = [], recentSum = 0, prevSum = 0;
+  if(dates.length >= 2){
+    const n = Math.max(1, Math.min(7, Math.floor(dates.length/2)));
+    recentDates = dates.slice(-n);
+    prevDates = dates.slice(-2*n, -n);
+    recentSum = recentDates.reduce((s,d)=>s+byDate[d],0);
+    prevSum = prevDates.reduce((s,d)=>s+byDate[d],0);
+    trendPct = ((recentSum - (prevSum||1)) / (prevSum||1)) * 100;
+  }
+
+  // 광고비 & ROAS (광고비 데이터가 있을 때만)
+  let totalAdSpend = 0, roas = null, adRatio = null, netAmount = totalAmount, adTrendPct = null, roasTrendPct = null;
+  const adByDate = {};
+  const adAlerts = [];
+  if(adRecords.length){
+    adRecords.forEach(a => {
+      // 상품이 매핑된 광고비는 해당 상품·월에 수동으로 OFF 지정되어 있으면 집계에서 제외합니다.
+      let amt = a.amount;
+      if(a.product && manualAdStatus[a.product + '||' + a.date.slice(0,7)] === 'off') amt = 0;
+      adByDate[a.date] = (adByDate[a.date]||0) + amt;
+    });
+    totalAdSpend = dates.reduce((s,d)=>s+(adByDate[d]||0),0);
+    netAmount = totalAmount - totalAdSpend;
+    if(totalAdSpend > 0){
+      roas = totalAmount / totalAdSpend;
+      adRatio = (totalAdSpend / totalAmount) * 100;
+    } else {
+      adAlerts.push('광고비 데이터의 날짜가 매출 데이터 기간과 겹치지 않습니다. 두 파일의 날짜 범위를 확인해주세요.');
+    }
+    if(recentDates.length && prevDates.length){
+      const recentAd = recentDates.reduce((s,d)=>s+(adByDate[d]||0),0);
+      const prevAd = prevDates.reduce((s,d)=>s+(adByDate[d]||0),0);
+      if(prevAd > 0) adTrendPct = ((recentAd - prevAd) / prevAd) * 100;
+      if(recentAd > 0 && prevAd > 0){
+        const roasRecent = recentSum / recentAd;
+        const roasPrev = prevSum / prevAd;
+        if(roasPrev > 0) roasTrendPct = ((roasRecent - roasPrev) / roasPrev) * 100;
+      }
+    }
+    if(roas !== null && roas < 1){
+      adAlerts.push(`⚠ ROAS가 1배 미만입니다 (${roas.toFixed(2)}배) — 집행한 광고비보다 매출이 적습니다. 캠페인 점검이 필요합니다.`);
+    }
+    if(roasTrendPct !== null && roasTrendPct <= -30){
+      adAlerts.push(`⚠ 광고 효율(ROAS)이 직전 기간 대비 ${roasTrendPct.toFixed(1)}% 하락했습니다.`);
+    }
+    if(adTrendPct !== null && adTrendPct >= 50 && (trendPct===null || trendPct < 20)){
+      adAlerts.push(`⚠ 광고비는 ${adTrendPct.toFixed(1)}% 증가했지만 매출 증가폭은 그에 못 미칩니다. 광고 효율을 점검해주세요.`);
+    }
+  }
+
+  // 원가 & 이익 (원가 데이터가 있을 때만)
+  let totalCost = null, grossProfit = null, operatingProfit = null, missingCostProducts = [];
+  const hasCostData = Object.keys(costMap).length > 0;
+  if(hasCostData){
+    const productsInRecords = new Set(records.map(r=>r.product));
+    missingCostProducts = [...productsInRecords].filter(p => costMap[p] == null);
+    totalCost = records.reduce((s,r)=> s + (costMap[r.product] != null ? costMap[r.product]*r.qty : 0), 0);
+    grossProfit = totalAmount - totalCost;
+    operatingProfit = grossProfit - totalAdSpend;
+  }
+
+  // 상품별 합계 (전체 순위)
+  const byProduct = {};
+  records.forEach(r => { byProduct[r.product] = (byProduct[r.product]||0) + r.amount; });
+  const topProducts = Object.entries(byProduct).sort((a,b)=>b[1]-a[1]);
+
+  // 이상 탐지: 상품별 최근 3일 평균 vs 그 이전 7일 평균, 40% 이상 하락 시 경고
+  const byProductDate = {};
+  records.forEach(r => {
+    byProductDate[r.product] = byProductDate[r.product] || {};
+    byProductDate[r.product][r.date] = (byProductDate[r.product][r.date]||0) + r.amount;
+  });
+  const anomalies = [];
+  Object.keys(byProductDate).forEach(p => {
+    const dmap = byProductDate[p];
+    const pdates = Object.keys(dmap).sort();
+    if(pdates.length < 5) return;
+    const recent = pdates.slice(-3);
+    const prior = pdates.slice(-10,-3);
+    if(!prior.length) return;
+    const recentAvg = recent.reduce((s,d)=>s+dmap[d],0)/recent.length;
+    const priorAvg = prior.reduce((s,d)=>s+dmap[d],0)/prior.length;
+    if(priorAvg > 0){
+      const changePct = ((recentAvg - priorAvg)/priorAvg)*100;
+      if(changePct <= -40){
+        anomalies.push({product:p, changePct, type:'급감'});
+      } else if(changePct >= 80){
+        anomalies.push({product:p, changePct, type:'급증'});
+      }
+    }
+  });
+
+  lastReport = {
+    dates, byDate, totalAmount, totalOrders, avgOrder, trendPct, topProducts, anomalies,
+    hasAdData: adRecords.length > 0, totalAdSpend, roas, adRatio, netAmount, adTrendPct, roasTrendPct, adAlerts,
+    hasCostData, totalCost, grossProfit, operatingProfit, missingCostProducts,
+    monthly: computeMonthlyBreakdown()
+  };
+  renderReport();
+}
+
+// ---------- 품목별 월별 상세 (광고 ON/OFF 비교) ----------
+function computeMonthlyBreakdown(){
+  const hasAdProduct = adRecords.some(a => a.product);
+  const hasCost = Object.keys(costMap).length > 0;
+
+  const monthsSet = new Set(records.map(r=>r.date.slice(0,7)));
+  if(hasAdProduct){ adRecords.forEach(a=>monthsSet.add(a.date.slice(0,7))); }
+  const months = [...monthsSet].sort();
+
+  const productSet = new Set(records.map(r=>r.product));
+  const products = [...productSet];
+
+  const perProduct = products.map(p=>{
+    const monthly = months.map(m=>{
+      const lineItems = records.filter(r=>r.product===p && r.date.slice(0,7)===m);
+      const revenue = lineItems.reduce((s,r)=>s+r.amount,0);
+      const qty = lineItems.reduce((s,r)=>s+r.qty,0);
+      const unitCost = costMap[p];
+      const cost = (hasCost && unitCost != null) ? unitCost*qty : null;
+      let adSpend = null;
+      if(hasAdProduct){
+        adSpend = adRecords.filter(a=>a.product===p && a.date.slice(0,7)===m).reduce((s,a)=>s+a.amount,0);
+      }
+      const manualKey = p + '||' + m;
+      const manualStatus = manualAdStatus[manualKey] || null; // 'on' | 'off' | null
+      // 수동으로 OFF 지정한 달은 실제 집행된 광고비가 있어도 손익 계산에서 0원으로 취급합니다.
+      const effectiveAdSpend = manualStatus === 'off' ? 0 : (adSpend || 0);
+      const profit = revenue - (cost||0) - effectiveAdSpend;
+      let adOn = adSpend === null ? null : adSpend > 0;
+      if(manualStatus === 'on') adOn = true;
+      else if(manualStatus === 'off') adOn = false;
+      return { month:m, revenue, qty, cost, adSpend, effectiveAdSpend, profit, adOn, manualStatus };
+    });
+
+    // adOn은 광고비 데이터 또는 사용자가 직접 지정한 ON/OFF를 모두 반영하므로,
+    // 광고비 CSV가 없어도(hasAdProduct=false) 수동 지정만으로 비교가 가능합니다.
+    let onOff = null;
+    const onM = monthly.filter(x=>x.adOn===true);
+    const offM = monthly.filter(x=>x.adOn===false);
+    if(onM.length && offM.length){
+      const avgOn = onM.reduce((s,x)=>s+x.revenue,0)/onM.length;
+      const avgOff = offM.reduce((s,x)=>s+x.revenue,0)/offM.length;
+      const diffPct = avgOff>0 ? ((avgOn-avgOff)/avgOff)*100 : null;
+      onOff = { avgOn, avgOff, diffPct, onMonths: onM.map(x=>x.month), offMonths: offM.map(x=>x.month) };
+    }
+
+    const totalRevenue = monthly.reduce((s,x)=>s+x.revenue,0);
+    const totalCostP = hasCost ? monthly.reduce((s,x)=>s+(x.cost||0),0) : null;
+    const totalAdP = hasAdProduct ? monthly.reduce((s,x)=>s+x.effectiveAdSpend,0) : null;
+    const totalProfitP = totalRevenue - (totalCostP||0) - (totalAdP||0);
+
+    return {
+      product: p, monthly, onOff, totalRevenue,
+      totalCost: totalCostP, totalAd: totalAdP, totalProfit: totalProfitP,
+      hasCostForProduct: hasCost && costMap[p] != null, hasAdColumn: hasAdProduct,
+      hasAnyAd: hasAdProduct && monthly.some(x => (x.adSpend||0) > 0)
+    };
+  }).sort((a,b)=>b.totalRevenue-a.totalRevenue);
+
+  return { months, hasAdProduct, hasCost, perProduct };
+}
+
+function toggleAdStatus(product, month){
+  const key = product + '||' + month;
+  const p = lastReport?.monthly?.perProduct.find(pp => pp.product === product);
+  const x = p?.monthly.find(mm => mm.month === month);
+  const hasAutoValue = x ? x.adSpend !== null : false;
+
+  if(hasAutoValue){
+    // 광고비 데이터로 이미 판별된 달은 현재 화면에 보이는 상태의 반대로 한 번에 전환합니다.
+    manualAdStatus[key] = x.adOn ? 'off' : 'on';
+  } else {
+    // 광고비 데이터가 아예 없는 달만 미지정 → ON → OFF → 미지정 순으로 순환합니다.
+    const current = manualAdStatus[key];
+    if(current === 'on') manualAdStatus[key] = 'off';
+    else if(current === 'off') delete manualAdStatus[key];
+    else manualAdStatus[key] = 'on';
+  }
+  localStorage.setItem('salesai_manual_ad_status', JSON.stringify(manualAdStatus));
+  if(!records.length) return;
+  // ON/OFF 지정은 광고비 집계·ROAS·손익 전체에 영향을 주므로 리포트를 전체 재계산합니다
+  // (펼침/검색/순위 더보기 등 화면 상태는 그대로 유지됩니다).
+  computeAndRenderReport();
+}
+
+function renderReport(){
+  const r = lastReport;
+  document.getElementById('periodLabel').textContent = `(${r.dates[0]} ~ ${r.dates[r.dates.length-1]}, ${r.dates.length}일)`
+    + (lastExcluded.count ? ` · 취소/반품 등 ${lastExcluded.count}건 제외됨` : '');
+  document.getElementById('kTotal').textContent = won(r.totalAmount);
+  document.getElementById('kOrders').textContent = r.totalOrders.toLocaleString('ko-KR')+'건';
+  document.getElementById('kAvg').textContent = won(r.avgOrder);
+  const trendEl = document.getElementById('kTrend');
+  if(r.trendPct===null){ trendEl.textContent='-'; trendEl.className='v'; }
+  else {
+    trendEl.textContent = (r.trendPct>=0?'▲ ':'▼ ') + Math.abs(r.trendPct).toFixed(1) + '%';
+    trendEl.className = 'v ' + (r.trendPct>=0?'up':'down');
+  }
+
+  // chart
+  const w = Math.max(600, r.dates.length*24), h=160, pad=24;
+  const max = Math.max(...r.dates.map(d=>r.byDate[d]), 1);
+  const pts = r.dates.map((d,i)=>{
+    const x = pad + i*((w-2*pad)/Math.max(1,r.dates.length-1));
+    const y = h-pad - (r.byDate[d]/max)*(h-2*pad);
+    return `${x},${y}`;
+  }).join(' ');
+  const dots = r.dates.map((d,i)=>{
+    const x = pad + i*((w-2*pad)/Math.max(1,r.dates.length-1));
+    const y = h-pad - (r.byDate[d]/max)*(h-2*pad);
+    return `<circle cx="${x}" cy="${y}" r="2.5" fill="#5b8cff"><title>${d}: ${won(r.byDate[d])}</title></circle>`;
+  }).join('');
+  document.getElementById('chartArea').innerHTML = `
+    <svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+      <polyline points="${pts}" fill="none" stroke="#5b8cff" stroke-width="2"/>
+      ${dots}
+      <text x="${pad}" y="${h-6}">${r.dates[0]}</text>
+      <text x="${w-pad-60}" y="${h-6}">${r.dates[r.dates.length-1]}</text>
+    </svg>
+  `;
+
+  // 광고비 & ROAS
+  if(!r.hasAdData){
+    document.getElementById('kAdSpend').textContent = '-';
+    document.getElementById('kRoas').textContent = '-';
+    document.getElementById('kAdRatio').textContent = '-';
+    document.getElementById('kNetAmount').textContent = '-';
+    document.getElementById('adAlertBox').innerHTML = '<div class="empty">광고비 데이터를 불러오면 ROAS와 효율 경고가 표시됩니다.</div>';
+  } else {
+    document.getElementById('kAdSpend').textContent = won(r.totalAdSpend);
+    document.getElementById('kRoas').textContent = r.roas===null ? '-' : r.roas.toFixed(2)+'배';
+    document.getElementById('kAdRatio').textContent = r.adRatio===null ? '-' : r.adRatio.toFixed(1)+'%';
+    document.getElementById('kNetAmount').textContent = won(r.netAmount);
+    document.getElementById('adAlertBox').innerHTML = r.adAlerts.length
+      ? r.adAlerts.map(a=>`<div class="alert">${a}</div>`).join('')
+      : '<div class="alert none">✓ 광고 효율에 특이 이상 징후가 발견되지 않았습니다.</div>';
+  }
+
+  // 원가 & 손익
+  if(!r.hasCostData){
+    document.getElementById('kTotalCost').textContent = '-';
+    document.getElementById('kGrossProfit').textContent = '-';
+    document.getElementById('kOperatingProfit').textContent = '-';
+    document.getElementById('kOperatingMargin').textContent = '-';
+    document.getElementById('costAlertBox').innerHTML = '<div class="empty">원가 데이터를 불러오면 매출총이익·영업이익이 표시됩니다.</div>';
+  } else {
+    document.getElementById('kTotalCost').textContent = won(r.totalCost);
+    document.getElementById('kGrossProfit').textContent = won(r.grossProfit);
+    document.getElementById('kOperatingProfit').textContent = won(r.operatingProfit);
+    const margin = r.totalAmount>0 ? (r.operatingProfit/r.totalAmount*100) : null;
+    document.getElementById('kOperatingMargin').textContent = margin===null ? '-' : margin.toFixed(1)+'%';
+    document.getElementById('costAlertBox').innerHTML = r.missingCostProducts.length
+      ? `<div class="alert">⚠ 원가가 입력되지 않은 품목 ${r.missingCostProducts.length}건(${r.missingCostProducts.map(escapeHtml).join(', ')})은 원가 0원으로 계산되어 이익이 과대평가될 수 있습니다.</div>`
+      : '<div class="alert none">✓ 모든 품목에 원가가 입력되었습니다.</div>';
+  }
+
+  // 품목별 월별 상세
+  renderMonthlyDetail(r.monthly);
+
+  // top products (전체 순위, 더보기로 펼쳐보기)
+  renderTopProducts(r.topProducts);
+
+  // anomalies
+  if(!r.anomalies.length){
+    document.getElementById('anomalyBox').innerHTML = '<div class="alert none">✓ 특이 이상 징후가 발견되지 않았습니다.</div>';
+  } else {
+    document.getElementById('anomalyBox').innerHTML = r.anomalies.map(a=>`
+      <div class="alert">⚠ <b>${escapeHtml(a.product)}</b> — 최근 매출이 직전 대비 ${a.type} (${a.changePct>=0?'+':''}${a.changePct.toFixed(1)}%)。
+      ${a.type==='급감' ? '품절, 노출순위 하락, 광고 중단 여부를 확인해주세요.' : '재고 소진 위험이 있으니 발주를 점검해주세요.'}</div>
+    `).join('');
+  }
+
+  // AI comment (rule-based baseline)
+  buildAiComment();
+}
+
+const TOP_PRODUCTS_PAGE = 10;
+let topProductsExpanded = false;
+
+function renderTopProducts(list){
+  document.getElementById('topProductsCount').textContent = list.length ? `(전체 ${list.length}개)` : '';
+  const container = document.getElementById('topProducts');
+  if(!list.length){ container.innerHTML = '<div class="empty">데이터 없음</div>'; return; }
+  const maxP = list[0][1];
+  const rowHtml = (name, amt, rank) => `
+    <div class="bar-row">
+      <div class="rank">${rank}</div>
+      <div class="name" title="${escapeHtml(name)}">${escapeHtml(name)}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(amt/maxP*100).toFixed(1)}%"></div></div>
+      <div class="bar-val">${won(amt)}</div>
+    </div>`;
+  const visible = list.slice(0, TOP_PRODUCTS_PAGE).map(([n,a],i)=>rowHtml(n,a,i+1)).join('');
+  const rest = list.slice(TOP_PRODUCTS_PAGE).map(([n,a],i)=>rowHtml(n,a,i+1+TOP_PRODUCTS_PAGE)).join('');
+  const restCount = list.length - TOP_PRODUCTS_PAGE;
+  container.innerHTML = `
+    <div>${visible}</div>
+    ${restCount > 0 ? `
+      <div id="topProductsRest" style="display:${topProductsExpanded ? 'block' : 'none'};">${rest}</div>
+      <div class="btn-row">
+        <button class="btn-ghost" id="topProductsMoreBtn" onclick="toggleTopProducts()">${topProductsExpanded ? '접기' : `더보기 (${restCount}개 더)`}</button>
+      </div>
+    ` : ''}
+  `;
+}
+
+function toggleTopProducts(){
+  topProductsExpanded = !topProductsExpanded;
+  renderTopProducts(lastReport.topProducts);
+}
+
+function renderMonthlyDetail(m){
+  const el = document.getElementById('monthlyDetail');
+  if(!m || !m.perProduct.length){ el.innerHTML = '<div class="empty">데이터 없음</div>'; return; }
+  el.innerHTML = m.perProduct.map(p=>{
+    const showProfit = p.hasCostForProduct || p.hasAdColumn;
+    const monthRows = p.monthly.map(x=>{
+      const statusLabel = x.adOn === null ? '미지정' : (x.adOn ? 'ON' : 'OFF');
+      const statusClass = x.adOn === null ? 'unset' : (x.adOn ? 'on' : 'off');
+      return `
+      <tr>
+        <td>${x.month}</td>
+        <td>${won(x.revenue)}</td>
+        <td>${x.cost===null?'-':won(x.cost)}</td>
+        <td>${x.adSpend===null?'-':won(x.adSpend)}</td>
+        <td>${(x.cost!==null || x.adSpend!==null) ? won(x.profit) : '-'}</td>
+        <td><button type="button" class="pill ad-status-btn ${statusClass}" data-product="${escapeHtml(p.product)}" data-month="${x.month}" title="클릭해서 광고 ON/OFF를 직접 지정하세요">${statusLabel}</button></td>
+      </tr>
+    `;
+    }).join('');
+    return `
+      <details class="prod-item" data-product="${escapeHtml(p.product)}" ${openMonthlyDetails.has(p.product) ? 'open' : ''}>
+        <summary>
+          <span class="pname">${escapeHtml(p.product)}</span>
+          <span class="prev">총매출 ${won(p.totalRevenue)}${showProfit ? ` · 순이익 ${won(p.totalProfit)}` : ''}</span>
+        </summary>
+        <div class="prod-body">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>월</th><th>매출</th><th>원가</th><th>광고비</th><th>순이익</th><th>광고상태</th></tr></thead>
+              <tbody>${monthRows}</tbody>
+            </table>
+          </div>
+        </div>
+      </details>
+    `;
+  }).join('');
+}
+
+function ruleBasedComment(r){
+  const lines = [];
+  lines.push(`분석 기간: ${r.dates[0]} ~ ${r.dates[r.dates.length-1]} (${r.dates.length}일)`);
+  if(lastExcluded.count){
+    lines.push(`취소/반품 등 ${lastExcluded.count}건(${lastExcluded.statuses.join(', ')})은 매출 집계에서 제외했습니다.`);
+  }
+  lines.push(`총 매출 ${won(r.totalAmount)}, 총 주문 ${r.totalOrders}건, 평균 객단가 ${won(r.avgOrder)}입니다.`);
+  if(r.trendPct !== null){
+    lines.push(`최근 기간 매출은 직전 기간 대비 ${r.trendPct>=0?'증가':'감소'}했습니다 (${r.trendPct>=0?'+':''}${r.trendPct.toFixed(1)}%).`);
+  }
+  if(r.topProducts.length){
+    const [name, amt] = r.topProducts[0];
+    lines.push(`매출 1위 상품은 '${name}'이며, 전체 매출의 ${(amt/r.totalAmount*100).toFixed(1)}%를 차지합니다.`);
+  }
+  if(r.anomalies.length){
+    r.anomalies.forEach(a=>{
+      lines.push(`⚠ '${a.product}' 매출이 ${a.type}했습니다 (${a.changePct>=0?'+':''}${a.changePct.toFixed(1)}%) — 원인 확인이 필요합니다.`);
+    });
+  } else {
+    lines.push('상품별 급격한 이상 변동은 없었습니다.');
+  }
+  if(r.hasAdData){
+    lines.push(`광고비는 ${won(r.totalAdSpend)}이며, ROAS는 ${r.roas===null?'계산 불가':r.roas.toFixed(2)+'배'}(광고비율 ${r.adRatio===null?'-':r.adRatio.toFixed(1)+'%'})입니다. 광고비 차감 순매출은 ${won(r.netAmount)}입니다.`);
+    if(r.adAlerts.length){
+      r.adAlerts.forEach(a=>lines.push(a.replace(/^⚠ /,'⚠ [광고] ')));
+    } else {
+      lines.push('광고 효율에는 특이 이상 징후가 없습니다.');
+    }
+  }
+  if(r.hasCostData){
+    lines.push(`총 원가는 ${won(r.totalCost)}이며, 매출총이익 ${won(r.grossProfit)}, 영업이익(광고비 차감) ${won(r.operatingProfit)}입니다.`);
+    if(r.missingCostProducts.length){
+      lines.push(`⚠ [원가] ${r.missingCostProducts.join(', ')} 품목은 원가가 입력되지 않아 0원으로 계산되었습니다. 실제 이익은 더 낮을 수 있습니다.`);
+    }
+  }
+  return lines.join('\n');
+}
+
+async function callClaudeComment(r, apiKey){
+  const summary = {
+    period: `${r.dates[0]}~${r.dates[r.dates.length-1]}`,
+    totalAmount: r.totalAmount, totalOrders: r.totalOrders, avgOrder: Math.round(r.avgOrder),
+    trendPct: r.trendPct, topProducts: r.topProducts.slice(0,5).map(([n,a])=>({name:n, amount:a})),
+    anomalies: r.anomalies,
+    adSpend: r.hasAdData ? {
+      totalAdSpend: r.totalAdSpend, roas: r.roas===null?null:Number(r.roas.toFixed(2)),
+      adRatioPct: r.adRatio===null?null:Number(r.adRatio.toFixed(1)),
+      netAmount: r.netAmount, roasTrendPct: r.roasTrendPct, alerts: r.adAlerts
+    } : null,
+    profit: r.hasCostData ? {
+      totalCost: r.totalCost, grossProfit: r.grossProfit, operatingProfit: r.operatingProfit,
+      missingCostProducts: r.missingCostProducts
+    } : null,
+    adOnOffByProduct: (r.monthly?.perProduct || []).filter(p=>p.onOff).map(p=>({
+      product: p.product, avgRevenueWhenOn: Math.round(p.onOff.avgOn), avgRevenueWhenOff: Math.round(p.onOff.avgOff),
+      diffPct: p.onOff.diffPct===null?null:Number(p.onOff.diffPct.toFixed(1))
+    }))
+  };
+  const system = `당신은 Commerce AI Company의 매출관리 AI 직원입니다. 회사 규칙을 지키세요: 데이터 기반(아래 집계 데이터만 근거로 사용), 거짓말 금지(데이터에 없는 사실은 추측하지 말 것), 근거 제시, 신뢰도 표시. 아래 매출/광고비/원가/품목별 광고 ON-OFF 집계 데이터를 근거로 경영진 보고용 코멘트를 한국어로 4~6문장 작성하세요. 마지막 줄에는 대표가 취할 수 있는 실행 제안 1~2가지를 포함하세요.`;
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{
+      'content-type':'application/json', 'x-api-key': apiKey,
+      'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true'
+    },
+    body: JSON.stringify({
+      model:'claude-haiku-4-5-20251001', max_tokens:500, system,
+      messages:[{role:'user', content: JSON.stringify(summary)}]
+    })
+  });
+  if(!res.ok) throw new Error('API 호출 실패: ' + res.status);
+  const data = await res.json();
+  return data.content?.[0]?.text?.trim() || '';
+}
+
+async function buildAiComment(){
+  const el = document.getElementById('aiComment');
+  const baseline = ruleBasedComment(lastReport);
+  el.textContent = baseline;
+  const useApi = document.getElementById('useApi').checked;
+  const apiKey = document.getElementById('apiKey').value.trim();
+  if(useApi && apiKey){
+    el.textContent = baseline + '\n\n(Claude로 코멘트 생성 중...)';
+    try{
+      const aiText = await callClaudeComment(lastReport, apiKey);
+      el.textContent = aiText + '\n\n— Claude API 생성 코멘트 (신뢰도: 검토 권장)';
+    }catch(e){
+      el.textContent = baseline + `\n\n(API 호출 실패: ${e.message} — 규칙 기반 코멘트로 대체)`;
+    }
+  }
+}
+
+function logEntry(){
+  const r = lastReport;
+  logs.unshift({
+    time: new Date().toLocaleString('ko-KR'),
+    period: `${r.dates[0]}~${r.dates[r.dates.length-1]}`,
+    total: won(r.totalAmount),
+    trend: r.trendPct===null?'-':(r.trendPct>=0?'+':'')+r.trendPct.toFixed(1)+'%',
+    roas: r.hasAdData && r.roas!==null ? r.roas.toFixed(2)+'배' : '-',
+    anomalyCount: r.anomalies.length
+  });
+  localStorage.setItem('salesai_logs', JSON.stringify(logs));
+  renderLogs();
+}
+
+function renderLogs(){
+  const body = document.getElementById('logBody');
+  if(!logs.length){ body.innerHTML = '<tr><td colspan="6" class="empty">아직 생성된 리포트가 없습니다.</td></tr>'; return; }
+  body.innerHTML = logs.map(l=>`
+    <tr><td>${l.time}</td><td>${l.period}</td><td>${l.total}</td><td>${l.trend}</td><td>${l.roas||'-'}</td><td>${l.anomalyCount}건</td></tr>
+  `).join('');
+}
+
+// ---------- 데이터 검색: 키워드 칩 방식 ----------
+let activeSearchKeywords = new Set();
+
+function getSearchableValues(){
+  const products = new Set(), customers = new Set(), dates = new Set();
+  records.forEach(r => {
+    if(r.product) products.add(r.product);
+    if(r.customer) customers.add(r.customer);
+    if(r.date) dates.add(r.date);
+  });
+  return { products, customers, dates };
+}
+
+function keywordType(value, { products, customers, dates }){
+  if(products.has(value)) return 'product';
+  if(customers.has(value)) return 'customer';
+  if(dates.has(value)) return 'date';
+  return '';
+}
+
+function resetSearchState(){
+  activeSearchKeywords = new Set();
+  document.getElementById('searchInput').value = '';
+  document.getElementById('searchSuggestBox').style.display = 'none';
+  document.getElementById('searchSuggestBox').innerHTML = '';
+  document.getElementById('searchKeywords').innerHTML = '';
+  document.getElementById('searchResults').innerHTML = '';
+}
+
+function onSearchInput(){
+  const term = document.getElementById('searchInput').value.trim().toLowerCase();
+  const box = document.getElementById('searchSuggestBox');
+  if(!term){
+    box.style.display = 'none';
+    box.innerHTML = '';
+  } else {
+    const vals = getSearchableValues();
+    const candidates = [...vals.products, ...vals.customers, ...vals.dates];
+    const matched = [...new Set(candidates)]
+      .filter(v => !activeSearchKeywords.has(v) && v.toLowerCase().includes(term))
+      .slice(0, 20);
+    if(!matched.length){
+      box.style.display = 'none';
+      box.innerHTML = '';
+    } else {
+      box.innerHTML = matched.map(v =>
+        `<div class="suggest-item type-${keywordType(v, vals)}" data-value="${escapeHtml(v)}">${escapeHtml(v)}</div>`
+      ).join('');
+      box.style.display = 'block';
+    }
+  }
+  renderSearchResults();
+}
+
+function onSearchKeydown(e){
+  if(e.key !== 'Enter') return;
+  e.preventDefault();
+  const box = document.getElementById('searchSuggestBox');
+  const first = box.querySelector('.suggest-item');
+  if(first){ addSearchKeyword(first.dataset.value); return; }
+  const term = document.getElementById('searchInput').value.trim();
+  const vals = getSearchableValues();
+  if(keywordType(term, vals)) addSearchKeyword(term);
+}
+
+// mousedown으로 처리해 입력창의 blur/바깥 클릭 닫힘 로직보다 먼저 선택이 확정되도록 합니다.
+document.getElementById('searchSuggestBox').addEventListener('mousedown', (e) => {
+  const item = e.target.closest('.suggest-item');
+  if(!item) return;
+  e.preventDefault();
+  addSearchKeyword(item.dataset.value);
+});
+
+document.addEventListener('click', (e) => {
+  const box = document.getElementById('searchSuggestBox');
+  if(!box || box.style.display === 'none') return;
+  if(e.target.closest('#searchSuggestBox') || e.target.id === 'searchInput') return;
+  box.style.display = 'none';
+});
+
+function addSearchKeyword(value){
+  if(!value) return;
+  activeSearchKeywords.add(value);
+  const input = document.getElementById('searchInput');
+  input.value = '';
+  const box = document.getElementById('searchSuggestBox');
+  box.style.display = 'none';
+  box.innerHTML = '';
+  renderSearchKeywords();
+  renderSearchResults();
+  input.focus();
+}
+
+function removeSearchKeyword(value){
+  activeSearchKeywords.delete(value);
+  renderSearchKeywords();
+  renderSearchResults();
+}
+
+document.getElementById('searchKeywords').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-kw]');
+  if(!btn) return;
+  removeSearchKeyword(btn.dataset.kw);
+});
+
+function renderSearchKeywords(){
+  const el = document.getElementById('searchKeywords');
+  if(!activeSearchKeywords.size){ el.innerHTML = ''; return; }
+  const vals = getSearchableValues();
+  el.innerHTML = `<span class="note" style="margin:0 2px 0 0;">선택된 키워드:</span>` + [...activeSearchKeywords].map(k =>
+    `<span class="keyword-chip type-${keywordType(k, vals)}">${escapeHtml(k)}<button type="button" data-kw="${escapeHtml(k)}" title="필터 해제">×</button></span>`
+  ).join('');
+}
+
+function renderSearchResults(){
+  const term = document.getElementById('searchInput').value.trim().toLowerCase();
+  const el = document.getElementById('searchResults');
+  const vals = getSearchableValues();
+  const productKeywords = [...activeSearchKeywords].filter(k => vals.products.has(k));
+  const customerKeywords = [...activeSearchKeywords].filter(k => vals.customers.has(k));
+  const dateKeywords = [...activeSearchKeywords].filter(k => vals.dates.has(k));
+
+  let matches = records;
+  if(productKeywords.length || customerKeywords.length || dateKeywords.length){
+    matches = matches.filter(r =>
+      (productKeywords.length === 0 || productKeywords.includes(r.product)) &&
+      (customerKeywords.length === 0 || customerKeywords.includes(r.customer)) &&
+      (dateKeywords.length === 0 || dateKeywords.includes(r.date))
+    );
+  }
+  if(term){
+    matches = matches.filter(r => r.product.toLowerCase().includes(term) || (r.customer||'').toLowerCase().includes(term) || r.date.includes(term));
+  }
+  if(!activeSearchKeywords.size && !term){ el.innerHTML = ''; return; }
+  if(!matches.length){ el.innerHTML = '<div class="empty">일치하는 데이터가 없습니다.</div>'; return; }
+  const totalAmount = matches.reduce((s,r)=>s+r.amount,0);
+  const MAX_ROWS = 200;
+  const shown = matches.slice(0, MAX_ROWS);
+  el.innerHTML = `
+    <p class="note">${matches.length}건 일치 · 합계 ${won(totalAmount)}${matches.length > MAX_ROWS ? ` (최근 ${MAX_ROWS}건만 표시)` : ''}</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>날짜</th><th>상품명</th><th>구매자</th><th>매출액</th></tr></thead>
+        <tbody>${shown.map(r=>`<tr><td>${r.date}</td><td>${escapeHtml(r.product)}</td><td>${escapeHtml(r.customer||'-')}</td><td>${won(r.amount)}</td></tr>`).join('')}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function exportMarkdown(){
+  if(!lastReport){ alert('생성된 리포트가 없습니다.'); return; }
+  const r = lastReport;
+  const md = `# 매출 리포트 (${r.dates[0]} ~ ${r.dates[r.dates.length-1]})
+
+생성: ${new Date().toLocaleString('ko-KR')} · 작성: 매출관리 AI 직원
+
+${lastExcluded.count ? `> 취소/반품 등 ${lastExcluded.count}건(${lastExcluded.statuses.join(', ')})은 매출 집계에서 제외했습니다.\n` : ''}
+## KPI
+- 총 매출: ${won(r.totalAmount)}
+- 총 주문(라인) 수: ${r.totalOrders}건
+- 평균 객단가: ${won(r.avgOrder)}
+- 직전 기간 대비: ${r.trendPct===null?'-':(r.trendPct>=0?'+':'')+r.trendPct.toFixed(1)+'%'}
+
+## 상품별 매출 순위 (전체 ${r.topProducts.length}개)
+${r.topProducts.map(([n,a],i)=>`${i+1}. ${n} — ${won(a)}`).join('\n')}
+
+## 이상 징후
+${r.anomalies.length ? r.anomalies.map(a=>`- ⚠ ${a.product}: ${a.type} (${a.changePct>=0?'+':''}${a.changePct.toFixed(1)}%)`).join('\n') : '- 없음'}
+
+## 광고비 & ROAS
+${r.hasAdData ? `- 광고비 합계: ${won(r.totalAdSpend)}
+- ROAS(매출÷광고비): ${r.roas===null?'계산 불가':r.roas.toFixed(2)+'배'}
+- 광고비율(광고비÷매출): ${r.adRatio===null?'-':r.adRatio.toFixed(1)+'%'}
+- 광고비 차감 순매출: ${won(r.netAmount)}
+${r.adAlerts.length ? r.adAlerts.map(a=>`- ${a}`).join('\n') : '- 광고 효율 이상 징후 없음'}` : '- 광고비 데이터가 입력되지 않았습니다.'}
+
+## 원가 & 손익
+${r.hasCostData ? `- 총 원가: ${won(r.totalCost)}
+- 매출총이익(매출-원가): ${won(r.grossProfit)}
+- 영업이익(매출총이익-광고비): ${won(r.operatingProfit)}
+${r.missingCostProducts.length ? `- ⚠ 원가 미입력 품목(0원으로 계산됨): ${r.missingCostProducts.join(', ')}` : '- 모든 품목에 원가가 입력되었습니다.'}` : '- 원가 데이터가 입력되지 않았습니다.'}
+
+## 품목별 월별 상세 (전체 품목)
+${(r.monthly && r.monthly.perProduct.length) ? `| 품목 | 월 | 매출 | 원가 | 광고비 | 순이익 | 광고상태 |\n|---|---|---|---|---|---|---|\n` +
+  r.monthly.perProduct.flatMap(p => p.monthly.map(x => `| ${p.product} | ${x.month} | ${won(x.revenue)} | ${x.cost===null?'-':won(x.cost)} | ${x.adSpend===null?'-':won(x.adSpend)} | ${(x.cost!==null||x.adSpend!==null)?won(x.profit):'-'} | ${x.adOn===null?'-':(x.adOn?'ON':'OFF')} |`)).join('\n')
+  : '데이터 없음'}
+
+## AI 코멘트
+${document.getElementById('aiComment').textContent}
+`;
+  download(`매출리포트_${r.dates[r.dates.length-1]}.md`, md, 'text/markdown;charset=utf-8');
+}
+
+function exportHandoff(){
+  if(!lastReport){ alert('생성된 리포트가 없습니다.'); return; }
+  const r = lastReport;
+  const payload = {
+    handoff_from: '매출관리 AI',
+    handoff_to: 'Finance AI / 대표',
+    generated_at: new Date().toISOString(),
+    period: `${r.dates[0]}~${r.dates[r.dates.length-1]}`,
+    excluded: lastExcluded,
+    kpi: { totalAmount: r.totalAmount, totalOrders: r.totalOrders, avgOrder: Math.round(r.avgOrder), trendPct: r.trendPct },
+    topProducts: r.topProducts.map(([n,a])=>({name:n, amount:a})),
+    anomalies: r.anomalies,
+    adSpend: r.hasAdData ? {
+      totalAdSpend: r.totalAdSpend,
+      roas: r.roas===null?null:Number(r.roas.toFixed(2)),
+      adRatioPct: r.adRatio===null?null:Number(r.adRatio.toFixed(1)),
+      netAmount: r.netAmount,
+      roasTrendPct: r.roasTrendPct===null?null:Number(r.roasTrendPct.toFixed(1)),
+      alerts: r.adAlerts
+    } : null,
+    profit: r.hasCostData ? {
+      totalCost: r.totalCost, grossProfit: r.grossProfit, operatingProfit: r.operatingProfit,
+      missingCostProducts: r.missingCostProducts
+    } : null,
+    monthlyByProduct: (r.monthly?.perProduct || []).map(p => ({
+      product: p.product,
+      totalRevenue: p.totalRevenue, totalCost: p.totalCost, totalAd: p.totalAd, totalProfit: p.totalProfit,
+      adOnVsOff: p.onOff ? {
+        avgRevenueWhenOn: Math.round(p.onOff.avgOn), avgRevenueWhenOff: Math.round(p.onOff.avgOff),
+        diffPct: p.onOff.diffPct===null?null:Number(p.onOff.diffPct.toFixed(1))
+      } : null,
+      monthly: p.monthly
+    }))
+  };
+  download('handoff.json', JSON.stringify(payload, null, 2), 'application/json');
+}
+
+function download(filename, content, mime){
+  const blob = new Blob([content], {type: mime});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function resetAll(){
+  if(!confirm('업무일지를 초기화할까요? (업로드한 데이터는 다시 불러와야 합니다)')) return;
+  logs=[]; localStorage.setItem('salesai_logs','[]'); renderLogs();
+}
+
+// ---------- 초기 로드: 활성 플랫폼 탭의 저장된 데이터 복원 ----------
+renderPlatformTabs();
+loadPlatformData(activePlatformId);
+if(records.length) computeAndRenderReport();
+</script>
+</body>
+</html>
