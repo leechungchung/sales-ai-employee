@@ -136,18 +136,6 @@
           <button class="btn-ghost" onclick="loadSample()">샘플 데이터로 체험하기</button>
         </div>
 
-        <details class="adv">
-          <summary>🔌 실제 쿠팡 매출 데이터 연동 (로컬 서버 실행 시)</summary>
-          <div class="adv-body">
-            <p class="note">같은 폴더의 server.js를 <code>node server.js</code>로 실행하면(사전에 .env에 쿠팡 Open API 키 입력) 아래에서 실제 매출 데이터를 바로 가져올 수 있습니다.</p>
-            <div class="map-row">
-              <div><label>시작일</label><input type="text" id="apiFrom" placeholder="2026-06-01" /></div>
-              <div><label>종료일</label><input type="text" id="apiTo" placeholder="2026-07-06" /></div>
-            </div>
-            <div class="btn-row"><button class="btn-primary" onclick="fetchFromLocalServer()">로컬 서버에서 가져오기</button></div>
-          </div>
-        </details>
-
         <div id="mapSection" style="display:none;">
           <label style="margin-top:16px;">— 포맷 프리셋 (플랫폼별 컬럼 구성을 저장해두고 재사용) —</label>
           <div class="map-row">
@@ -157,6 +145,7 @@
           </div>
           <div class="btn-row">
             <button type="button" class="btn-ghost" id="salesAutoMapBtn" onclick="autoMapWithAI('sales')">✨ AI로 자동 매핑</button>
+            <button type="button" class="btn-ghost" id="salesCleanBtn" onclick="autoCleanAndDownload('sales')">🧹 AI로 자동 정리 + 다운로드</button>
           </div>
           <label style="margin-top:16px;">— 열 매핑 (내 파일의 컬럼을 선택하세요) —</label>
           <div class="map-row">
@@ -202,6 +191,7 @@
           </div>
           <div class="btn-row">
             <button type="button" class="btn-ghost" id="adAutoMapBtn" onclick="autoMapWithAI('ad')">✨ AI로 자동 매핑</button>
+            <button type="button" class="btn-ghost" id="adCleanBtn" onclick="autoCleanAndDownload('ad')">🧹 AI로 자동 정리 + 다운로드</button>
           </div>
           <label style="margin-top:16px;">— 열 매핑 —</label>
           <div class="map-row">
@@ -239,6 +229,7 @@
           </div>
           <div class="btn-row">
             <button type="button" class="btn-ghost" id="costAutoMapBtn" onclick="autoMapWithAI('cost')">✨ AI로 자동 매핑</button>
+            <button type="button" class="btn-ghost" id="costCleanBtn" onclick="autoCleanAndDownload('cost')">🧹 AI로 자동 정리 + 다운로드</button>
           </div>
           <label style="margin-top:16px;">— 열 매핑 —</label>
           <div class="map-row">
@@ -262,7 +253,7 @@
           <label style="display:flex;align-items:center;gap:6px;margin-top:8px;">
             <input type="checkbox" id="useApi" style="width:auto;" /> 리포트 생성 시 Claude가 경영진 보고용 코멘트 작성
           </label>
-          <p class="note">여기 입력한 키는 각 업로드 카드의 "✨ AI로 자동 매핑" 버튼에도 함께 쓰입니다(파일 헤더와 샘플 몇 줄만 전송, 전체 데이터는 보내지 않습니다). 키가 없어도 규칙 기반 AI 코멘트와 직접 매핑으로 전체 흐름을 체험할 수 있습니다. 쿠팡 Open API를 코드로 직접 연동하는 방법은 같은 폴더의 README.md를 참고하세요.</p>
+          <p class="note">여기 입력한 키는 각 업로드 카드의 "✨ AI로 자동 매핑" · "🧹 AI로 자동 정리" 버튼에도 함께 쓰입니다(파일 헤더와 샘플 몇 줄만 전송, 전체 데이터는 보내지 않습니다). 키가 없어도 규칙 기반 AI 코멘트와 직접 매핑으로 전체 흐름을 체험할 수 있습니다.</p>
         </div>
       </details>
     </div>
@@ -557,6 +548,40 @@ const AI_MAP_ROLE_HINTS = {
   cost: { product:'상품명', amount:'개당 원가/매입가/제조원가' }
 };
 
+// AI에 헤더+샘플 행을 보내 역할별 매핑을 받아옵니다. 반환값은 검증을 거친 { role: 헤더명 } 객체입니다.
+async function getAIColumnMapping(type, table, apiKey){
+  const roles = AI_MAP_ROLE_HINTS[type];
+  const system = `당신은 스프레드시트 컬럼을 분석하는 도우미입니다. 주어진 헤더 목록과 샘플 행(데이터 일부)을 보고, 요청된 각 역할에 가장 알맞은 헤더를 "헤더 목록"에 있는 문자열 그대로 정확히 골라주세요. 알맞은 컬럼이 없으면 null로 표시하세요. 반드시 JSON 객체 하나만 출력하고, 다른 설명이나 코드블록 기호(\`\`\`)는 절대 포함하지 마세요.`;
+  const userContent = JSON.stringify({
+    헤더_목록: table.headers,
+    샘플_행: table.rows.slice(0, 5),
+    찾아야_할_역할: roles
+  });
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json', 'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001', max_tokens: 300, system,
+      messages: [{ role: 'user', content: userContent }]
+    })
+  });
+  if(!res.ok) throw new Error('API 호출 실패: ' + res.status);
+  const data = await res.json();
+  let text = (data.content?.[0]?.text || '').trim();
+  text = text.replace(/^```(json)?\s*/i, '').replace(/```\s*$/,'').trim();
+  const mapping = JSON.parse(text);
+  // AI가 지어낸 헤더명을 그대로 믿지 않고, 실제 파일에 있는 헤더인지 한 번 더 확인합니다.
+  const cleaned = {};
+  Object.keys(mapping).forEach(k => {
+    const v = mapping[k];
+    cleaned[k] = (typeof v === 'string' && table.headers.includes(v)) ? v : '';
+  });
+  return cleaned;
+}
+
 async function autoMapWithAI(type){
   const apiKey = document.getElementById('apiKey').value.trim();
   if(!apiKey){
@@ -570,40 +595,70 @@ async function autoMapWithAI(type){
   const originalLabel = btn.textContent;
   btn.disabled = true;
   btn.textContent = '파일 정리 중...';
-
   try{
-    const roles = AI_MAP_ROLE_HINTS[type];
-    const system = `당신은 스프레드시트 컬럼을 분석하는 도우미입니다. 주어진 헤더 목록과 샘플 행(데이터 일부)을 보고, 요청된 각 역할에 가장 알맞은 헤더를 "헤더 목록"에 있는 문자열 그대로 정확히 골라주세요. 알맞은 컬럼이 없으면 null로 표시하세요. 반드시 JSON 객체 하나만 출력하고, 다른 설명이나 코드블록 기호(\`\`\`)는 절대 포함하지 마세요.`;
-      const userContent = JSON.stringify({
-      헤더_목록: table.headers,
-      샘플_행: table.rows.slice(0, 5),
-      찾아야_할_역할: roles
-    });
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json', 'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001', max_tokens: 300, system,
-        messages: [{ role: 'user', content: userContent }]
-      })
-    });
-    if(!res.ok) throw new Error('API 호출 실패: ' + res.status);
-    const data = await res.json();
-    let text = (data.content?.[0]?.text || '').trim();
-    text = text.replace(/^```(json)?\s*/i, '').replace(/```\s*$/,'').trim();
-    const mapping = JSON.parse(text);
-    // AI가 지어낸 헤더명을 그대로 믿지 않고, 실제 파일에 있는 헤더인지 한 번 더 확인합니다.
-    const cleaned = {};
-    Object.keys(mapping).forEach(k => {
-      const v = mapping[k];
-      cleaned[k] = (typeof v === 'string' && table.headers.includes(v)) ? v : '';
-    });
-    applyRoleMapping(type, cleaned);
+    applyRoleMapping(type, await getAIColumnMapping(type, table, apiKey));
   }catch(err){
     alert('AI 자동 매핑에 실패했습니다: ' + err.message + '\n\n직접 매핑해주세요.');
+  }finally{
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+  }
+}
+
+// ---------- AI 자동 정리 + 정리된 파일 다운로드 (매핑 → 적용 → 표준 CSV 내보내기를 한 번에) ----------
+function exportCleanedFile(type){
+  let headers, rows;
+  if(type === 'sales'){
+    headers = ['날짜','상품명','매출액','수량','구매자'];
+    rows = records.map(r => [r.date, r.product, r.amount, r.qty, r.customer || '']);
+  } else if(type === 'ad'){
+    headers = ['날짜','광고비','채널','상품명'];
+    rows = adRecords.map(a => [a.date, a.amount, a.channel || '', a.product || '']);
+  } else {
+    headers = ['상품명','원가'];
+    rows = Object.entries(costMap).map(([p, c]) => [p, c]);
+  }
+  if(!rows.length){ alert('정리할 데이터가 없습니다. 먼저 파일을 올리고 매핑을 적용해주세요.'); return; }
+  const escapeCsv = (v) => {
+    const s = String(v == null ? '' : v);
+    return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const lines = [headers.map(escapeCsv).join(',')].concat(rows.map(r => r.map(escapeCsv).join(',')));
+  const csv = '﻿' + lines.join('\r\n'); // BOM 포함 — 엑셀에서 한글 깨짐 방지
+  const fileNames = { sales: '정리된_매출데이터.csv', ad: '정리된_광고비데이터.csv', cost: '정리된_원가데이터.csv' };
+  download(fileNames[type], csv, 'text/csv;charset=utf-8');
+}
+
+async function autoCleanAndDownload(type){
+  const apiKey = document.getElementById('apiKey').value.trim();
+  if(!apiKey){
+    alert('먼저 아래 "고급 설정 · Claude API로 AI 코멘트·자동 매핑"에서 Anthropic API Key를 입력해주세요.');
+    return;
+  }
+  const table = type === 'sales' ? rawTable : type === 'ad' ? adRawTable : costRawTable;
+  if(!table){ alert('먼저 파일을 업로드해주세요.'); return; }
+  if(activePlatformId === '__all__'){ alert('전체보기에서는 데이터를 추가할 수 없습니다. 플랫폼 탭을 선택하거나 새로 추가해주세요.'); return; }
+
+  const btn = document.getElementById(type + 'CleanBtn');
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '데이터 정리 중...';
+  try{
+    const cleaned = await getAIColumnMapping(type, table, apiKey);
+    // 날짜/상품명/매출액처럼 반드시 있어야 하는 항목을 AI가 못 찾았으면, 매핑이
+    // 엉뚱한 기본값으로 적용되어 잘못된 파일이 만들어지지 않도록 여기서 멈춥니다.
+    const REQUIRED_ROLES = { sales: ['date','product','amount'], ad: ['date','amount'], cost: ['product','amount'] };
+    const missing = REQUIRED_ROLES[type].filter(r => !cleaned[r]);
+    if(missing.length){
+      throw new Error(`필수 항목(${missing.join(', ')})에 맞는 컬럼을 자동으로 찾지 못했습니다.`);
+    }
+    applyRoleMapping(type, cleaned);
+    if(type === 'sales') applyMapping();
+    else if(type === 'ad') applyAdMapping();
+    else applyCostMapping();
+    exportCleanedFile(type);
+  }catch(err){
+    alert('자동 정리에 실패했습니다: ' + err.message + '\n\n직접 매핑 후 "데이터 적용"을 눌러주세요.');
   }finally{
     btn.disabled = false;
     btn.textContent = originalLabel;
@@ -1076,26 +1131,6 @@ function loadCostSample(){
     return;
   }
   buildReport();
-}
-
-// ---------- 로컬 프록시 서버(server.js)에서 실제 쿠팡 데이터 가져오기 ----------
-async function fetchFromLocalServer(){
-  if(activePlatformId === '__all__'){ alert('전체보기에서는 데이터를 추가할 수 없습니다. 플랫폼 탭을 선택하거나 새로 추가해주세요.'); return; }
-  const from = document.getElementById('apiFrom').value.trim();
-  const to = document.getElementById('apiTo').value.trim();
-  if(!from || !to){ alert('시작일/종료일을 입력하세요 (예: 2026-06-01)'); return; }
-  try{
-    const res = await fetch(`http://localhost:5500/api/revenue?from=${from}&to=${to}`);
-    if(!res.ok) throw new Error('서버 응답 오류: ' + res.status);
-    const data = await res.json();
-    if(!Array.isArray(data) || !data.length){ alert('가져온 데이터가 없습니다. 기간을 확인해주세요.'); return; }
-    records = data;
-    lastExcluded = { count: 0, statuses: [] };
-    document.getElementById('mapSection').style.display = 'none';
-    buildReport();
-  }catch(e){
-    alert('로컬 서버 연결에 실패했습니다: ' + e.message + '\n\nREADME.md를 참고해 server.js를 먼저 실행했는지 확인해주세요 (node server.js).');
-  }
 }
 
 // ---------- 샘플 데이터 ----------
