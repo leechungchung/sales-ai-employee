@@ -1096,9 +1096,27 @@ async function handleFileUpload(file, onParsed){
     }
     return;
   }
-  const reader = new FileReader();
-  reader.onload = (ev) => onParsed(parseCsvText(ev.target.result));
-  reader.readAsText(file, 'utf-8');
+  try{
+    const buf = await file.arrayBuffer();
+    onParsed(parseCsvText(decodeTextBuffer(buf)));
+  }catch(err){
+    alert('파일을 읽는 중 문제가 발생했습니다: ' + err.message);
+  }
+}
+
+function decodeTextBuffer(buf){
+  const bytes = new Uint8Array(buf);
+  if(bytes.length >= 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF){
+    return new TextDecoder('utf-8').decode(bytes.slice(3));
+  }
+  try{
+    // BOM이 없으면 우선 UTF-8로 엄격하게 시도합니다.
+    return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+  }catch(e){
+    // UTF-8로 디코딩할 수 없으면 한글 엑셀이 흔히 쓰는 EUC-KR(CP949)로 다시 시도합니다.
+    try{ return new TextDecoder('euc-kr').decode(bytes); }
+    catch(e2){ return new TextDecoder('utf-8').decode(bytes); }
+  }
 }
 
 document.getElementById('dataFile').addEventListener('change', (e) => {
@@ -1759,7 +1777,7 @@ function resetSearchState(){
   document.getElementById('searchSuggestBox').style.display = 'none';
   document.getElementById('searchSuggestBox').innerHTML = '';
   document.getElementById('searchKeywords').innerHTML = '';
-  document.getElementById('searchResults').innerHTML = '';
+  renderSearchResults();
 }
 
 let suggestHighlightIndex = -1;
@@ -1987,14 +2005,15 @@ function renderSearchResults(){
   if(searchInclusionFilter !== 'all'){
     matches = matches.filter(r => searchInclusionFilter === 'on' ? r.included !== false : r.included === false);
   }
-  if(!activeSearchKeywords.size && !term && searchInclusionFilter === 'all'){ el.innerHTML = ''; return; }
-  if(!matches.length){ el.innerHTML = '<div class="empty">일치하는 데이터가 없습니다.</div>'; return; }
+  const isFiltered = activeSearchKeywords.size || term || searchInclusionFilter !== 'all';
+  if(!records.length){ el.innerHTML = '<div class="empty">불러온 매출 데이터가 없습니다.</div>'; return; }
+  if(!matches.length){ el.innerHTML = `<div class="empty">${isFiltered ? '일치하는 데이터가 없습니다.' : '표시할 데이터가 없습니다.'}</div>`; return; }
   const totalAmount = matches.reduce((s,r)=> s + (r.included === false ? 0 : r.amount), 0);
   const MAX_ROWS = 200;
   const shown = matches.slice(0, MAX_ROWS);
   const showPlatform = vals.platformNames.size > 0;
   el.innerHTML = `
-    <p class="note">${matches.length}건 일치 · ON 합계 ${won(totalAmount)}${matches.length > MAX_ROWS ? ` (최근 ${MAX_ROWS}건만 표시)` : ''}</p>
+    <p class="note">${matches.length}건${isFiltered ? ' 일치' : ''} · ON 합계 ${won(totalAmount)}${matches.length > MAX_ROWS ? ` (최근 ${MAX_ROWS}건만 표시)` : ''}</p>
     <div class="table-wrap">
       <table>
         <thead><tr>${showPlatform ? '<th>플랫폼</th>' : ''}<th>날짜</th><th>상품명</th><th>구매자</th><th>매출액</th><th>상태</th><th colspan="2"></th></tr></thead>
