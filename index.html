@@ -38,6 +38,13 @@
   .btn-ghost{background:var(--panel2);color:var(--text);border:1px solid var(--border);}
   .type-toggle{flex:1;}
   .type-toggle.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .file-item{display:flex;align-items:center;gap:4px;margin-top:6px;}
+  .file-item-name{flex:1;min-width:0;text-align:left;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 10px;font-size:11.5px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .file-item-name:hover{border-color:var(--accent);}
+  .file-item.hidden .file-item-name{opacity:.5;text-decoration:line-through;}
+  .file-item-toggle, .file-item-del{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:5px 7px;border-radius:6px;flex-shrink:0;}
+  .file-item-toggle:hover{background:var(--panel);color:var(--text);}
+  .file-item-del:hover{background:var(--panel);color:var(--red);}
   .btn-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
   .map-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
   .map-row > *{min-width:0;}
@@ -134,84 +141,66 @@
         <input type="file" id="dataFile" accept=".csv,.txt,.xlsx" />
         <div id="fileList"></div>
 
-        <div id="typeSection" style="display:none;">
-          <div class="btn-row">
-            <button type="button" class="btn-ghost type-toggle" id="typeBtn_sales" onclick="toggleFileType('sales')">매출</button>
-            <button type="button" class="btn-ghost type-toggle" id="typeBtn_ad" onclick="toggleFileType('ad')">광고비</button>
-            <button type="button" class="btn-ghost type-toggle" id="typeBtn_cost" onclick="toggleFileType('cost')">원가</button>
-          </div>
+        <div id="mapSection" style="display:none;">
+          <details id="mapFieldsDetails" open>
+            <summary style="cursor:pointer;color:var(--muted);font-size:12px;margin-top:8px;">컬럼 매핑</summary>
 
-          <div id="salesMapBlock" style="display:none;">
-            <div class="btn-row">
+            <label style="margin-top:8px;">매출 프리셋</label>
+            <div class="btn-row" style="margin-top:0;">
               <select id="salesPresetSelect" onchange="applyFormatPreset('sales')" style="flex:1;"></select>
               <button type="button" class="btn-ghost" onclick="deleteFormatPreset('sales')" title="선택한 프리셋 삭제">🗑</button>
             </div>
-            <details id="salesMapFields" open>
-              <summary style="cursor:pointer;color:var(--muted);font-size:12px;margin-top:8px;">매출 컬럼</summary>
-              <div class="map-row" style="margin-top:8px;">
-                <div><label>날짜 컬럼</label><select id="mapDate"></select></div>
-                <div><label>상품명 컬럼</label><select id="mapProduct"></select></div>
-              </div>
-              <div class="map-row">
-                <div><label>매출액 컬럼</label><select id="mapAmount"></select></div>
-                <div><label>수량 컬럼 (선택)</label><select id="mapQty"><option value="">- 없음 -</option></select></div>
-              </div>
-              <div class="map-row">
-                <div><label>주문상태 컬럼 (선택)</label><select id="mapStatus"><option value="">- 없음 -</option></select></div>
-                <div><label>매출에서 제외할 상태값</label><input type="text" id="excludeStatus" value="취소,반품,환불" /></div>
-              </div>
-              <div class="map-row">
-                <div><label>구매자명/회원명 컬럼 (선택)</label><select id="mapCustomer"><option value="">- 없음 -</option></select></div>
-                <div></div>
-              </div>
-              <div class="map-row" style="margin-top:10px;">
-                <div><input type="text" id="salesPresetName" placeholder="새 포맷 이름" /></div>
-                <div><button class="btn-ghost" style="width:100%;" onclick="saveFormatPreset('sales')">프리셋으로 저장</button></div>
-              </div>
-            </details>
-          </div>
+            <div class="map-row" style="margin-top:8px;">
+              <div><label>날짜 컬럼</label><select id="mapDate"></select></div>
+              <div><label>상품명 컬럼</label><select id="mapProduct"></select></div>
+            </div>
+            <div class="map-row">
+              <div><label>매출액 컬럼 (선택)</label><select id="mapAmount"><option value="">- 없음 -</option></select></div>
+              <div><label>수량 컬럼 (선택)</label><select id="mapQty"><option value="">- 없음 -</option></select></div>
+            </div>
+            <div class="map-row">
+              <div><label>주문상태 컬럼 (선택)</label><select id="mapStatus"><option value="">- 없음 -</option></select></div>
+              <div><label>매출에서 제외할 상태값</label><input type="text" id="excludeStatus" value="취소,반품,환불" /></div>
+            </div>
+            <div class="map-row">
+              <div><label>구매자명/회원명 컬럼 (선택)</label><select id="mapCustomer"><option value="">- 없음 -</option></select></div>
+              <div></div>
+            </div>
+            <div class="map-row" style="margin-top:10px;">
+              <div><input type="text" id="salesPresetName" placeholder="새 포맷 이름" /></div>
+              <div><button class="btn-ghost" style="width:100%;" onclick="saveFormatPreset('sales')">프리셋으로 저장</button></div>
+            </div>
 
-          <div id="adMapBlock" style="display:none;">
-            <div class="btn-row">
+            <label style="margin-top:16px;">광고비 프리셋 (선택)</label>
+            <div class="btn-row" style="margin-top:0;">
               <select id="adPresetSelect" onchange="applyFormatPreset('ad')" style="flex:1;"></select>
               <button type="button" class="btn-ghost" onclick="deleteFormatPreset('ad')" title="선택한 프리셋 삭제">🗑</button>
             </div>
-            <details id="adMapFields" open>
-              <summary style="cursor:pointer;color:var(--muted);font-size:12px;margin-top:8px;">광고비 컬럼</summary>
-              <div class="map-row" style="margin-top:8px;">
-                <div><label>날짜 컬럼</label><select id="mapAdDate"></select></div>
-                <div><label>광고비 컬럼</label><select id="mapAdAmount"></select></div>
-              </div>
-              <div class="map-row">
-                <div><label>채널 컬럼 (선택)</label><select id="mapAdChannel"><option value="">- 없음 -</option></select></div>
-                <div><label>상품명 컬럼 (선택)</label><select id="mapAdProduct"><option value="">- 없음 -</option></select></div>
-              </div>
-              <div class="map-row" style="margin-top:10px;">
-                <div><input type="text" id="adPresetName" placeholder="새 포맷 이름" /></div>
-                <div><button class="btn-ghost" style="width:100%;" onclick="saveFormatPreset('ad')">프리셋으로 저장</button></div>
-              </div>
-            </details>
-          </div>
+            <div class="map-row" style="margin-top:8px;">
+              <div><label>광고비 컬럼 (선택)</label><select id="mapAdAmount"><option value="">- 없음 -</option></select></div>
+              <div><label>채널 컬럼 (선택)</label><select id="mapAdChannel"><option value="">- 없음 -</option></select></div>
+            </div>
+            <div class="map-row" style="margin-top:10px;">
+              <div><input type="text" id="adPresetName" placeholder="새 포맷 이름" /></div>
+              <div><button class="btn-ghost" style="width:100%;" onclick="saveFormatPreset('ad')">프리셋으로 저장</button></div>
+            </div>
 
-          <div id="costMapBlock" style="display:none;">
-            <div class="btn-row">
+            <label style="margin-top:16px;">원가 프리셋 (선택)</label>
+            <div class="btn-row" style="margin-top:0;">
               <select id="costPresetSelect" onchange="applyFormatPreset('cost')" style="flex:1;"></select>
               <button type="button" class="btn-ghost" onclick="deleteFormatPreset('cost')" title="선택한 프리셋 삭제">🗑</button>
             </div>
-            <details id="costMapFields" open>
-              <summary style="cursor:pointer;color:var(--muted);font-size:12px;margin-top:8px;">원가 컬럼</summary>
-              <div class="map-row" style="margin-top:8px;">
-                <div><label>상품명 컬럼</label><select id="mapCostProduct"></select></div>
-                <div><label>개당 원가 컬럼</label><select id="mapCostAmount"></select></div>
-              </div>
-              <div class="map-row" style="margin-top:10px;">
-                <div><input type="text" id="costPresetName" placeholder="새 포맷 이름" /></div>
-                <div><button class="btn-ghost" style="width:100%;" onclick="saveFormatPreset('cost')">프리셋으로 저장</button></div>
-              </div>
-            </details>
-          </div>
+            <div class="map-row" style="margin-top:8px;">
+              <div><label>원가 컬럼 (선택)</label><select id="mapCostAmount"><option value="">- 없음 -</option></select></div>
+              <div></div>
+            </div>
+            <div class="map-row" style="margin-top:10px;">
+              <div><input type="text" id="costPresetName" placeholder="새 포맷 이름" /></div>
+              <div><button class="btn-ghost" style="width:100%;" onclick="saveFormatPreset('cost')">프리셋으로 저장</button></div>
+            </div>
+          </details>
 
-          <div class="btn-row"><button class="btn-primary" onclick="applyUnifiedMapping()">데이터 추가</button></div>
+          <div class="btn-row"><button class="btn-primary" onclick="applyMapping()">데이터 추가</button></div>
         </div>
 
         <details style="margin-top:10px;">
@@ -294,7 +283,6 @@
         <h2>🔍 데이터 검색 <span class="n">(품목명 · 구매자명 등)</span></h2>
         <div class="btn-row" style="margin-top:0;margin-bottom:8px;">
           <button type="button" class="btn-ghost" id="searchInclusionBtn" onclick="cycleSearchInclusionFilter()" style="font-size:11px;padding:4px 8px;opacity:.75;">전체 보기</button>
-          <button type="button" class="btn-ghost" onclick="deleteAllData()" style="font-size:11px;padding:4px 8px;opacity:.75;">전체 데이터 삭제</button>
         </div>
         <div style="position:relative;">
           <input type="text" id="searchInput" placeholder="검색어 입력 후 아래 목록에서 클릭하세요 (예: 반팔티, 홍길동, 2026-06)" oninput="onSearchInput()" onkeydown="onSearchKeydown(event)" autocomplete="off" />
@@ -366,16 +354,24 @@
 
 <script>
 let rawTable = null;   // {headers:[], rows:[[...]]}
-let records = [];      // normalized [{date, product, amount, qty, included}] — included===false는 계산에서 제외(소프트 OFF)
+let records = [];      // normalized [{date, product, amount, qty, customer, included, fileId}] — included===false는 계산에서 제외(소프트 OFF)
 function activeRecords(){ return records.filter(r => r.included !== false); }
-let adRecords = [];    // normalized [{date, amount, channel, product}]
-let costMap = {};      // { product: unitCost }
+let adRecords = [];    // normalized [{date, amount, channel, product, included, fileId}]
+function activeAdRecords(){ return adRecords.filter(a => a.included !== false); }
+let costRecords = [];  // normalized [{product, amount, included, fileId}]
+function activeCostMap(){
+  const m = {};
+  costRecords.forEach(r => { if(r.included !== false) m[r.product] = r.amount; });
+  return m;
+}
 let manualAdStatus = JSON.parse(localStorage.getItem('salesai_manual_ad_status') || '{}'); // { "product||YYYY-MM": 'on'|'off' }
 let openMonthlyDetails = new Set(); // 펼쳐진 품목별 월별 상세 <details>의 상품명 (재렌더링 시에도 펼침 상태 유지)
-let uploadedFiles = []; // [{fileName, parts:[{type,presetName}]}] — 파일을 추가할 때마다 쌓이는 이력(표시용)
-let pendingFileName = null; // 파일 선택 직후 ~ 데이터 적용 전까지 임시 보관
+let uploadedFiles = []; // [{id, fileName, hidden, file, parts:[{type,presetName,count}]}] — 파일을 추가할 때마다 쌓이는 이력
+let nextFileId = 1;
+let pendingFile = null;     // 파일 선택 직후 ~ 데이터 적용 전까지 임시 보관된 File 객체(재매핑용)
+let pendingFileName = null;
+let editingFileId = null;   // 파일 목록에서 클릭해 다시 매핑 중인 파일의 id
 let lastAppliedPresetName = { sales: null, ad: null, cost: null };
-let selectedFileTypes = new Set(); // 지금 선택된 파일에 어떤 데이터가 들어있는지 (매출/광고비/원가 중복 선택 가능)
 let activeManualType = 'sales';
 
 // ---------- 플랫폼 탭 (쿠팡/네이버 등 소스별 데이터 관리, 새 탭 계속 추가 가능) ----------
@@ -392,12 +388,36 @@ function isPlatformActive(p){ return p.active !== false; }
 
 function savePlatformData(){
   if(!activePlatformId || activePlatformId === '__all__') return;
-  localStorage.setItem(platformDataKey(activePlatformId), JSON.stringify({ records, adRecords, costMap, lastExcluded, uploadedFiles }));
+  localStorage.setItem(platformDataKey(activePlatformId), JSON.stringify({ records, adRecords, costRecords, lastExcluded, uploadedFiles }));
+}
+
+// 예전 저장 형식과의 호환: costMap({product:cost}) → costRecords 배열,
+// uploadedFiles({sales:[],ad:[],cost:[]}) → 배열 형태로 변환합니다.
+function normalizeCostRecords(d){
+  if(Array.isArray(d?.costRecords)) return d.costRecords;
+  if(d?.costMap) return Object.entries(d.costMap).map(([product, amount]) => ({ product, amount, fileId: null }));
+  return [];
+}
+function normalizeUploadedFiles(raw){
+  if(!raw) return [];
+  if(Array.isArray(raw)){
+    return raw.map((f, idx) => ({ id: f.id ?? (idx + 1), fileName: f.fileName || '(파일명 확인 불가)', hidden: f.hidden || false, file: null, parts: f.parts || [] }));
+  }
+  const merged = [];
+  ['sales','ad','cost'].forEach(type => {
+    (raw[type] || []).forEach(f => {
+      merged.push({ id: merged.length + 1, fileName: f.fileName || '(파일명 확인 불가)', hidden: false, file: null, parts: [{ type, presetName: f.presetName || '직접 매핑' }] });
+    });
+  });
+  return merged;
+}
+function recomputeNextFileId(){
+  nextFileId = uploadedFiles.reduce((max, f) => Math.max(max, f.id || 0), 0) + 1;
 }
 
 function loadPlatformData(id){
   if(id === '__all__'){
-    records = []; adRecords = []; costMap = {}; lastExcluded = { count: 0, statuses: [] };
+    records = []; adRecords = []; costRecords = []; lastExcluded = { count: 0, statuses: [] };
     uploadedFiles = [];
     platforms.filter(isPlatformActive).forEach(p => {
       const raw = localStorage.getItem(platformDataKey(p.id));
@@ -405,17 +425,18 @@ function loadPlatformData(id){
       const d = JSON.parse(raw);
       records = records.concat((d.records || []).map(r => ({ ...r, platformName: p.name })));
       adRecords = adRecords.concat((d.adRecords || []).map(a => ({ ...a, platformName: p.name })));
-      Object.assign(costMap, d.costMap || {});
-      uploadedFiles = uploadedFiles.concat(d.uploadedFiles || []);
+      costRecords = costRecords.concat(normalizeCostRecords(d).map(c => ({ ...c, platformName: p.name })));
+      uploadedFiles = uploadedFiles.concat(normalizeUploadedFiles(d.uploadedFiles));
     });
   } else {
     const raw = localStorage.getItem(platformDataKey(id));
     const d = raw ? JSON.parse(raw) : null;
     records = d?.records || [];
     adRecords = d?.adRecords || [];
-    costMap = d?.costMap || {};
+    costRecords = normalizeCostRecords(d);
     lastExcluded = d?.lastExcluded || { count: 0, statuses: [] };
-    uploadedFiles = d?.uploadedFiles || [];
+    uploadedFiles = normalizeUploadedFiles(d?.uploadedFiles);
+    recomputeNextFileId();
   }
 }
 
@@ -491,12 +512,12 @@ function switchPlatform(id){
   localStorage.setItem('salesai_active_platform', id);
   loadPlatformData(id);
   renderPlatformTabs();
-  document.getElementById('typeSection').style.display = 'none';
+  document.getElementById('mapSection').style.display = 'none';
   document.getElementById('dataFile').value = '';
   rawTable = null;
-  selectedFileTypes = new Set();
-  renderFileTypeUI();
+  pendingFile = null;
   pendingFileName = null;
+  editingFileId = null;
   lastAppliedPresetName = { sales: null, ad: null, cost: null };
   editingSalesIndex = null; editingAdIndex = null; editingCostIndex = null;
   renderUploadedFiles();
@@ -526,14 +547,14 @@ const BUILTIN_PRESETS = {
     { name: '네이버 스마트스토어 (주문 다운로드, 추정)', roles: { date:'주문일시', product:'상품명', amount:'상품주문금액', qty:'수량', status:'상품주문상태', excludeStatuses:'취소,반품,교환,구매취소', customer:'구매자명' } }
   ],
   ad: [
-    { name: '쿠팡 광고관리자 (추정)', roles: { date:'날짜', amount:'광고비', channel:'', product:'상품명' } },
-    { name: '네이버 검색광고 (추정)', roles: { date:'일자', amount:'총비용', channel:'캠페인명', product:'' } },
-    { name: '메타 광고관리자 (추정)', roles: { date:'일', amount:'지출 금액 (KRW)', channel:'캠페인 이름', product:'' } }
+    { name: '쿠팡 광고관리자 (추정)', roles: { amount:'광고비', channel:'' } },
+    { name: '네이버 검색광고 (추정)', roles: { amount:'총비용', channel:'캠페인명' } },
+    { name: '메타 광고관리자 (추정)', roles: { amount:'지출 금액 (KRW)', channel:'캠페인 이름' } }
   ],
   cost: [
-    { name: '기본 (상품명 · 원가)', roles: { product:'상품명', amount:'원가' } },
-    { name: '매입가 기준 (상품명 · 매입가)', roles: { product:'상품명', amount:'매입가' } },
-    { name: '제조원가 기준 (상품명 · 제조원가)', roles: { product:'상품명', amount:'제조원가' } }
+    { name: '기본 (원가)', roles: { amount:'원가' } },
+    { name: '매입가 기준', roles: { amount:'매입가' } },
+    { name: '제조원가 기준', roles: { amount:'제조원가' } }
   ]
 };
 const savedPresets = {
@@ -569,26 +590,16 @@ function applyRoleMapping(type, roles){
     setSelect('mapCustomer', roles.customer);
     if(roles.excludeStatuses) document.getElementById('excludeStatus').value = roles.excludeStatuses;
   } else if(type === 'ad'){
-    setSelect('mapAdDate', roles.date);
     setSelect('mapAdAmount', roles.amount);
     setSelect('mapAdChannel', roles.channel);
-    setSelect('mapAdProduct', roles.product);
   } else {
-    setSelect('mapCostProduct', roles.product);
     setSelect('mapCostAmount', roles.amount);
   }
 }
 
-const REQUIRED_MAP_SELECTS = {
-  sales: ['mapDate','mapProduct','mapAmount'],
-  ad: ['mapAdDate','mapAdAmount'],
-  cost: ['mapCostProduct','mapCostAmount']
-};
-const MAP_FIELDS_DETAILS_ID = { sales: 'salesMapFields', ad: 'adMapFields', cost: 'costMapFields' };
-
-function collapseMappingIfComplete(type){
-  const complete = REQUIRED_MAP_SELECTS[type].every(id => document.getElementById(id).value);
-  const details = document.getElementById(MAP_FIELDS_DETAILS_ID[type]);
+function collapseMappingIfComplete(){
+  const complete = document.getElementById('mapDate').value && document.getElementById('mapProduct').value;
+  const details = document.getElementById('mapFieldsDetails');
   if(details) details.open = !complete;
 }
 
@@ -599,7 +610,7 @@ function applyFormatPreset(type){
   if(!preset) return;
   applyRoleMapping(type, preset.roles);
   lastAppliedPresetName[type] = preset.name;
-  collapseMappingIfComplete(type);
+  collapseMappingIfComplete();
 }
 
 function deleteFormatPreset(type){
@@ -634,15 +645,66 @@ function downloadTemplate(type){
   download(t.fileName, csv, 'text/csv;charset=utf-8');
 }
 
-// ---------- 불러온 파일 + 적용 프리셋 이력 (심플 목록) ----------
+// ---------- 불러온 파일 목록: 클릭해서 재매핑 · 숨기기 · 삭제 ----------
 const TYPE_LABEL = { sales: '매출', ad: '광고비', cost: '원가' };
 
 function renderUploadedFiles(){
   const el = document.getElementById('fileList');
   if(!uploadedFiles.length){ el.innerHTML = ''; return; }
-  el.innerHTML = uploadedFiles.map(f =>
-    `<div class="note" style="margin:2px 0;">📄 ${escapeHtml(f.fileName)} — ${f.parts.map(p => `${TYPE_LABEL[p.type]}(${escapeHtml(p.presetName)})`).join(', ')}</div>`
-  ).join('');
+  el.innerHTML = uploadedFiles.map(f => `
+    <div class="file-item${f.hidden ? ' hidden' : ''}">
+      <button type="button" class="file-item-name" onclick="editUploadedFile(${f.id})" title="클릭해서 컬럼 다시 매핑">📄 ${escapeHtml(f.fileName)} — ${f.parts.map(p => `${TYPE_LABEL[p.type]}(${escapeHtml(p.presetName)})`).join(', ')}</button>
+      <button type="button" class="file-item-toggle" onclick="toggleFileHidden(${f.id})" title="${f.hidden ? '다시 포함' : '계산에서 숨기기'}">${f.hidden ? '🚫' : '👁'}</button>
+      <button type="button" class="file-item-del" onclick="deleteUploadedFile(${f.id})" title="이 파일 데이터 삭제">×</button>
+    </div>
+  `).join('');
+}
+
+async function editUploadedFile(fileId){
+  if(activePlatformId === '__all__'){ alert('전체보기에서는 수정할 수 없습니다. 플랫폼 탭을 선택해주세요.'); return; }
+  const file = uploadedFiles.find(f => f.id === fileId);
+  if(!file) return;
+  if(!file.file){ alert('새로고침 후에는 파일을 다시 불러올 수 없습니다. 🗑로 삭제한 뒤 새로 업로드해주세요.'); return; }
+  editingFileId = fileId;
+  pendingFile = file.file;
+  pendingFileName = file.fileName;
+  await handleFileUpload(file.file, (table) => { rawTable = table; showMapping(); });
+  document.getElementById('mapSection').scrollIntoView({ block: 'center', behavior: 'smooth' });
+}
+
+function toggleFileHidden(fileId){
+  if(activePlatformId === '__all__'){ alert('전체보기에서는 변경할 수 없습니다. 플랫폼 탭을 선택해주세요.'); return; }
+  const file = uploadedFiles.find(f => f.id === fileId);
+  if(!file) return;
+  file.hidden = !file.hidden;
+  const included = !file.hidden;
+  records.forEach(r => { if(r.fileId === fileId) r.included = included; });
+  adRecords.forEach(a => { if(a.fileId === fileId) a.included = included; });
+  costRecords.forEach(c => { if(c.fileId === fileId) c.included = included; });
+  savePlatformData();
+  renderUploadedFiles();
+  renderSearchResults();
+  renderAdList();
+  renderCostList();
+  if(records.length) computeAndRenderReport(); else clearReportUI();
+}
+
+function deleteUploadedFile(fileId){
+  if(activePlatformId === '__all__'){ alert('전체보기에서는 삭제할 수 없습니다. 플랫폼 탭을 선택해주세요.'); return; }
+  const file = uploadedFiles.find(f => f.id === fileId);
+  if(!file) return;
+  if(!confirm(`"${file.fileName}" 파일에서 불러온 데이터를 모두 삭제할까요? 되돌릴 수 없습니다.`)) return;
+  records = records.filter(r => r.fileId !== fileId);
+  adRecords = adRecords.filter(a => a.fileId !== fileId);
+  costRecords = costRecords.filter(c => c.fileId !== fileId);
+  uploadedFiles = uploadedFiles.filter(f => f.id !== fileId);
+  editingSalesIndex = null; editingAdIndex = null; editingCostIndex = null;
+  savePlatformData();
+  renderUploadedFiles();
+  renderSearchResults();
+  renderAdList();
+  renderCostList();
+  if(records.length){ computeAndRenderReport(); } else clearReportUI();
 }
 
 // ---------- 파일 없이 직접 한 건씩 입력해서 추가 ----------
@@ -671,18 +733,18 @@ function addManualSalesRecord(){
   document.getElementById('manualSalesProduct').value = '';
   document.getElementById('manualSalesAmount').value = '';
   document.getElementById('manualSalesCustomer').value = '';
-  records.push({ date, product, amount, qty, customer });
+  records.push({ date, product, amount, qty, customer, fileId: null });
   buildReport();
 }
 
 function addManualAdRecord(){
   if(activePlatformId === '__all__'){ alert('전체보기에서는 데이터를 추가할 수 없습니다. 플랫폼 탭을 선택하거나 새로 추가해주세요.'); return; }
   const date = document.getElementById('manualAdDate').value;
-  const amount = toNumber(document.getElementById('manualAdAmount').value);
+  const amount = Math.abs(toNumber(document.getElementById('manualAdAmount').value));
   const channel = document.getElementById('manualAdChannel').value.trim();
   const product = document.getElementById('manualAdProduct').value.trim();
   if(!date || isNaN(amount)){ alert('날짜와 광고비는 필수입니다.'); return; }
-  adRecords.push({ date, amount, channel: channel || '(채널없음)', product });
+  adRecords.push({ date, amount, channel: channel || '(채널없음)', product, fileId: null });
   document.getElementById('manualAdAmount').value = '';
   document.getElementById('manualAdChannel').value = '';
   document.getElementById('manualAdProduct').value = '';
@@ -695,9 +757,9 @@ function addManualAdRecord(){
 function addManualCostRecord(){
   if(activePlatformId === '__all__'){ alert('전체보기에서는 데이터를 추가할 수 없습니다. 플랫폼 탭을 선택하거나 새로 추가해주세요.'); return; }
   const product = document.getElementById('manualCostProduct').value.trim();
-  const amount = toNumber(document.getElementById('manualCostAmount').value);
+  const amount = Math.abs(toNumber(document.getElementById('manualCostAmount').value));
   if(!product || isNaN(amount)){ alert('상품명과 원가는 필수입니다.'); return; }
-  costMap[product] = amount;
+  costRecords.push({ product, amount, fileId: null });
   document.getElementById('manualCostProduct').value = '';
   document.getElementById('manualCostAmount').value = '';
   renderCostList();
@@ -734,7 +796,8 @@ function renderAdList(){
               <td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="cancelEditAdRecord()">취소</button></td>
             </tr>`;
           }
-          return `<tr>${showPlatform ? `<td>${escapeHtml(r.platformName||'-')}</td>` : ''}<td>${r.date}</td><td>${won(r.amount)}</td><td>${escapeHtml(r.channel||'-')}</td><td>${escapeHtml(r.product||'-')}</td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="editAdRecord(${i})">수정</button></td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="deleteAdRecord(${i})" title="삭제">🗑</button></td></tr>`;
+          const off = r.included === false;
+          return `<tr style="${off ? 'opacity:.5;' : ''}">${showPlatform ? `<td>${escapeHtml(r.platformName||'-')}</td>` : ''}<td>${r.date}</td><td>${won(r.amount)}</td><td>${escapeHtml(r.channel||'-')}</td><td>${escapeHtml(r.product||'-')}</td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="editAdRecord(${i})">수정</button></td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="deleteAdRecord(${i})" title="삭제">🗑</button></td></tr>`;
         }).join('')}</tbody>
       </table>
     </div>
@@ -755,7 +818,7 @@ function cancelEditAdRecord(){
 
 function saveAdRecordEdit(i){
   const date = document.getElementById('editAdDate_'+i).value;
-  const amount = toNumber(document.getElementById('editAdAmount_'+i).value);
+  const amount = Math.abs(toNumber(document.getElementById('editAdAmount_'+i).value));
   const channel = document.getElementById('editAdChannel_'+i).value.trim();
   const product = document.getElementById('editAdProduct_'+i).value.trim();
   if(!date || isNaN(amount)){ alert('날짜와 광고비는 필수입니다.'); return; }
@@ -782,23 +845,24 @@ let editingCostIndex = null;
 
 function renderCostList(){
   const el = document.getElementById('costListBody');
-  const products = Object.keys(costMap);
-  document.getElementById('costListCount').textContent = products.length;
-  if(!products.length){ el.innerHTML = '<div class="empty">불러온 원가 데이터가 없습니다.</div>'; return; }
+  document.getElementById('costListCount').textContent = costRecords.length;
+  if(!costRecords.length){ el.innerHTML = '<div class="empty">불러온 원가 데이터가 없습니다.</div>'; return; }
+  const showPlatform = costRecords.some(r=>r.platformName);
   el.innerHTML = `
     <div class="table-wrap">
       <table>
-        <thead><tr><th>상품명</th><th>개당 원가</th><th colspan="2"></th></tr></thead>
-        <tbody>${products.map((p,i) => {
+        <thead><tr>${showPlatform ? '<th>플랫폼</th>' : ''}<th>상품명</th><th>개당 원가</th><th colspan="2"></th></tr></thead>
+        <tbody>${costRecords.map((r,i) => {
           if(i === editingCostIndex){
-            return `<tr>
-              <td><input type="text" id="editCostProduct_${i}" value="${escapeHtml(p)}" style="padding:4px 6px;font-size:12px;" /></td>
-              <td><input type="number" id="editCostAmount_${i}" value="${costMap[p]}" style="padding:4px 6px;font-size:12px;width:90px;" /></td>
+            return `<tr>${showPlatform ? `<td>${escapeHtml(r.platformName||'-')}</td>` : ''}
+              <td><input type="text" id="editCostProduct_${i}" value="${escapeHtml(r.product)}" style="padding:4px 6px;font-size:12px;" /></td>
+              <td><input type="number" id="editCostAmount_${i}" value="${r.amount}" style="padding:4px 6px;font-size:12px;width:90px;" /></td>
               <td><button type="button" class="btn-primary" style="padding:3px 8px;font-size:11px;" onclick="saveCostRecordEdit(${i})">저장</button></td>
               <td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="cancelEditCostRecord()">취소</button></td>
             </tr>`;
           }
-          return `<tr><td>${escapeHtml(p)}</td><td>${won(costMap[p])}</td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="editCostRecord(${i})">수정</button></td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="deleteCostRecord(${i})" title="삭제">🗑</button></td></tr>`;
+          const off = r.included === false;
+          return `<tr style="${off ? 'opacity:.5;' : ''}">${showPlatform ? `<td>${escapeHtml(r.platformName||'-')}</td>` : ''}<td>${escapeHtml(r.product)}</td><td>${won(r.amount)}</td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="editCostRecord(${i})">수정</button></td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="deleteCostRecord(${i})" title="삭제">🗑</button></td></tr>`;
         }).join('')}</tbody>
       </table>
     </div>
@@ -807,7 +871,7 @@ function renderCostList(){
 
 function editCostRecord(i){
   if(activePlatformId === '__all__'){ alert('전체보기에서는 개별 데이터를 수정할 수 없습니다. 플랫폼 탭을 선택해주세요.'); return; }
-  if(Object.keys(costMap)[i] == null) return;
+  if(!costRecords[i]) return;
   editingCostIndex = i;
   renderCostList();
 }
@@ -818,13 +882,11 @@ function cancelEditCostRecord(){
 }
 
 function saveCostRecordEdit(i){
-  const oldProduct = Object.keys(costMap)[i];
-  if(oldProduct == null) return;
-  const newProduct = document.getElementById('editCostProduct_'+i).value.trim();
-  const amount = toNumber(document.getElementById('editCostAmount_'+i).value);
-  if(!newProduct || isNaN(amount)){ alert('상품명과 원가는 필수입니다.'); return; }
-  if(newProduct !== oldProduct) delete costMap[oldProduct];
-  costMap[newProduct] = amount;
+  if(!costRecords[i]) return;
+  const product = document.getElementById('editCostProduct_'+i).value.trim();
+  const amount = Math.abs(toNumber(document.getElementById('editCostAmount_'+i).value));
+  if(!product || isNaN(amount)){ alert('상품명과 원가는 필수입니다.'); return; }
+  costRecords[i] = { ...costRecords[i], product, amount };
   editingCostIndex = null;
   savePlatformData();
   renderCostList();
@@ -833,10 +895,9 @@ function saveCostRecordEdit(i){
 
 function deleteCostRecord(i){
   if(activePlatformId === '__all__'){ alert('전체보기에서는 개별 데이터를 삭제할 수 없습니다. 플랫폼 탭을 선택해주세요.'); return; }
-  const p = Object.keys(costMap)[i];
-  if(p == null) return;
-  if(!confirm(`"${p}" 원가 데이터를 삭제할까요? 되돌릴 수 없습니다.`)) return;
-  delete costMap[p];
+  if(!costRecords[i]) return;
+  if(!confirm(`"${costRecords[i].product}" 원가 데이터를 삭제할까요? 되돌릴 수 없습니다.`)) return;
+  costRecords.splice(i, 1);
   if(editingCostIndex === i) editingCostIndex = null;
   savePlatformData();
   renderCostList();
@@ -860,14 +921,11 @@ function saveFormatPreset(type){
     };
   } else if(type === 'ad'){
     roles = {
-      date: document.getElementById('mapAdDate').value,
       amount: document.getElementById('mapAdAmount').value,
-      channel: document.getElementById('mapAdChannel').value,
-      product: document.getElementById('mapAdProduct').value
+      channel: document.getElementById('mapAdChannel').value
     };
   } else {
     roles = {
-      product: document.getElementById('mapCostProduct').value,
       amount: document.getElementById('mapCostAmount').value
     };
   }
@@ -1121,40 +1179,20 @@ function decodeTextBuffer(buf){
 
 document.getElementById('dataFile').addEventListener('change', (e) => {
   const file = e.target.files[0];
+  pendingFile = file;
   pendingFileName = file ? file.name : null;
   lastAppliedPresetName = { sales: null, ad: null, cost: null };
-  handleFileUpload(file, (table) => {
-    rawTable = table;
-    selectedFileTypes = new Set(['sales']);
-    showMapping();
-    showAdMapping();
-    showCostMapping();
-    renderFileTypeUI();
-    document.getElementById('typeSection').style.display = 'block';
-  });
+  editingFileId = null;
+  handleFileUpload(file, (table) => { rawTable = table; showMapping(); });
 });
-
-function toggleFileType(type){
-  if(selectedFileTypes.has(type)) selectedFileTypes.delete(type);
-  else selectedFileTypes.add(type);
-  renderFileTypeUI();
-}
-
-function renderFileTypeUI(){
-  ['sales','ad','cost'].forEach(t => {
-    document.getElementById('typeBtn_'+t).classList.toggle('active', selectedFileTypes.has(t));
-    document.getElementById(t+'MapBlock').style.display = selectedFileTypes.has(t) ? 'block' : 'none';
-  });
-}
 
 function showMapping(){
   const sel = (id) => document.getElementById(id);
-  ['mapDate','mapProduct','mapAmount'].forEach(id=>{
-    sel(id).innerHTML = rawTable.headers.map(h=>`<option value="${escapeHtml(h)}">${escapeHtml(h)}</option>`).join('');
+  const headerOpts = rawTable.headers.map(h=>`<option value="${escapeHtml(h)}">${escapeHtml(h)}</option>`).join('');
+  ['mapDate','mapProduct'].forEach(id => { sel(id).innerHTML = headerOpts; });
+  ['mapAmount','mapQty','mapStatus','mapCustomer','mapAdAmount','mapAdChannel','mapCostAmount'].forEach(id => {
+    sel(id).innerHTML = '<option value="">- 없음 -</option>' + headerOpts;
   });
-  sel('mapQty').innerHTML = '<option value="">- 없음 -</option>' + rawTable.headers.map(h=>`<option value="${escapeHtml(h)}">${escapeHtml(h)}</option>`).join('');
-  sel('mapStatus').innerHTML = '<option value="">- 없음 -</option>' + rawTable.headers.map(h=>`<option value="${escapeHtml(h)}">${escapeHtml(h)}</option>`).join('');
-  sel('mapCustomer').innerHTML = '<option value="">- 없음 -</option>' + rawTable.headers.map(h=>`<option value="${escapeHtml(h)}">${escapeHtml(h)}</option>`).join('');
   // 흔한 컬럼명 자동 추정
   const guess = (cands) => rawTable.headers.find(h => cands.some(c => h.includes(c)));
   if(guess(['날짜','일자','date'])) sel('mapDate').value = guess(['날짜','일자','date']);
@@ -1163,7 +1201,11 @@ function showMapping(){
   if(guess(['수량','qty'])) sel('mapQty').value = guess(['수량','qty']);
   if(guess(['상태','주문상태','status'])) sel('mapStatus').value = guess(['상태','주문상태','status']);
   if(guess(['구매자','회원','고객','customer','buyer'])) sel('mapCustomer').value = guess(['구매자','회원','고객','customer','buyer']);
-  document.getElementById('salesMapFields').open = true;
+  if(guess(['광고비','광고 비용','ad spend','adspend'])) sel('mapAdAmount').value = guess(['광고비','광고 비용','ad spend','adspend']);
+  if(guess(['채널','매체','channel'])) sel('mapAdChannel').value = guess(['채널','매체','channel']);
+  if(guess(['원가','매입가','제조원가','cost'])) sel('mapCostAmount').value = guess(['원가','매입가','제조원가','cost']);
+  document.getElementById('mapFieldsDetails').open = true;
+  document.getElementById('mapSection').style.display = 'block';
 }
 
 function toNumber(v){
@@ -1188,7 +1230,7 @@ function toISODate(v){
 
 let lastExcluded = { count: 0, statuses: [] };
 
-function applySalesFromRawTable(){
+function applySalesFromRawTable(fileId){
   const dCol = document.getElementById('mapDate').value;
   const pCol = document.getElementById('mapProduct').value;
   const aCol = document.getElementById('mapAmount').value;
@@ -1212,97 +1254,89 @@ function applySalesFromRawTable(){
     product: r[pi] || '(상품명없음)',
     amount: toNumber(r[ai]),
     qty: qi > -1 ? toNumber(r[qi]) : 1,
-    customer: cui > -1 ? (r[cui] || '') : ''
+    customer: cui > -1 ? (r[cui] || '') : '',
+    fileId
   })).filter(r => r.date && !isNaN(r.amount));
 
   records = records.concat(newRecords);
   lastExcluded = { count: lastExcluded.count + excludedCount, statuses: [...excludedStatuses] };
-  return lastAppliedPresetName.sales || '직접 매핑';
+  return { presetName: lastAppliedPresetName.sales || '직접 매핑', count: newRecords.length };
 }
 
-// ---------- 광고비 ----------
-function showAdMapping(){
-  const sel = (id) => document.getElementById(id);
-  ['mapAdDate','mapAdAmount'].forEach(id=>{
-    sel(id).innerHTML = rawTable.headers.map(h=>`<option value="${escapeHtml(h)}">${escapeHtml(h)}</option>`).join('');
-  });
-  sel('mapAdChannel').innerHTML = '<option value="">- 없음 -</option>' + rawTable.headers.map(h=>`<option value="${escapeHtml(h)}">${escapeHtml(h)}</option>`).join('');
-  sel('mapAdProduct').innerHTML = '<option value="">- 없음 -</option>' + rawTable.headers.map(h=>`<option value="${escapeHtml(h)}">${escapeHtml(h)}</option>`).join('');
-  const guess = (cands) => rawTable.headers.find(h => cands.some(c => h.includes(c)));
-  if(guess(['날짜','일자','date'])) sel('mapAdDate').value = guess(['날짜','일자','date']);
-  if(guess(['광고비','비용','지출','금액','amount','cost','spend'])) sel('mapAdAmount').value = guess(['광고비','비용','지출','금액','amount','cost','spend']);
-  if(guess(['채널','매체','channel'])) sel('mapAdChannel').value = guess(['채널','매체','channel']);
-  if(guess(['상품','품목','캠페인','product','item','campaign'])) sel('mapAdProduct').value = guess(['상품','품목','캠페인','product','item','campaign']);
-  document.getElementById('adMapFields').open = true;
-}
-
-function applyAdFromRawTable(){
-  const dCol = document.getElementById('mapAdDate').value;
+function applyAdFromRawTable(fileId){
+  const dCol = document.getElementById('mapDate').value;
+  const pCol = document.getElementById('mapProduct').value;
   const aCol = document.getElementById('mapAdAmount').value;
   const cCol = document.getElementById('mapAdChannel').value;
-  const pCol = document.getElementById('mapAdProduct').value;
   const hi = rawTable.headers.indexOf.bind(rawTable.headers);
   const di = hi(dCol), ai = hi(aCol), ci = cCol ? hi(cCol) : -1, pi = pCol ? hi(pCol) : -1;
 
   const newAdRecords = rawTable.rows.filter(r => r.length > 1).map(r => ({
     date: toISODate(r[di]),
-    amount: toNumber(r[ai]),
+    amount: Math.abs(toNumber(r[ai])),
     channel: ci > -1 ? (r[ci] || '(채널없음)') : '(채널없음)',
-    product: pi > -1 ? (r[pi] || '') : ''
+    product: pi > -1 ? (r[pi] || '') : '',
+    fileId
   })).filter(r => r.date && !isNaN(r.amount));
 
   adRecords = adRecords.concat(newAdRecords);
-  return lastAppliedPresetName.ad || '직접 매핑';
+  return { presetName: lastAppliedPresetName.ad || '직접 매핑', count: newAdRecords.length };
 }
 
-// ---------- 원가 ----------
-function showCostMapping(){
-  const sel = (id) => document.getElementById(id);
-  ['mapCostProduct','mapCostAmount'].forEach(id=>{
-    sel(id).innerHTML = rawTable.headers.map(h=>`<option value="${escapeHtml(h)}">${escapeHtml(h)}</option>`).join('');
-  });
-  const guess = (cands) => rawTable.headers.find(h => cands.some(c => h.includes(c)));
-  if(guess(['상품','품목','product','item'])) sel('mapCostProduct').value = guess(['상품','품목','product','item']);
-  if(guess(['원가','매입가','제조원가','cost'])) sel('mapCostAmount').value = guess(['원가','매입가','제조원가','cost']);
-  document.getElementById('costMapFields').open = true;
-}
-
-function applyCostFromRawTable(){
-  const pCol = document.getElementById('mapCostProduct').value;
+function applyCostFromRawTable(fileId){
+  const pCol = document.getElementById('mapProduct').value;
   const aCol = document.getElementById('mapCostAmount').value;
   const hi = rawTable.headers.indexOf.bind(rawTable.headers);
   const pi = hi(pCol), ai = hi(aCol);
 
-  rawTable.rows.filter(r => r.length > 1).forEach(r => {
-    const product = r[pi];
-    const unitCost = toNumber(r[ai]);
-    if(product) costMap[product] = unitCost;
-  });
-  return lastAppliedPresetName.cost || '직접 매핑';
+  const newCostRecords = rawTable.rows.filter(r => r.length > 1).map(r => ({
+    product: r[pi],
+    amount: Math.abs(toNumber(r[ai])),
+    fileId
+  })).filter(r => r.product);
+
+  costRecords = costRecords.concat(newCostRecords);
+  return { presetName: lastAppliedPresetName.cost || '직접 매핑', count: newCostRecords.length };
 }
 
-function applyUnifiedMapping(){
+function applyMapping(){
   if(activePlatformId === '__all__'){ alert('전체보기에서는 데이터를 추가할 수 없습니다. 플랫폼 탭을 선택하거나 새로 추가해주세요.'); return; }
-  if(!selectedFileTypes.size){ alert('매출/광고비/원가 중 이 파일에 있는 유형을 선택해주세요.'); return; }
+  const dCol = document.getElementById('mapDate').value;
+  const pCol = document.getElementById('mapProduct').value;
+  const aCol = document.getElementById('mapAmount').value;
+  const adCol = document.getElementById('mapAdAmount').value;
+  const costCol = document.getElementById('mapCostAmount').value;
+  if(!aCol && !adCol && !costCol){ alert('매출액·광고비·원가 중 하나 이상 컬럼을 지정해주세요.'); return; }
+  if((aCol || adCol) && !dCol){ alert('날짜 컬럼을 지정해주세요.'); return; }
+  if((aCol || costCol) && !pCol){ alert('상품명 컬럼을 지정해주세요.'); return; }
+
+  const fileId = editingFileId != null ? editingFileId : nextFileId++;
+  if(editingFileId != null){
+    records = records.filter(r => r.fileId !== fileId);
+    adRecords = adRecords.filter(a => a.fileId !== fileId);
+    costRecords = costRecords.filter(c => c.fileId !== fileId);
+  }
 
   const parts = [];
-  const hadSales = selectedFileTypes.has('sales');
-  if(hadSales) parts.push({ type: 'sales', presetName: applySalesFromRawTable() });
-  if(selectedFileTypes.has('ad')) parts.push({ type: 'ad', presetName: applyAdFromRawTable() });
-  if(selectedFileTypes.has('cost')) parts.push({ type: 'cost', presetName: applyCostFromRawTable() });
+  let hadSales = false;
+  if(aCol){ parts.push({ type: 'sales', ...applySalesFromRawTable(fileId) }); hadSales = true; }
+  if(adCol) parts.push({ type: 'ad', ...applyAdFromRawTable(fileId) });
+  if(costCol) parts.push({ type: 'cost', ...applyCostFromRawTable(fileId) });
 
-  uploadedFiles.push({ fileName: pendingFileName || '(파일명 확인 불가)', parts });
+  const fileEntry = { id: fileId, fileName: pendingFileName || '(파일명 확인 불가)', hidden: false, file: pendingFile, parts };
+  const existingIdx = uploadedFiles.findIndex(f => f.id === fileId);
+  if(existingIdx > -1) uploadedFiles[existingIdx] = fileEntry; else uploadedFiles.push(fileEntry);
   renderUploadedFiles();
   renderAdList();
   renderCostList();
 
+  pendingFile = null;
   pendingFileName = null;
   lastAppliedPresetName = { sales: null, ad: null, cost: null };
+  editingFileId = null;
   rawTable = null;
-  selectedFileTypes = new Set();
-  renderFileTypeUI();
   document.getElementById('dataFile').value = '';
-  document.getElementById('typeSection').style.display = 'none';
+  document.getElementById('mapSection').style.display = 'none';
 
   if(hadSales){ buildReport(); return; }
   savePlatformData();
@@ -1325,8 +1359,10 @@ function buildReport(){
 }
 
 function computeAndRenderReport(){
-  const records = activeRecords(); // OFF로 꺼둔 데이터는 전체 계산에서 제외 (아래는 기존 코드 그대로)
+  const records = activeRecords(); // OFF로 꺼둔(또는 숨긴 파일의) 데이터는 전체 계산에서 제외 (아래는 기존 코드 그대로)
   if(!records.length){ clearReportUI(); return; }
+  const adRecords = activeAdRecords();
+  const costMap = activeCostMap();
   const byDate = {};
   records.forEach(r => { byDate[r.date] = (byDate[r.date]||0) + r.amount; });
   const dates = Object.keys(byDate).sort();
@@ -1438,7 +1474,9 @@ function computeAndRenderReport(){
 
 // ---------- 품목별 월별 상세 (광고 ON/OFF 비교) ----------
 function computeMonthlyBreakdown(){
-  const records = activeRecords(); // OFF로 꺼둔 데이터는 여기서도 제외
+  const records = activeRecords(); // OFF로 꺼둔(또는 숨긴 파일의) 데이터는 여기서도 제외
+  const adRecords = activeAdRecords();
+  const costMap = activeCostMap();
   const hasAdProduct = adRecords.some(a => a.product);
   const hasCost = Object.keys(costMap).length > 0;
 
@@ -1957,30 +1995,6 @@ function deleteRecord(idx){
   if(records.length) computeAndRenderReport(); else clearReportUI();
 }
 
-function deleteAllData(){
-  if(activePlatformId === '__all__'){ alert('전체보기에서는 데이터를 삭제할 수 없습니다. 플랫폼 탭을 선택해주세요.'); return; }
-  if(!records.length && !adRecords.length && !Object.keys(costMap).length){ alert('삭제할 데이터가 없습니다.'); return; }
-  if(!confirm('이 플랫폼의 매출·광고비·원가 데이터를 모두 삭제할까요? 되돌릴 수 없습니다.')) return;
-  records = []; adRecords = []; costMap = {};
-  rawTable = null;
-  selectedFileTypes = new Set();
-  pendingFileName = null;
-  lastAppliedPresetName = { sales: null, ad: null, cost: null };
-  uploadedFiles = [];
-  lastExcluded = { count: 0, statuses: [] };
-  searchInclusionFilter = 'all';
-  editingSalesIndex = null; editingAdIndex = null; editingCostIndex = null;
-  document.getElementById('searchInclusionBtn').textContent = SEARCH_INCLUSION_LABELS.all;
-  document.getElementById('dataFile').value = '';
-  document.getElementById('typeSection').style.display = 'none';
-  renderFileTypeUI();
-  renderUploadedFiles();
-  renderAdList();
-  renderCostList();
-  savePlatformData();
-  clearReportUI();
-}
-
 function renderSearchResults(){
   const term = document.getElementById('searchInput').value.trim().toLowerCase();
   const el = document.getElementById('searchResults');
@@ -2136,7 +2150,6 @@ function resetAll(){
 // ---------- 초기 로드: 활성 플랫폼 탭의 저장된 데이터 복원 ----------
 renderPlatformTabs();
 loadPlatformData(activePlatformId);
-renderFileTypeUI();
 renderUploadedFiles();
 renderAdList();
 renderCostList();
