@@ -26,9 +26,10 @@
   .card h2{font-size:15px;margin:0 0 12px;display:flex;align-items:center;gap:8px;}
   .card h2 .n{color:var(--muted);font-weight:400;font-size:12px;}
   label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px;}
-  input[type=text], input[type=file], input[type=number], textarea, select{
+  input[type=text], input[type=file], input[type=number], input[type=date], textarea, select{
     width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:8px;
     color:var(--text);padding:9px 10px;font-size:13px;font-family:inherit;resize:vertical;
+    color-scheme:dark;
   }
   textarea{min-height:70px;}
   button{cursor:pointer;border:none;border-radius:9px;padding:9px 14px;font-size:13px;font-weight:600;font-family:inherit;}
@@ -127,7 +128,7 @@
         <h2>📥 정산/매출 데이터 불러오기</h2>
         <input type="file" id="csvFile" accept=".csv,.txt,.xlsx" />
         <div class="btn-row">
-          <button class="btn-ghost" onclick="loadSample()">샘플 데이터로 체험하기</button>
+          <button class="btn-ghost" onclick="loadSample()">샘플 데이터</button>
           <button class="btn-ghost" onclick="downloadTemplate('sales')">샘플 양식 다운로드</button>
         </div>
 
@@ -159,8 +160,8 @@
           </div>
         </div>
 
-        <details style="margin-top:10px;">
-          <summary style="cursor:pointer;color:var(--muted);font-size:12px;">파일 없이 직접 입력해서 추가</summary>
+        <details style="margin-top:10px;" id="salesManualDetails">
+          <summary style="cursor:pointer;color:var(--muted);font-size:12px;">파일 없이 직접 입력해서 추가·수정</summary>
           <div class="map-row" style="margin-top:8px;">
             <div><label>날짜</label><input type="date" id="manualSalesDate" /></div>
             <div><label>상품명</label><input type="text" id="manualSalesProduct" /></div>
@@ -173,7 +174,7 @@
             <div><label>구매자 (선택)</label><input type="text" id="manualSalesCustomer" /></div>
             <div></div>
           </div>
-          <div class="btn-row"><button class="btn-primary" onclick="addManualSalesRecord()">추가</button></div>
+          <div class="btn-row"><button class="btn-primary" id="salesManualSubmitBtn" onclick="addManualSalesRecord()">추가</button></div>
         </details>
       </div>
 
@@ -181,7 +182,7 @@
         <h2>📢 광고비 데이터 불러오기 <span class="n">(선택 · ROAS 계산용)</span></h2>
         <input type="file" id="adCsvFile" accept=".csv,.txt,.xlsx" />
         <div class="btn-row">
-          <button class="btn-ghost" onclick="loadAdSample()">샘플 광고비 데이터로 체험하기</button>
+          <button class="btn-ghost" onclick="loadAdSample()">샘플 데이터</button>
           <button class="btn-ghost" onclick="downloadTemplate('ad')">샘플 양식 다운로드</button>
         </div>
 
@@ -205,8 +206,8 @@
           </div>
         </div>
 
-        <details style="margin-top:10px;">
-          <summary style="cursor:pointer;color:var(--muted);font-size:12px;">파일 없이 직접 입력해서 추가</summary>
+        <details style="margin-top:10px;" id="adManualDetails">
+          <summary style="cursor:pointer;color:var(--muted);font-size:12px;">파일 없이 직접 입력해서 추가·수정</summary>
           <div class="map-row" style="margin-top:8px;">
             <div><label>날짜</label><input type="date" id="manualAdDate" /></div>
             <div><label>광고비</label><input type="number" id="manualAdAmount" /></div>
@@ -215,7 +216,12 @@
             <div><label>채널 (선택)</label><input type="text" id="manualAdChannel" /></div>
             <div><label>상품명 (선택)</label><input type="text" id="manualAdProduct" /></div>
           </div>
-          <div class="btn-row"><button class="btn-primary" onclick="addManualAdRecord()">추가</button></div>
+          <div class="btn-row"><button class="btn-primary" id="adManualSubmitBtn" onclick="addManualAdRecord()">추가</button></div>
+        </details>
+
+        <details style="margin-top:10px;">
+          <summary style="cursor:pointer;color:var(--muted);font-size:12px;">불러온 광고비 데이터 보기·수정·삭제 (<span id="adListCount">0</span>건)</summary>
+          <div id="adListBody" style="margin-top:8px;"></div>
         </details>
       </div>
 
@@ -223,7 +229,7 @@
         <h2>🏷️ 원가 데이터 불러오기 <span class="n">(선택 · 이익 계산용)</span></h2>
         <input type="file" id="costCsvFile" accept=".csv,.txt,.xlsx" />
         <div class="btn-row">
-          <button class="btn-ghost" onclick="loadCostSample()">샘플 원가 데이터로 체험하기</button>
+          <button class="btn-ghost" onclick="loadCostSample()">샘플 데이터</button>
           <button class="btn-ghost" onclick="downloadTemplate('cost')">샘플 양식 다운로드</button>
         </div>
 
@@ -243,13 +249,18 @@
           </div>
         </div>
 
-        <details style="margin-top:10px;">
-          <summary style="cursor:pointer;color:var(--muted);font-size:12px;">파일 없이 직접 입력해서 추가</summary>
+        <details style="margin-top:10px;" id="costManualDetails">
+          <summary style="cursor:pointer;color:var(--muted);font-size:12px;">파일 없이 직접 입력해서 추가·수정</summary>
           <div class="map-row" style="margin-top:8px;">
             <div><label>상품명</label><input type="text" id="manualCostProduct" /></div>
             <div><label>개당 원가</label><input type="number" id="manualCostAmount" /></div>
           </div>
-          <div class="btn-row"><button class="btn-primary" onclick="addManualCostRecord()">추가</button></div>
+          <div class="btn-row"><button class="btn-primary" id="costManualSubmitBtn" onclick="addManualCostRecord()">추가</button></div>
+        </details>
+
+        <details style="margin-top:10px;">
+          <summary style="cursor:pointer;color:var(--muted);font-size:12px;">불러온 원가 데이터 보기·수정·삭제 (<span id="costListCount">0</span>건)</summary>
+          <div id="costListBody" style="margin-top:8px;"></div>
         </details>
       </div>
 
@@ -270,6 +281,10 @@
 
       <div class="card">
         <h2>🔍 데이터 검색 <span class="n">(품목명 · 구매자명 등)</span></h2>
+        <div class="btn-row" style="margin-top:0;margin-bottom:8px;">
+          <button type="button" class="btn-ghost" id="searchInclusionBtn" onclick="cycleSearchInclusionFilter()" style="font-size:11px;padding:4px 8px;opacity:.75;">전체 보기</button>
+          <button type="button" class="btn-ghost" onclick="deleteAllData()" style="font-size:11px;padding:4px 8px;opacity:.75;">전체 데이터 삭제</button>
+        </div>
         <div style="position:relative;">
           <input type="text" id="searchInput" placeholder="검색어 입력 후 아래 목록에서 클릭하세요 (예: 반팔티, 홍길동, 2026-06)" oninput="onSearchInput()" onkeydown="onSearchKeydown(event)" autocomplete="off" />
           <div id="searchSuggestBox" class="suggest-box" style="display:none;"></div>
@@ -340,7 +355,8 @@
 
 <script>
 let rawTable = null;   // {headers:[], rows:[[...]]}
-let records = [];      // normalized [{date, product, amount, qty}]
+let records = [];      // normalized [{date, product, amount, qty, included}] — included===false는 계산에서 제외(소프트 OFF)
+function activeRecords(){ return records.filter(r => r.included !== false); }
 let adRawTable = null; // {headers:[], rows:[[...]]}
 let adRecords = [];    // normalized [{date, amount, channel, product}]
 let costRawTable = null; // {headers:[], rows:[[...]]}
@@ -461,6 +477,9 @@ function switchPlatform(id){
   document.getElementById('mapSection').style.display = 'none';
   document.getElementById('adMapSection').style.display = 'none';
   document.getElementById('costMapSection').style.display = 'none';
+  editingSalesIndex = null; editingAdIndex = null; editingCostProduct = null;
+  renderAdList();
+  renderCostList();
   if(records.length){ resetReportUiState(); computeAndRenderReport(); } else clearReportUI();
 }
 
@@ -578,7 +597,25 @@ function downloadTemplate(type){
   download(t.fileName, csv, 'text/csv;charset=utf-8');
 }
 
-// ---------- 파일 없이 직접 한 건씩 입력해서 추가 ----------
+// ---------- 파일 없이 직접 한 건씩 입력해서 추가·수정 ----------
+let editingSalesIndex = null;
+
+function editSalesRecord(idx){
+  if(activePlatformId === '__all__'){ alert('전체보기에서는 개별 데이터를 수정할 수 없습니다. 플랫폼 탭을 선택해주세요.'); return; }
+  const r = records[idx];
+  if(!r) return;
+  document.getElementById('manualSalesDate').value = r.date;
+  document.getElementById('manualSalesProduct').value = r.product;
+  document.getElementById('manualSalesAmount').value = r.amount;
+  document.getElementById('manualSalesQty').value = r.qty;
+  document.getElementById('manualSalesCustomer').value = r.customer || '';
+  editingSalesIndex = idx;
+  const details = document.getElementById('salesManualDetails');
+  details.open = true;
+  document.getElementById('salesManualSubmitBtn').textContent = '수정 저장';
+  details.scrollIntoView({ block:'center', behavior:'smooth' });
+}
+
 function addManualSalesRecord(){
   if(activePlatformId === '__all__'){ alert('전체보기에서는 데이터를 추가할 수 없습니다. 플랫폼 탭을 선택하거나 새로 추가해주세요.'); return; }
   const date = document.getElementById('manualSalesDate').value;
@@ -587,11 +624,69 @@ function addManualSalesRecord(){
   const qty = toNumber(document.getElementById('manualSalesQty').value) || 1;
   const customer = document.getElementById('manualSalesCustomer').value.trim();
   if(!date || !product || isNaN(amount)){ alert('날짜, 상품명, 매출액은 필수입니다.'); return; }
-  records.push({ date, product, amount, qty, customer });
   document.getElementById('manualSalesProduct').value = '';
   document.getElementById('manualSalesAmount').value = '';
   document.getElementById('manualSalesCustomer').value = '';
+  if(editingSalesIndex !== null){
+    records[editingSalesIndex] = { ...records[editingSalesIndex], date, product, amount, qty, customer };
+    editingSalesIndex = null;
+    document.getElementById('salesManualSubmitBtn').textContent = '추가';
+    savePlatformData();
+    renderSearchResults();
+    computeAndRenderReport();
+    return;
+  }
+  records.push({ date, product, amount, qty, customer });
   buildReport();
+}
+
+let editingAdIndex = null;
+
+function renderAdList(){
+  const el = document.getElementById('adListBody');
+  document.getElementById('adListCount').textContent = adRecords.length;
+  if(!adRecords.length){ el.innerHTML = '<div class="empty">불러온 광고비 데이터가 없습니다.</div>'; return; }
+  const order = adRecords.map((r,i)=>i).sort((a,b)=> adRecords[a].date < adRecords[b].date ? 1 : adRecords[a].date > adRecords[b].date ? -1 : 0);
+  const showPlatform = adRecords.some(r=>r.platformName);
+  const MAX_ROWS = 100;
+  const shown = order.slice(0, MAX_ROWS);
+  el.innerHTML = `
+    ${order.length > MAX_ROWS ? `<p class="note">최근 ${MAX_ROWS}건만 표시 (전체 ${order.length}건)</p>` : ''}
+    <div class="table-wrap">
+      <table>
+        <thead><tr>${showPlatform ? '<th>플랫폼</th>' : ''}<th>날짜</th><th>광고비</th><th>채널</th><th>상품명</th><th></th><th></th></tr></thead>
+        <tbody>${shown.map(i => {
+          const r = adRecords[i];
+          return `<tr>${showPlatform ? `<td>${escapeHtml(r.platformName||'-')}</td>` : ''}<td>${r.date}</td><td>${won(r.amount)}</td><td>${escapeHtml(r.channel||'-')}</td><td>${escapeHtml(r.product||'-')}</td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="editAdRecord(${i})">수정</button></td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="deleteAdRecord(${i})" title="삭제">🗑</button></td></tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function editAdRecord(i){
+  if(activePlatformId === '__all__'){ alert('전체보기에서는 개별 데이터를 수정할 수 없습니다. 플랫폼 탭을 선택해주세요.'); return; }
+  const r = adRecords[i];
+  if(!r) return;
+  document.getElementById('manualAdDate').value = r.date;
+  document.getElementById('manualAdAmount').value = r.amount;
+  document.getElementById('manualAdChannel').value = r.channel === '(채널없음)' ? '' : (r.channel || '');
+  document.getElementById('manualAdProduct').value = r.product || '';
+  editingAdIndex = i;
+  const details = document.getElementById('adManualDetails');
+  details.open = true;
+  document.getElementById('adManualSubmitBtn').textContent = '수정 저장';
+  details.scrollIntoView({ block:'center', behavior:'smooth' });
+}
+
+function deleteAdRecord(i){
+  if(activePlatformId === '__all__'){ alert('전체보기에서는 개별 데이터를 삭제할 수 없습니다. 플랫폼 탭을 선택해주세요.'); return; }
+  if(!adRecords[i]) return;
+  if(!confirm('이 광고비 데이터를 삭제할까요? 되돌릴 수 없습니다.')) return;
+  adRecords.splice(i, 1);
+  savePlatformData();
+  renderAdList();
+  if(records.length) computeAndRenderReport();
 }
 
 function addManualAdRecord(){
@@ -601,12 +696,57 @@ function addManualAdRecord(){
   const channel = document.getElementById('manualAdChannel').value.trim();
   const product = document.getElementById('manualAdProduct').value.trim();
   if(!date || isNaN(amount)){ alert('날짜와 광고비는 필수입니다.'); return; }
-  adRecords.push({ date, amount, channel: channel || '(채널없음)', product });
+  const rec = { date, amount, channel: channel || '(채널없음)', product };
+  if(editingAdIndex !== null){ adRecords[editingAdIndex] = rec; editingAdIndex = null; document.getElementById('adManualSubmitBtn').textContent = '추가'; }
+  else adRecords.push(rec);
   document.getElementById('manualAdAmount').value = '';
   document.getElementById('manualAdChannel').value = '';
   document.getElementById('manualAdProduct').value = '';
-  if(!records.length){ alert('광고비를 추가했습니다. 매출 데이터를 불러오면 ROAS가 함께 계산됩니다.'); return; }
-  buildReport();
+  renderAdList();
+  savePlatformData();
+  if(!records.length){ alert('광고비를 저장했습니다. 매출 데이터를 불러오면 ROAS가 함께 계산됩니다.'); return; }
+  computeAndRenderReport();
+}
+
+let editingCostProduct = null;
+
+function renderCostList(){
+  const el = document.getElementById('costListBody');
+  const products = Object.keys(costMap);
+  document.getElementById('costListCount').textContent = products.length;
+  if(!products.length){ el.innerHTML = '<div class="empty">불러온 원가 데이터가 없습니다.</div>'; return; }
+  el.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>상품명</th><th>개당 원가</th><th></th><th></th></tr></thead>
+        <tbody>${products.map((p,i)=>`<tr><td>${escapeHtml(p)}</td><td>${won(costMap[p])}</td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="editCostRecord(${i})">수정</button></td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="deleteCostRecord(${i})" title="삭제">🗑</button></td></tr>`).join('')}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function editCostRecord(i){
+  if(activePlatformId === '__all__'){ alert('전체보기에서는 개별 데이터를 수정할 수 없습니다. 플랫폼 탭을 선택해주세요.'); return; }
+  const p = Object.keys(costMap)[i];
+  if(p == null) return;
+  document.getElementById('manualCostProduct').value = p;
+  document.getElementById('manualCostAmount').value = costMap[p];
+  editingCostProduct = p;
+  const details = document.getElementById('costManualDetails');
+  details.open = true;
+  document.getElementById('costManualSubmitBtn').textContent = '수정 저장';
+  details.scrollIntoView({ block:'center', behavior:'smooth' });
+}
+
+function deleteCostRecord(i){
+  if(activePlatformId === '__all__'){ alert('전체보기에서는 개별 데이터를 삭제할 수 없습니다. 플랫폼 탭을 선택해주세요.'); return; }
+  const p = Object.keys(costMap)[i];
+  if(p == null) return;
+  if(!confirm(`"${p}" 원가 데이터를 삭제할까요? 되돌릴 수 없습니다.`)) return;
+  delete costMap[p];
+  savePlatformData();
+  renderCostList();
+  if(records.length) computeAndRenderReport();
 }
 
 function addManualCostRecord(){
@@ -614,11 +754,16 @@ function addManualCostRecord(){
   const product = document.getElementById('manualCostProduct').value.trim();
   const amount = toNumber(document.getElementById('manualCostAmount').value);
   if(!product || isNaN(amount)){ alert('상품명과 원가는 필수입니다.'); return; }
+  if(editingCostProduct !== null && editingCostProduct !== product) delete costMap[editingCostProduct];
   costMap[product] = amount;
+  editingCostProduct = null;
+  document.getElementById('costManualSubmitBtn').textContent = '추가';
   document.getElementById('manualCostProduct').value = '';
   document.getElementById('manualCostAmount').value = '';
-  if(!records.length){ alert('원가를 추가했습니다. 매출 데이터를 불러오면 이익이 함께 계산됩니다.'); return; }
-  buildReport();
+  renderCostList();
+  savePlatformData();
+  if(!records.length){ alert('원가를 저장했습니다. 매출 데이터를 불러오면 이익이 함께 계산됩니다.'); return; }
+  computeAndRenderReport();
 }
 
 function saveFormatPreset(type){
@@ -926,6 +1071,8 @@ let lastExcluded = { count: 0, statuses: [] };
 
 function applyMapping(){
   if(activePlatformId === '__all__'){ alert('전체보기에서는 데이터를 추가할 수 없습니다. 플랫폼 탭을 선택하거나 새로 추가해주세요.'); return; }
+  editingSalesIndex = null;
+  document.getElementById('salesManualSubmitBtn').textContent = '추가';
   const dCol = document.getElementById('mapDate').value;
   const pCol = document.getElementById('mapProduct').value;
   const aCol = document.getElementById('mapAmount').value;
@@ -978,6 +1125,8 @@ function showAdMapping(){
 
 function applyAdMapping(){
   if(activePlatformId === '__all__'){ alert('전체보기에서는 데이터를 추가할 수 없습니다. 플랫폼 탭을 선택하거나 새로 추가해주세요.'); return; }
+  editingAdIndex = null;
+  document.getElementById('adManualSubmitBtn').textContent = '추가';
   const dCol = document.getElementById('mapAdDate').value;
   const aCol = document.getElementById('mapAdAmount').value;
   const cCol = document.getElementById('mapAdChannel').value;
@@ -992,7 +1141,9 @@ function applyAdMapping(){
     product: pi > -1 ? (r[pi] || '') : ''
   })).filter(r => r.date && !isNaN(r.amount));
 
+  renderAdList();
   if(!records.length){
+    savePlatformData();
     alert('광고비를 적용했습니다. 매출 데이터를 불러오면 ROAS가 함께 계산됩니다.');
     return;
   }
@@ -1001,6 +1152,8 @@ function applyAdMapping(){
 
 function loadAdSample(){
   if(activePlatformId === '__all__'){ alert('전체보기에서는 데이터를 추가할 수 없습니다. 플랫폼 탭을 선택하거나 새로 추가해주세요.'); return; }
+  editingAdIndex = null;
+  document.getElementById('adManualSubmitBtn').textContent = '추가';
   // 매출 샘플과 같은 상품명을 사용해 품목별 광고 ON/OFF 비교를 데모합니다.
   // - 여름 반팔티: 두 달 내내 광고 집행 (항상 ON)
   // - 냉감 이불커버 세트: 6월엔 광고, 7월엔 광고 중단 (ON→OFF 비교 데모)
@@ -1026,8 +1179,10 @@ function loadAdSample(){
   }
   adRecords = rows;
   document.getElementById('adMapSection').style.display = 'none';
+  renderAdList();
   if(!records.length){
-    alert('샘플 광고비 데이터를 불러왔습니다. "샘플 데이터로 체험하기"로 매출 데이터도 불러오면 ROAS가 함께 계산됩니다.');
+    savePlatformData();
+    alert('샘플 광고비 데이터를 불러왔습니다. "샘플 데이터"로 매출 데이터도 불러오면 ROAS가 함께 계산됩니다.');
     return;
   }
   buildReport();
@@ -1051,6 +1206,8 @@ function showCostMapping(){
 
 function applyCostMapping(){
   if(activePlatformId === '__all__'){ alert('전체보기에서는 데이터를 추가할 수 없습니다. 플랫폼 탭을 선택하거나 새로 추가해주세요.'); return; }
+  editingCostProduct = null;
+  document.getElementById('costManualSubmitBtn').textContent = '추가';
   const pCol = document.getElementById('mapCostProduct').value;
   const aCol = document.getElementById('mapCostAmount').value;
   const hi = costRawTable.headers.indexOf.bind(costRawTable.headers);
@@ -1063,7 +1220,9 @@ function applyCostMapping(){
     if(product) costMap[product] = unitCost;
   });
 
+  renderCostList();
   if(!records.length){
+    savePlatformData();
     alert('원가를 적용했습니다. 매출 데이터를 불러오면 이익이 함께 계산됩니다.');
     return;
   }
@@ -1072,6 +1231,8 @@ function applyCostMapping(){
 
 function loadCostSample(){
   if(activePlatformId === '__all__'){ alert('전체보기에서는 데이터를 추가할 수 없습니다. 플랫폼 탭을 선택하거나 새로 추가해주세요.'); return; }
+  editingCostProduct = null;
+  document.getElementById('costManualSubmitBtn').textContent = '추가';
   const costs = {
     '여름 반팔티 (화이트)': 12000,
     '접이식 미니 선풍기': 9500,
@@ -1082,8 +1243,10 @@ function loadCostSample(){
   };
   costMap = costs;
   document.getElementById('costMapSection').style.display = 'none';
+  renderCostList();
   if(!records.length){
-    alert('샘플 원가 데이터를 불러왔습니다. "샘플 데이터로 체험하기"로 매출 데이터도 불러오면 이익이 함께 계산됩니다.');
+    savePlatformData();
+    alert('샘플 원가 데이터를 불러왔습니다. "샘플 데이터"로 매출 데이터도 불러오면 이익이 함께 계산됩니다.');
     return;
   }
   buildReport();
@@ -1092,6 +1255,8 @@ function loadCostSample(){
 // ---------- 샘플 데이터 ----------
 function loadSample(){
   if(activePlatformId === '__all__'){ alert('전체보기에서는 데이터를 추가할 수 없습니다. 플랫폼 탭을 선택하거나 새로 추가해주세요.'); return; }
+  editingSalesIndex = null;
+  document.getElementById('salesManualSubmitBtn').textContent = '추가';
   const products = ['여름 반팔티 (화이트)','접이식 미니 선풍기','스포츠 물병 1L','캠핑 감성 랜턴','냉감 이불커버 세트','휴대용 목선풍기'];
   const base = [3200000, 1800000, 900000, 1400000, 2600000, 700000];
   const customers = ['홍길동','김영희','이철수','박민수','최지은'];
@@ -1133,6 +1298,8 @@ function buildReport(){
 }
 
 function computeAndRenderReport(){
+  const records = activeRecords(); // OFF로 꺼둔 데이터는 전체 계산에서 제외 (아래는 기존 코드 그대로)
+  if(!records.length){ clearReportUI(); return; }
   const byDate = {};
   records.forEach(r => { byDate[r.date] = (byDate[r.date]||0) + r.amount; });
   const dates = Object.keys(byDate).sort();
@@ -1244,6 +1411,7 @@ function computeAndRenderReport(){
 
 // ---------- 품목별 월별 상세 (광고 ON/OFF 비교) ----------
 function computeMonthlyBreakdown(){
+  const records = activeRecords(); // OFF로 꺼둔 데이터는 여기서도 제외
   const hasAdProduct = adRecords.some(a => a.product);
   const hasCost = Object.keys(costMap).length > 0;
 
@@ -1705,6 +1873,47 @@ function renderSearchKeywords(){
   ).join('');
 }
 
+let searchInclusionFilter = 'all'; // 'all' | 'on' | 'off'
+const SEARCH_INCLUSION_LABELS = { all: '전체 보기', on: 'ON만 보기', off: 'OFF만 보기' };
+
+function cycleSearchInclusionFilter(){
+  searchInclusionFilter = searchInclusionFilter === 'all' ? 'on' : searchInclusionFilter === 'on' ? 'off' : 'all';
+  document.getElementById('searchInclusionBtn').textContent = SEARCH_INCLUSION_LABELS[searchInclusionFilter];
+  renderSearchResults();
+}
+
+function toggleRecordIncluded(idx){
+  if(activePlatformId === '__all__'){ alert('전체보기에서는 개별 데이터를 변경할 수 없습니다. 플랫폼 탭을 선택해주세요.'); return; }
+  const r = records[idx];
+  if(!r) return;
+  r.included = r.included === false ? true : false;
+  savePlatformData();
+  renderSearchResults();
+  computeAndRenderReport();
+}
+
+function deleteRecord(idx){
+  if(activePlatformId === '__all__'){ alert('전체보기에서는 개별 데이터를 삭제할 수 없습니다. 플랫폼 탭을 선택해주세요.'); return; }
+  if(!records[idx]) return;
+  if(!confirm('이 데이터를 삭제할까요? 되돌릴 수 없습니다.')) return;
+  records.splice(idx, 1);
+  savePlatformData();
+  renderSearchResults();
+  if(records.length) computeAndRenderReport(); else clearReportUI();
+}
+
+function deleteAllData(){
+  if(activePlatformId === '__all__'){ alert('전체보기에서는 데이터를 삭제할 수 없습니다. 플랫폼 탭을 선택해주세요.'); return; }
+  if(!records.length && !adRecords.length && !Object.keys(costMap).length){ alert('삭제할 데이터가 없습니다.'); return; }
+  if(!confirm('이 플랫폼의 매출·광고비·원가 데이터를 모두 삭제할까요? 되돌릴 수 없습니다.')) return;
+  records = []; adRecords = []; costMap = {};
+  lastExcluded = { count: 0, statuses: [] };
+  searchInclusionFilter = 'all';
+  document.getElementById('searchInclusionBtn').textContent = SEARCH_INCLUSION_LABELS.all;
+  savePlatformData();
+  clearReportUI();
+}
+
 function renderSearchResults(){
   const term = document.getElementById('searchInput').value.trim().toLowerCase();
   const el = document.getElementById('searchResults');
@@ -1726,18 +1935,25 @@ function renderSearchResults(){
   if(term){
     matches = matches.filter(r => r.product.toLowerCase().includes(term) || (r.customer||'').toLowerCase().includes(term) || r.date.includes(term) || (r.platformName||'').toLowerCase().includes(term));
   }
-  if(!activeSearchKeywords.size && !term){ el.innerHTML = ''; return; }
+  if(searchInclusionFilter !== 'all'){
+    matches = matches.filter(r => searchInclusionFilter === 'on' ? r.included !== false : r.included === false);
+  }
+  if(!activeSearchKeywords.size && !term && searchInclusionFilter === 'all'){ el.innerHTML = ''; return; }
   if(!matches.length){ el.innerHTML = '<div class="empty">일치하는 데이터가 없습니다.</div>'; return; }
-  const totalAmount = matches.reduce((s,r)=>s+r.amount,0);
+  const totalAmount = matches.reduce((s,r)=> s + (r.included === false ? 0 : r.amount), 0);
   const MAX_ROWS = 200;
   const shown = matches.slice(0, MAX_ROWS);
   const showPlatform = vals.platformNames.size > 0;
   el.innerHTML = `
-    <p class="note">${matches.length}건 일치 · 합계 ${won(totalAmount)}${matches.length > MAX_ROWS ? ` (최근 ${MAX_ROWS}건만 표시)` : ''}</p>
+    <p class="note">${matches.length}건 일치 · ON 합계 ${won(totalAmount)}${matches.length > MAX_ROWS ? ` (최근 ${MAX_ROWS}건만 표시)` : ''}</p>
     <div class="table-wrap">
       <table>
-        <thead><tr>${showPlatform ? '<th>플랫폼</th>' : ''}<th>날짜</th><th>상품명</th><th>구매자</th><th>매출액</th></tr></thead>
-        <tbody>${shown.map(r=>`<tr>${showPlatform ? `<td>${escapeHtml(r.platformName||'-')}</td>` : ''}<td>${r.date}</td><td>${escapeHtml(r.product)}</td><td>${escapeHtml(r.customer||'-')}</td><td>${won(r.amount)}</td></tr>`).join('')}</tbody>
+        <thead><tr>${showPlatform ? '<th>플랫폼</th>' : ''}<th>날짜</th><th>상품명</th><th>구매자</th><th>매출액</th><th>상태</th><th></th><th></th></tr></thead>
+        <tbody>${shown.map(r => {
+          const idx = records.indexOf(r);
+          const off = r.included === false;
+          return `<tr style="${off ? 'opacity:.5;' : ''}">${showPlatform ? `<td>${escapeHtml(r.platformName||'-')}</td>` : ''}<td>${r.date}</td><td>${escapeHtml(r.product)}</td><td>${escapeHtml(r.customer||'-')}</td><td>${won(r.amount)}</td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="toggleRecordIncluded(${idx})">${off ? 'OFF' : 'ON'}</button></td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="editSalesRecord(${idx})">수정</button></td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="deleteRecord(${idx})" title="삭제">🗑</button></td></tr>`;
+        }).join('')}</tbody>
       </table>
     </div>
   `;
@@ -1841,6 +2057,8 @@ function resetAll(){
 // ---------- 초기 로드: 활성 플랫폼 탭의 저장된 데이터 복원 ----------
 renderPlatformTabs();
 loadPlatformData(activePlatformId);
+renderAdList();
+renderCostList();
 if(records.length) computeAndRenderReport();
 </script>
 </body>
