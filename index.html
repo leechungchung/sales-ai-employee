@@ -36,8 +36,6 @@
   button{cursor:pointer;border:none;border-radius:9px;padding:9px 14px;font-size:13px;font-weight:600;font-family:inherit;}
   .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;}
   .btn-ghost{background:var(--panel2);color:var(--text);border:1px solid var(--border);}
-  .type-toggle{flex:1;}
-  .type-toggle.active{background:var(--accent);border-color:var(--accent);color:#fff;}
   .file-item{display:flex;align-items:center;gap:4px;margin-top:6px;}
   .file-item-name{flex:1;min-width:0;text-align:left;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 10px;font-size:11.5px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .file-item-name:hover{border-color:var(--accent);}
@@ -182,11 +180,6 @@
 
         <details style="margin-top:10px;">
           <summary style="cursor:pointer;color:var(--muted);font-size:12px;">파일 없이 직접 입력해서 추가</summary>
-          <div class="btn-row" style="margin-top:8px;">
-            <button type="button" class="btn-ghost type-toggle active" id="manualTypeBtn_sales" onclick="setManualType('sales')">매출</button>
-            <button type="button" class="btn-ghost type-toggle" id="manualTypeBtn_ad" onclick="setManualType('ad')">광고비</button>
-            <button type="button" class="btn-ghost type-toggle" id="manualTypeBtn_cost" onclick="setManualType('cost')">원가</button>
-          </div>
 
           <div id="manualSalesFields">
             <div class="map-row" style="margin-top:8px;">
@@ -199,35 +192,19 @@
             </div>
             <div class="map-row">
               <div><label>구매자 (선택)</label><input type="text" id="manualSalesCustomer" /></div>
-              <div></div>
-            </div>
-          </div>
-
-          <div id="manualAdFields" style="display:none;">
-            <div class="map-row" style="margin-top:8px;">
-              <div><label>날짜</label><input type="date" id="manualAdDate" /></div>
-              <div><label>광고비</label><input type="number" id="manualAdAmount" /></div>
+              <div><label>개당 원가 (선택)</label><input type="number" id="manualSalesCost" /></div>
             </div>
             <div class="map-row">
-              <div><label>채널 (선택)</label><input type="text" id="manualAdChannel" /></div>
-              <div><label>상품명 (선택)</label><input type="text" id="manualAdProduct" /></div>
+              <div><label>광고비 (선택)</label><input type="number" id="manualSalesAd" /></div>
+              <div><label>채널 (선택)</label><input type="text" id="manualSalesAdChannel" /></div>
             </div>
           </div>
 
-          <div id="manualCostFields" style="display:none;">
-            <div class="map-row" style="margin-top:8px;">
-              <div><label>상품명</label><input type="text" id="manualCostProduct" /></div>
-              <div><label>개당 원가</label><input type="number" id="manualCostAmount" /></div>
-            </div>
-          </div>
-
-          <div class="btn-row"><button class="btn-primary" onclick="addManualRecord()">추가</button></div>
+          <div class="btn-row"><button type="button" class="btn-primary" onclick="addManualSalesRecord()">추가</button></div>
         </details>
 
         <div class="btn-row" style="margin-top:8px;">
           <button type="button" class="btn-ghost" style="font-size:11px;padding:4px 8px;opacity:.75;" onclick="downloadTemplate('sales')">매출 양식</button>
-          <button type="button" class="btn-ghost" style="font-size:11px;padding:4px 8px;opacity:.75;" onclick="downloadTemplate('ad')">광고비 양식</button>
-          <button type="button" class="btn-ghost" style="font-size:11px;padding:4px 8px;opacity:.75;" onclick="downloadTemplate('cost')">원가 양식</button>
         </div>
       </div>
 
@@ -326,16 +303,8 @@ function matchesSelectedFile(fileId){
   if(selectedFileId == null) return true;
   return fileId === selectedFileId;
 }
-let records = [];      // normalized [{date, product, amount, qty, customer, included, fileId}] — included===false는 계산에서 제외(소프트 OFF)
+let records = [];      // normalized [{date, product, amount, qty, customer, cost, adAmount, adChannel, included, fileId}] — included===false는 계산에서 제외(소프트 OFF); cost(개당 원가)·adAmount(광고비)·adChannel(채널)은 모두 선택 항목으로, 없으면 null/빈 문자열
 function activeRecords(){ return records.filter(r => r.included !== false && matchesSelectedFile(r.fileId)); }
-let adRecords = [];    // normalized [{date, amount, channel, product, included, fileId}]
-function activeAdRecords(){ return adRecords.filter(a => a.included !== false && matchesSelectedFile(a.fileId)); }
-let costRecords = [];  // normalized [{product, amount, included, fileId}]
-function activeCostMap(){
-  const m = {};
-  costRecords.forEach(r => { if(r.included !== false && matchesSelectedFile(r.fileId)) m[r.product] = r.amount; });
-  return m;
-}
 let manualAdStatus = JSON.parse(localStorage.getItem('salesai_manual_ad_status') || '{}'); // { "product||YYYY-MM": 'on'|'off' }
 let openMonthlyDetails = new Set(); // 펼쳐진 품목별 월별 상세 <details>의 상품명 (재렌더링 시에도 펼침 상태 유지)
 let uploadedFiles = []; // [{id, fileName, hidden, file}] — 파일을 추가할 때마다(또는 수기 입력 시) 쌓이는 이력
@@ -344,7 +313,6 @@ let pendingFile = null;     // 파일 선택 직후 ~ 데이터 적용 전까지
 let pendingFileName = null;
 let editingFileId = null;   // 파일 목록에서 클릭해 다시 매핑 중인 파일의 id
 let lastAppliedPresetName = null;
-let activeManualType = 'sales';
 
 // ---------- 플랫폼 탭 (쿠팡/네이버 등 소스별 데이터 관리, 새 탭 계속 추가 가능) ----------
 let platforms = JSON.parse(localStorage.getItem('salesai_platforms') || 'null') || [
@@ -360,15 +328,44 @@ function isPlatformActive(p){ return p.active !== false; }
 
 function savePlatformData(){
   if(!activePlatformId || activePlatformId === '__all__') return;
-  localStorage.setItem(platformDataKey(activePlatformId), JSON.stringify({ records, adRecords, costRecords, lastExcluded, uploadedFiles }));
+  localStorage.setItem(platformDataKey(activePlatformId), JSON.stringify({ records, lastExcluded, uploadedFiles }));
 }
 
-// 예전 저장 형식과의 호환: costMap({product:cost}) → costRecords 배열,
-// uploadedFiles({sales:[],ad:[],cost:[]}) → 배열 형태로 변환합니다.
+// 예전 저장 형식과의 호환: 원가(costRecords/costMap)와 광고비(adRecords)를 매출과 별도 배열로 저장하던 방식에서,
+// 같은 상품명·날짜의 매출 레코드에 cost/adAmount/adChannel 필드로 병합합니다.
+// uploadedFiles({sales:[],ad:[],cost:[]}) → 배열 형태로 변환하는 것도 함께 처리합니다.
 function normalizeCostRecords(d){
   if(Array.isArray(d?.costRecords)) return d.costRecords;
   if(d?.costMap) return Object.entries(d.costMap).map(([product, amount]) => ({ product, amount, fileId: null }));
   return [];
+}
+function migrateLegacyDataIntoRecords(d){
+  const recs = (d.records || []).map(r => ({ ...r }));
+
+  const oldCostRecords = normalizeCostRecords(d);
+  if(oldCostRecords.length){
+    const costLookup = {};
+    oldCostRecords.forEach(c => { if(c.included !== false) costLookup[c.product] = c.amount; });
+    recs.forEach(r => { if(r.cost == null && costLookup[r.product] != null) r.cost = costLookup[r.product]; });
+  }
+
+  const oldAdRecords = d.adRecords || [];
+  if(oldAdRecords.length){
+    // 예전 광고비 레코드는 상품명이 없을 수 있어(채널 단위 총액), 상품명이 있는 것만 날짜+상품명 기준으로 매칭합니다.
+    const adLookup = {};
+    oldAdRecords.forEach(a => {
+      if(a.included === false || !a.product) return;
+      const key = a.date + '||' + a.product;
+      adLookup[key] = adLookup[key] || { amount: 0, channel: a.channel || '' };
+      adLookup[key].amount += a.amount;
+    });
+    recs.forEach(r => {
+      const hit = adLookup[r.date + '||' + r.product];
+      if(hit && r.adAmount == null){ r.adAmount = hit.amount; r.adChannel = r.adChannel || hit.channel; }
+    });
+  }
+
+  return recs;
 }
 function normalizeUploadedFiles(raw){
   if(!raw) return [];
@@ -399,31 +396,25 @@ function ensureManualFileEntry(){
 function migrateOrphanRecordsToManualFile(){
   let hasOrphan = false;
   records.forEach(r => { if(r.fileId == null){ r.fileId = MANUAL_FILE_ID; hasOrphan = true; } });
-  adRecords.forEach(a => { if(a.fileId == null){ a.fileId = MANUAL_FILE_ID; hasOrphan = true; } });
-  costRecords.forEach(c => { if(c.fileId == null){ c.fileId = MANUAL_FILE_ID; hasOrphan = true; } });
   if(hasOrphan) ensureManualFileEntry();
 }
 
 function loadPlatformData(id){
   if(id === '__all__'){
-    records = []; adRecords = []; costRecords = []; lastExcluded = { count: 0, statuses: [] };
+    records = []; lastExcluded = { count: 0, statuses: [] };
     uploadedFiles = [];
     platforms.filter(isPlatformActive).forEach(p => {
       const raw = localStorage.getItem(platformDataKey(p.id));
       if(!raw) return;
       const d = JSON.parse(raw);
-      records = records.concat((d.records || []).map(r => ({ ...r, platformName: p.name })));
-      adRecords = adRecords.concat((d.adRecords || []).map(a => ({ ...a, platformName: p.name })));
-      costRecords = costRecords.concat(normalizeCostRecords(d).map(c => ({ ...c, platformName: p.name })));
+      records = records.concat(migrateLegacyDataIntoRecords(d).map(r => ({ ...r, platformName: p.name })));
       uploadedFiles = uploadedFiles.concat(normalizeUploadedFiles(d.uploadedFiles));
     });
     migrateOrphanRecordsToManualFile();
   } else {
     const raw = localStorage.getItem(platformDataKey(id));
     const d = raw ? JSON.parse(raw) : null;
-    records = d?.records || [];
-    adRecords = d?.adRecords || [];
-    costRecords = normalizeCostRecords(d);
+    records = d ? migrateLegacyDataIntoRecords(d) : [];
     lastExcluded = d?.lastExcluded || { count: 0, statuses: [] };
     uploadedFiles = normalizeUploadedFiles(d?.uploadedFiles);
     migrateOrphanRecordsToManualFile();
@@ -615,10 +606,9 @@ function deleteFormatPreset(){
 }
 
 // ---------- 샘플 양식 다운로드 (우리가 쓰는 컬럼 구성을 담은 빈 CSV) ----------
+// 원가·광고비·채널은 모두 선택 컬럼입니다 — 비워두고 올려도 되고, 나중에 "데이터 검색"에서 건별로 채워넣어도 됩니다.
 const FILE_TEMPLATES = {
-  sales: { headers: ['날짜','상품명','매출액','수량','구매자'], rows: [['2026-06-06','예시 상품명','98730','1','홍길동']], fileName: '매출데이터_양식.csv' },
-  ad: { headers: ['날짜','광고비','채널','상품명'], rows: [['2026-06-06','146329','메타(인스타/페북)','예시 상품명']], fileName: '광고비데이터_양식.csv' },
-  cost: { headers: ['상품명','원가'], rows: [['예시 상품명','12000']], fileName: '원가데이터_양식.csv' }
+  sales: { headers: ['날짜','상품명','매출액','수량','구매자','원가','광고비','채널'], rows: [['2026-06-06','예시 상품명','98730','1','홍길동','12000','14630','메타(인스타/페북)']], fileName: '매출데이터_양식.csv' }
 };
 
 function downloadTemplate(type){
@@ -634,13 +624,13 @@ function downloadTemplate(type){
 
 // ---------- 불러온 파일 목록: 클릭해서 그 파일만 보기+재매핑 · 숨기기 · 삭제 ----------
 function fileEntryCounts(fileId){
-  const sales = records.filter(r => r.fileId === fileId).length;
-  const ad = adRecords.filter(a => a.fileId === fileId).length;
-  const cost = costRecords.filter(c => c.fileId === fileId).length;
+  const fileRecords = records.filter(r => r.fileId === fileId);
+  const costFilled = fileRecords.filter(r => r.cost != null).length;
+  const adFilled = fileRecords.filter(r => r.adAmount != null).length;
   const parts = [];
-  if(sales) parts.push(`매출 ${sales}건`);
-  if(ad) parts.push(`광고비 ${ad}건`);
-  if(cost) parts.push(`원가 ${cost}건`);
+  if(fileRecords.length) parts.push(`매출 ${fileRecords.length}건`);
+  if(costFilled) parts.push(`원가 ${costFilled}건`);
+  if(adFilled) parts.push(`광고비 ${adFilled}건`);
   return parts.join(', ');
 }
 
@@ -686,8 +676,6 @@ function toggleFileHidden(fileId){
   file.hidden = !file.hidden;
   const included = !file.hidden;
   records.forEach(r => { if(r.fileId === fileId) r.included = included; });
-  adRecords.forEach(a => { if(a.fileId === fileId) a.included = included; });
-  costRecords.forEach(c => { if(c.fileId === fileId) c.included = included; });
   savePlatformData();
   renderUploadedFiles();
   renderSearchResults();
@@ -700,8 +688,6 @@ function deleteUploadedFile(fileId){
   if(!file) return;
   if(!confirm(`"${file.fileName}"에서 불러온 데이터를 모두 삭제할까요? 되돌릴 수 없습니다.`)) return;
   records = records.filter(r => r.fileId !== fileId);
-  adRecords = adRecords.filter(a => a.fileId !== fileId);
-  costRecords = costRecords.filter(c => c.fileId !== fileId);
   uploadedFiles = uploadedFiles.filter(f => f.id !== fileId);
   if(selectedFileId === fileId) selectedFileId = null;
   editingSalesIndex = null;
@@ -712,20 +698,7 @@ function deleteUploadedFile(fileId){
 }
 
 // ---------- 파일 없이 직접 한 건씩 입력해서 추가 (모두 "수기 입력 목록"이라는 하나의 파일로 묶임) ----------
-function setManualType(type){
-  activeManualType = type;
-  ['sales','ad','cost'].forEach(t => {
-    document.getElementById('manualTypeBtn_'+t).classList.toggle('active', t===type);
-    document.getElementById('manual'+t[0].toUpperCase()+t.slice(1)+'Fields').style.display = t===type ? 'block' : 'none';
-  });
-}
-
-function addManualRecord(){
-  if(activeManualType === 'sales') addManualSalesRecord();
-  else if(activeManualType === 'ad') addManualAdRecord();
-  else addManualCostRecord();
-}
-
+// 매출/광고비/원가를 유형으로 나누지 않고, 한 건의 매출 라인에 원가·광고비(선택)를 함께 입력합니다.
 function addManualSalesRecord(){
   if(activePlatformId === '__all__'){ alert('전체보기에서는 데이터를 추가할 수 없습니다. 플랫폼 탭을 선택하거나 새로 추가해주세요.'); return; }
   const date = document.getElementById('manualSalesDate').value;
@@ -733,47 +706,26 @@ function addManualSalesRecord(){
   const amount = toNumber(document.getElementById('manualSalesAmount').value);
   const qty = toNumber(document.getElementById('manualSalesQty').value) || 1;
   const customer = document.getElementById('manualSalesCustomer').value.trim();
+  const cost = toNumberOrNull(document.getElementById('manualSalesCost').value);
+  const adAmount = toNumberOrNull(document.getElementById('manualSalesAd').value);
+  const adChannel = document.getElementById('manualSalesAdChannel').value.trim();
   if(!date || !product || isNaN(amount)){ alert('날짜, 상품명, 매출액은 필수입니다.'); return; }
   document.getElementById('manualSalesProduct').value = '';
   document.getElementById('manualSalesAmount').value = '';
   document.getElementById('manualSalesCustomer').value = '';
-  records.push({ date, product, amount, qty, customer, fileId: MANUAL_FILE_ID });
+  document.getElementById('manualSalesCost').value = '';
+  document.getElementById('manualSalesAd').value = '';
+  document.getElementById('manualSalesAdChannel').value = '';
+  records.push({
+    date, product, amount, qty, customer,
+    cost: cost != null ? Math.abs(cost) : null,
+    adAmount: adAmount != null ? Math.abs(adAmount) : null,
+    adChannel,
+    fileId: MANUAL_FILE_ID
+  });
   ensureManualFileEntry();
   renderUploadedFiles();
   buildReport();
-}
-
-function addManualAdRecord(){
-  if(activePlatformId === '__all__'){ alert('전체보기에서는 데이터를 추가할 수 없습니다. 플랫폼 탭을 선택하거나 새로 추가해주세요.'); return; }
-  const date = document.getElementById('manualAdDate').value;
-  const amount = Math.abs(toNumber(document.getElementById('manualAdAmount').value));
-  const channel = document.getElementById('manualAdChannel').value.trim();
-  const product = document.getElementById('manualAdProduct').value.trim();
-  if(!date || isNaN(amount)){ alert('날짜와 광고비는 필수입니다.'); return; }
-  adRecords.push({ date, amount, channel: channel || '(채널없음)', product, fileId: MANUAL_FILE_ID });
-  document.getElementById('manualAdAmount').value = '';
-  document.getElementById('manualAdChannel').value = '';
-  document.getElementById('manualAdProduct').value = '';
-  ensureManualFileEntry();
-  renderUploadedFiles();
-  savePlatformData();
-  if(!records.length){ alert('광고비를 저장했습니다. 매출 데이터를 불러오면 ROAS가 함께 계산됩니다.'); return; }
-  computeAndRenderReport();
-}
-
-function addManualCostRecord(){
-  if(activePlatformId === '__all__'){ alert('전체보기에서는 데이터를 추가할 수 없습니다. 플랫폼 탭을 선택하거나 새로 추가해주세요.'); return; }
-  const product = document.getElementById('manualCostProduct').value.trim();
-  const amount = Math.abs(toNumber(document.getElementById('manualCostAmount').value));
-  if(!product || isNaN(amount)){ alert('상품명과 원가는 필수입니다.'); return; }
-  costRecords.push({ product, amount, fileId: MANUAL_FILE_ID });
-  document.getElementById('manualCostProduct').value = '';
-  document.getElementById('manualCostAmount').value = '';
-  ensureManualFileEntry();
-  renderUploadedFiles();
-  savePlatformData();
-  if(!records.length){ alert('원가를 저장했습니다. 매출 데이터를 불러오면 이익이 함께 계산됩니다.'); return; }
-  computeAndRenderReport();
 }
 
 function saveFormatPreset(){
@@ -1080,6 +1032,14 @@ function toNumber(v){
   const n = parseFloat(String(v).replace(/[^0-9.\-]/g,''));
   return isNaN(n) ? 0 : n;
 }
+// 원가·광고비처럼 선택 입력 항목은 값이 비어있으면(입력 안 함) 0이 아니라 null로 취급해야
+// "입력되지 않음"과 "0원"을 구분할 수 있습니다.
+function toNumberOrNull(v){
+  const s = String(v == null ? '' : v).trim();
+  if(!s) return null;
+  const n = toNumber(s);
+  return isNaN(n) ? null : n;
+}
 function toISODate(v){
   const s = String(v).trim();
   // 엑셀은 날짜를 "1900-01-01부터 며칠째"인 일련번호로 저장합니다(예: 46000).
@@ -1100,6 +1060,7 @@ let lastExcluded = { count: 0, statuses: [] };
 // 주문상태 컬럼을 지정하면 이 키워드가 포함된 건은 매출 집계에서 자동으로 빠집니다.
 const DEFAULT_EXCLUDE_STATUSES = ['취소', '반품', '환불', '교환', '구매취소'];
 
+// 매출·원가·광고비를 모두 같은 매출 행에서 함께 읽어옵니다(원가·광고비·채널 컬럼은 선택 사항).
 function applySalesFromRawTable(fileId){
   const dCol = document.getElementById('mapDate').value;
   const pCol = document.getElementById('mapProduct').value;
@@ -1107,8 +1068,12 @@ function applySalesFromRawTable(fileId){
   const qCol = document.getElementById('mapQty').value;
   const sCol = document.getElementById('mapStatus').value;
   const cCol = document.getElementById('mapCustomer').value;
+  const costCol = document.getElementById('mapCostAmount').value;
+  const adCol = document.getElementById('mapAdAmount').value;
+  const chCol = document.getElementById('mapAdChannel').value;
   const hi = rawTable.headers.indexOf.bind(rawTable.headers);
   const di = hi(dCol), pi = hi(pCol), ai = hi(aCol), qi = qCol ? hi(qCol) : -1, si = sCol ? hi(sCol) : -1, cui = cCol ? hi(cCol) : -1;
+  const costi = costCol ? hi(costCol) : -1, adi = adCol ? hi(adCol) : -1, chi = chCol ? hi(chCol) : -1;
 
   let excludedCount = 0;
   const excludedStatuses = new Set(lastExcluded.statuses);
@@ -1118,54 +1083,25 @@ function applySalesFromRawTable(fileId){
     const isExcluded = DEFAULT_EXCLUDE_STATUSES.some(ex => status.includes(ex));
     if(isExcluded){ excludedCount++; excludedStatuses.add(status); return false; }
     return true;
-  }).map(r => ({
-    date: toISODate(r[di]),
-    product: r[pi] || '(상품명없음)',
-    amount: toNumber(r[ai]),
-    qty: qi > -1 ? toNumber(r[qi]) : 1,
-    customer: cui > -1 ? (r[cui] || '') : '',
-    fileId
-  })).filter(r => r.date && !isNaN(r.amount));
+  }).map(r => {
+    const cost = costi > -1 ? toNumberOrNull(r[costi]) : null;
+    const adAmount = adi > -1 ? toNumberOrNull(r[adi]) : null;
+    return {
+      date: toISODate(r[di]),
+      product: r[pi] || '(상품명없음)',
+      amount: toNumber(r[ai]),
+      qty: qi > -1 ? toNumber(r[qi]) : 1,
+      customer: cui > -1 ? (r[cui] || '') : '',
+      cost: cost != null ? Math.abs(cost) : null,
+      adAmount: adAmount != null ? Math.abs(adAmount) : null,
+      adChannel: chi > -1 ? (r[chi] || '') : '',
+      fileId
+    };
+  }).filter(r => r.date && !isNaN(r.amount));
 
   records = records.concat(newRecords);
   lastExcluded = { count: lastExcluded.count + excludedCount, statuses: [...excludedStatuses] };
   return newRecords.length;
-}
-
-function applyAdFromRawTable(fileId){
-  const dCol = document.getElementById('mapDate').value;
-  const pCol = document.getElementById('mapProduct').value;
-  const aCol = document.getElementById('mapAdAmount').value;
-  const cCol = document.getElementById('mapAdChannel').value;
-  const hi = rawTable.headers.indexOf.bind(rawTable.headers);
-  const di = hi(dCol), ai = hi(aCol), ci = cCol ? hi(cCol) : -1, pi = pCol ? hi(pCol) : -1;
-
-  const newAdRecords = rawTable.rows.filter(r => r.length > 1).map(r => ({
-    date: toISODate(r[di]),
-    amount: Math.abs(toNumber(r[ai])),
-    channel: ci > -1 ? (r[ci] || '(채널없음)') : '(채널없음)',
-    product: pi > -1 ? (r[pi] || '') : '',
-    fileId
-  })).filter(r => r.date && !isNaN(r.amount));
-
-  adRecords = adRecords.concat(newAdRecords);
-  return newAdRecords.length;
-}
-
-function applyCostFromRawTable(fileId){
-  const pCol = document.getElementById('mapProduct').value;
-  const aCol = document.getElementById('mapCostAmount').value;
-  const hi = rawTable.headers.indexOf.bind(rawTable.headers);
-  const pi = hi(pCol), ai = hi(aCol);
-
-  const newCostRecords = rawTable.rows.filter(r => r.length > 1).map(r => ({
-    product: r[pi],
-    amount: Math.abs(toNumber(r[ai])),
-    fileId
-  })).filter(r => r.product);
-
-  costRecords = costRecords.concat(newCostRecords);
-  return newCostRecords.length;
 }
 
 function applyMapping(){
@@ -1173,23 +1109,16 @@ function applyMapping(){
   const dCol = document.getElementById('mapDate').value;
   const pCol = document.getElementById('mapProduct').value;
   const aCol = document.getElementById('mapAmount').value;
-  const adCol = document.getElementById('mapAdAmount').value;
-  const costCol = document.getElementById('mapCostAmount').value;
-  if(!aCol && !adCol && !costCol){ alert('매출액·광고비·원가 중 하나 이상 컬럼을 지정해주세요.'); return; }
-  if((aCol || adCol) && !dCol){ alert('날짜 컬럼을 지정해주세요.'); return; }
-  if((aCol || costCol) && !pCol){ alert('상품명 컬럼을 지정해주세요.'); return; }
+  if(!aCol){ alert('매출액 컬럼을 지정해주세요. (원가·광고비는 이 매출 데이터에 포함되어 함께 저장됩니다)'); return; }
+  if(!dCol){ alert('날짜 컬럼을 지정해주세요.'); return; }
+  if(!pCol){ alert('상품명 컬럼을 지정해주세요.'); return; }
 
   const fileId = editingFileId != null ? editingFileId : nextFileId++;
   if(editingFileId != null){
     records = records.filter(r => r.fileId !== fileId);
-    adRecords = adRecords.filter(a => a.fileId !== fileId);
-    costRecords = costRecords.filter(c => c.fileId !== fileId);
   }
 
-  let hadSales = false;
-  if(aCol){ applySalesFromRawTable(fileId); hadSales = true; }
-  if(adCol) applyAdFromRawTable(fileId);
-  if(costCol) applyCostFromRawTable(fileId);
+  applySalesFromRawTable(fileId);
 
   const fileEntry = { id: fileId, fileName: pendingFileName || '(파일명 확인 불가)', hidden: false, file: pendingFile, presetName: lastAppliedPresetName || '직접 매핑' };
   const existingIdx = uploadedFiles.findIndex(f => f.id === fileId);
@@ -1204,9 +1133,7 @@ function applyMapping(){
   document.getElementById('dataFile').value = '';
   document.getElementById('mapSection').style.display = 'none';
 
-  if(hadSales){ buildReport(); return; }
-  savePlatformData();
-  if(records.length) computeAndRenderReport();
+  buildReport();
 }
 
 // ---------- 리포트 생성 ----------
@@ -1227,8 +1154,6 @@ function buildReport(){
 function computeAndRenderReport(){
   const records = activeRecords(); // OFF로 꺼둔(또는 숨긴 파일의) 데이터는 전체 계산에서 제외 (아래는 기존 코드 그대로)
   if(!records.length){ clearReportUI(); return; }
-  const adRecords = activeAdRecords();
-  const costMap = activeCostMap();
   const byDate = {};
   records.forEach(r => { byDate[r.date] = (byDate[r.date]||0) + r.amount; });
   const dates = Object.keys(byDate).sort();
@@ -1247,16 +1172,18 @@ function computeAndRenderReport(){
     trendPct = ((recentSum - (prevSum||1)) / (prevSum||1)) * 100;
   }
 
-  // 광고비 & ROAS (광고비 데이터가 있을 때만)
+  // 광고비 & ROAS (광고비가 입력된 매출 라인이 있을 때만)
   let totalAdSpend = 0, roas = null, adRatio = null, netAmount = totalAmount, adTrendPct = null, roasTrendPct = null;
   const adByDate = {};
   const adAlerts = [];
-  if(adRecords.length){
-    adRecords.forEach(a => {
-      // 상품이 매핑된 광고비는 해당 상품·월에 수동으로 OFF 지정되어 있으면 집계에서 제외합니다.
-      let amt = a.amount;
-      if(a.product && manualAdStatus[a.product + '||' + a.date.slice(0,7)] === 'off') amt = 0;
-      adByDate[a.date] = (adByDate[a.date]||0) + amt;
+  const hasAdData = records.some(r => r.adAmount != null);
+  if(hasAdData){
+    records.forEach(r => {
+      if(r.adAmount == null) return;
+      // 해당 상품·월에 수동으로 OFF 지정되어 있으면 집계에서 제외합니다.
+      let amt = r.adAmount;
+      if(manualAdStatus[r.product + '||' + r.date.slice(0,7)] === 'off') amt = 0;
+      adByDate[r.date] = (adByDate[r.date]||0) + amt;
     });
     totalAdSpend = dates.reduce((s,d)=>s+(adByDate[d]||0),0);
     netAmount = totalAmount - totalAdSpend;
@@ -1264,7 +1191,7 @@ function computeAndRenderReport(){
       roas = totalAmount / totalAdSpend;
       adRatio = (totalAdSpend / totalAmount) * 100;
     } else {
-      adAlerts.push('광고비 데이터의 날짜가 매출 데이터 기간과 겹치지 않습니다. 두 파일의 날짜 범위를 확인해주세요.');
+      adAlerts.push('입력된 광고비 합계가 0원입니다. 값을 확인해주세요.');
     }
     if(recentDates.length && prevDates.length){
       const recentAd = recentDates.reduce((s,d)=>s+(adByDate[d]||0),0);
@@ -1287,13 +1214,12 @@ function computeAndRenderReport(){
     }
   }
 
-  // 원가 & 이익 (원가 데이터가 있을 때만)
+  // 원가 & 이익 (원가가 입력된 매출 라인이 있을 때만)
   let totalCost = null, grossProfit = null, operatingProfit = null, missingCostProducts = [];
-  const hasCostData = Object.keys(costMap).length > 0;
+  const hasCostData = records.some(r => r.cost != null);
   if(hasCostData){
-    const productsInRecords = new Set(records.map(r=>r.product));
-    missingCostProducts = [...productsInRecords].filter(p => costMap[p] == null);
-    totalCost = records.reduce((s,r)=> s + (costMap[r.product] != null ? costMap[r.product]*r.qty : 0), 0);
+    missingCostProducts = [...new Set(records.filter(r => r.cost == null).map(r => r.product))];
+    totalCost = records.reduce((s,r)=> s + (r.cost != null ? r.cost*r.qty : 0), 0);
     grossProfit = totalAmount - totalCost;
     operatingProfit = grossProfit - totalAdSpend;
   }
@@ -1331,7 +1257,7 @@ function computeAndRenderReport(){
 
   lastReport = {
     dates, byDate, totalAmount, totalOrders, avgOrder, trendPct, topProducts, anomalies,
-    hasAdData: adRecords.length > 0, totalAdSpend, roas, adRatio, netAmount, adTrendPct, roasTrendPct, adAlerts,
+    hasAdData, totalAdSpend, roas, adRatio, netAmount, adTrendPct, roasTrendPct, adAlerts,
     hasCostData, totalCost, grossProfit, operatingProfit, missingCostProducts,
     monthly: computeMonthlyBreakdown()
   };
@@ -1341,29 +1267,21 @@ function computeAndRenderReport(){
 // ---------- 품목별 월별 상세 (광고 ON/OFF 비교) ----------
 function computeMonthlyBreakdown(){
   const records = activeRecords(); // OFF로 꺼둔(또는 숨긴 파일의) 데이터는 여기서도 제외
-  const adRecords = activeAdRecords();
-  const costMap = activeCostMap();
-  const hasAdProduct = adRecords.some(a => a.product);
-  const hasCost = Object.keys(costMap).length > 0;
+  const hasAd = records.some(r => r.adAmount != null);
+  const hasCost = records.some(r => r.cost != null);
 
-  const monthsSet = new Set(records.map(r=>r.date.slice(0,7)));
-  if(hasAdProduct){ adRecords.forEach(a=>monthsSet.add(a.date.slice(0,7))); }
-  const months = [...monthsSet].sort();
-
-  const productSet = new Set(records.map(r=>r.product));
-  const products = [...productSet];
+  const months = [...new Set(records.map(r=>r.date.slice(0,7)))].sort();
+  const products = [...new Set(records.map(r=>r.product))];
 
   const perProduct = products.map(p=>{
     const monthly = months.map(m=>{
       const lineItems = records.filter(r=>r.product===p && r.date.slice(0,7)===m);
       const revenue = lineItems.reduce((s,r)=>s+r.amount,0);
       const qty = lineItems.reduce((s,r)=>s+r.qty,0);
-      const unitCost = costMap[p];
-      const cost = (hasCost && unitCost != null) ? unitCost*qty : null;
-      let adSpend = null;
-      if(hasAdProduct){
-        adSpend = adRecords.filter(a=>a.product===p && a.date.slice(0,7)===m).reduce((s,a)=>s+a.amount,0);
-      }
+      const hasCostForMonth = hasCost && lineItems.some(r=>r.cost!=null);
+      const cost = hasCostForMonth ? lineItems.reduce((s,r)=>s+(r.cost!=null?r.cost*r.qty:0),0) : null;
+      const hasAdForMonth = hasAd && lineItems.some(r=>r.adAmount!=null);
+      const adSpend = hasAdForMonth ? lineItems.reduce((s,r)=>s+(r.adAmount||0),0) : null;
       const manualKey = p + '||' + m;
       const manualStatus = manualAdStatus[manualKey] || null; // 'on' | 'off' | null
       // 수동으로 OFF 지정한 달은 실제 집행된 광고비가 있어도 손익 계산에서 0원으로 취급합니다.
@@ -1375,8 +1293,8 @@ function computeMonthlyBreakdown(){
       return { month:m, revenue, qty, cost, adSpend, effectiveAdSpend, profit, adOn, manualStatus };
     });
 
-    // adOn은 광고비 데이터 또는 사용자가 직접 지정한 ON/OFF를 모두 반영하므로,
-    // 광고비 CSV가 없어도(hasAdProduct=false) 수동 지정만으로 비교가 가능합니다.
+    // adOn은 광고비 입력값 또는 사용자가 직접 지정한 ON/OFF를 모두 반영하므로,
+    // 광고비가 입력되지 않아도(hasAd=false) 수동 지정만으로 비교가 가능합니다.
     let onOff = null;
     const onM = monthly.filter(x=>x.adOn===true);
     const offM = monthly.filter(x=>x.adOn===false);
@@ -1389,18 +1307,18 @@ function computeMonthlyBreakdown(){
 
     const totalRevenue = monthly.reduce((s,x)=>s+x.revenue,0);
     const totalCostP = hasCost ? monthly.reduce((s,x)=>s+(x.cost||0),0) : null;
-    const totalAdP = hasAdProduct ? monthly.reduce((s,x)=>s+x.effectiveAdSpend,0) : null;
+    const totalAdP = hasAd ? monthly.reduce((s,x)=>s+x.effectiveAdSpend,0) : null;
     const totalProfitP = totalRevenue - (totalCostP||0) - (totalAdP||0);
 
     return {
       product: p, monthly, onOff, totalRevenue,
       totalCost: totalCostP, totalAd: totalAdP, totalProfit: totalProfitP,
-      hasCostForProduct: hasCost && costMap[p] != null, hasAdColumn: hasAdProduct,
-      hasAnyAd: hasAdProduct && monthly.some(x => (x.adSpend||0) > 0)
+      hasCostForProduct: hasCost && records.some(r=>r.product===p && r.cost!=null), hasAdColumn: hasAd,
+      hasAnyAd: hasAd && monthly.some(x => (x.adSpend||0) > 0)
     };
   }).sort((a,b)=>b.totalRevenue-a.totalRevenue);
 
-  return { months, hasAdProduct, hasCost, perProduct };
+  return { months, hasAdProduct: hasAd, hasCost, perProduct };
 }
 
 function toggleAdStatus(product, month){
@@ -1842,8 +1760,16 @@ function saveSalesRecordEdit(idx){
   const product = document.getElementById('editSalesProduct_'+idx).value.trim();
   const customer = document.getElementById('editSalesCustomer_'+idx).value.trim();
   const amount = toNumber(document.getElementById('editSalesAmount_'+idx).value);
+  const cost = toNumberOrNull(document.getElementById('editSalesCost_'+idx).value);
+  const adAmount = toNumberOrNull(document.getElementById('editSalesAd_'+idx).value);
+  const adChannel = document.getElementById('editSalesAdChannel_'+idx).value.trim();
   if(!date || !product || isNaN(amount)){ alert('날짜, 상품명, 매출액은 필수입니다.'); return; }
-  records[idx] = { ...records[idx], date, product, customer, amount };
+  records[idx] = {
+    ...records[idx], date, product, customer, amount,
+    cost: cost != null ? Math.abs(cost) : null,
+    adAmount: adAmount != null ? Math.abs(adAmount) : null,
+    adChannel
+  };
   editingSalesIndex = null;
   savePlatformData();
   renderSearchResults();
@@ -1896,7 +1822,7 @@ function renderSearchResults(){
     <p class="note">${matches.length}건${isFiltered ? ' 일치' : ''} · ON 합계 ${won(totalAmount)}${matches.length > MAX_ROWS ? ` (최근 ${MAX_ROWS}건만 표시)` : ''}</p>
     <div class="table-wrap">
       <table>
-        <thead><tr>${showPlatform ? '<th>플랫폼</th>' : ''}<th>날짜</th><th>상품명</th><th>구매자</th><th>매출액</th><th>상태</th><th colspan="2"></th></tr></thead>
+        <thead><tr>${showPlatform ? '<th>플랫폼</th>' : ''}<th>날짜</th><th>상품명</th><th>구매자</th><th>매출액</th><th>원가</th><th>광고비</th><th>채널</th><th>상태</th><th colspan="2"></th></tr></thead>
         <tbody>${shown.map(r => {
           const idx = records.indexOf(r);
           if(idx === editingSalesIndex){
@@ -1905,13 +1831,16 @@ function renderSearchResults(){
               <td><input type="text" id="editSalesProduct_${idx}" value="${escapeHtml(r.product)}" style="padding:4px 6px;font-size:12px;" /></td>
               <td><input type="text" id="editSalesCustomer_${idx}" value="${escapeHtml(r.customer||'')}" style="padding:4px 6px;font-size:12px;" /></td>
               <td><input type="number" id="editSalesAmount_${idx}" value="${r.amount}" style="padding:4px 6px;font-size:12px;width:90px;" /></td>
+              <td><input type="number" id="editSalesCost_${idx}" value="${r.cost != null ? r.cost : ''}" placeholder="선택" style="padding:4px 6px;font-size:12px;width:80px;" /></td>
+              <td><input type="number" id="editSalesAd_${idx}" value="${r.adAmount != null ? r.adAmount : ''}" placeholder="선택" style="padding:4px 6px;font-size:12px;width:80px;" /></td>
+              <td><input type="text" id="editSalesAdChannel_${idx}" value="${escapeHtml(r.adChannel||'')}" placeholder="선택" style="padding:4px 6px;font-size:12px;width:80px;" /></td>
               <td>-</td>
               <td><button type="button" class="btn-primary" style="padding:3px 8px;font-size:11px;" onclick="saveSalesRecordEdit(${idx})">저장</button></td>
               <td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="cancelEditSalesRecord()">취소</button></td>
             </tr>`;
           }
           const off = r.included === false;
-          return `<tr style="${off ? 'opacity:.5;' : ''}">${showPlatform ? `<td>${escapeHtml(r.platformName||'-')}</td>` : ''}<td>${r.date}</td><td>${escapeHtml(r.product)}</td><td>${escapeHtml(r.customer||'-')}</td><td>${won(r.amount)}</td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="toggleRecordIncluded(${idx})">${off ? 'OFF' : 'ON'}</button></td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="editSalesRecord(${idx})">수정</button></td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="deleteRecord(${idx})" title="삭제">🗑</button></td></tr>`;
+          return `<tr style="${off ? 'opacity:.5;' : ''}">${showPlatform ? `<td>${escapeHtml(r.platformName||'-')}</td>` : ''}<td>${r.date}</td><td>${escapeHtml(r.product)}</td><td>${escapeHtml(r.customer||'-')}</td><td>${won(r.amount)}</td><td>${r.cost != null ? won(r.cost) : '-'}</td><td>${r.adAmount != null ? won(r.adAmount) : '-'}</td><td>${escapeHtml(r.adChannel||'-')}</td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="toggleRecordIncluded(${idx})">${off ? 'OFF' : 'ON'}</button></td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="editSalesRecord(${idx})">수정</button></td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="deleteRecord(${idx})" title="삭제">🗑</button></td></tr>`;
         }).join('')}</tbody>
       </table>
     </div>
