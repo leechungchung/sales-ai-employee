@@ -26,6 +26,8 @@
   .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:18px;}
   .card h2{font-size:15px;margin:0 0 12px;display:flex;align-items:center;gap:8px;}
   .card h2 .n{color:var(--muted);font-weight:400;font-size:12px;}
+  .card-toggle{margin-left:auto;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:3px 9px;font-size:11px;cursor:pointer;font-family:inherit;flex-shrink:0;}
+  .card-toggle:hover{color:var(--text);border-color:var(--accent);}
   label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px;}
   input[type=text], input[type=file], input[type=number], input[type=date], textarea, select{
     width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:8px;
@@ -224,16 +226,18 @@
       </div>
 
       <div class="card">
-        <h2>🔍 데이터 검색 <span class="n">(품목명 · 구매자명 등)</span></h2>
-        <div class="btn-row" style="margin-top:0;margin-bottom:8px;">
-          <button type="button" class="btn-ghost" id="searchInclusionBtn" onclick="cycleSearchInclusionFilter()" style="font-size:11px;padding:4px 8px;opacity:.75;">전체 보기</button>
+        <h2>🔍 데이터 검색 <span class="n">(품목명 · 구매자명 등)</span><button type="button" class="card-toggle" id="cardToggle_search" onclick="toggleCardCollapse('search')">접기</button></h2>
+        <div id="cardBody_search">
+          <div class="btn-row" style="margin-top:0;margin-bottom:8px;">
+            <button type="button" class="btn-ghost" id="searchInclusionBtn" onclick="cycleSearchInclusionFilter()" style="font-size:11px;padding:4px 8px;opacity:.75;">전체 보기</button>
+          </div>
+          <div style="position:relative;">
+            <input type="text" id="searchInput" placeholder="검색어 입력 후 아래 목록에서 클릭하세요 (예: 반팔티, 홍길동, 2026-06)" oninput="onSearchInput()" onkeydown="onSearchKeydown(event)" autocomplete="off" />
+            <div id="searchSuggestBox" class="suggest-box" style="display:none;"></div>
+          </div>
+          <div id="searchKeywords" class="keyword-chips"></div>
+          <div id="searchResults" style="margin-top:10px;"></div>
         </div>
-        <div style="position:relative;">
-          <input type="text" id="searchInput" placeholder="검색어 입력 후 아래 목록에서 클릭하세요 (예: 반팔티, 홍길동, 2026-06)" oninput="onSearchInput()" onkeydown="onSearchKeydown(event)" autocomplete="off" />
-          <div id="searchSuggestBox" class="suggest-box" style="display:none;"></div>
-        </div>
-        <div id="searchKeywords" class="keyword-chips"></div>
-        <div id="searchResults" style="margin-top:10px;"></div>
       </div>
 
       <div class="card">
@@ -264,8 +268,10 @@
       </div>
 
       <div class="card">
-        <h2>📅 품목별 월별 상세</h2>
-        <div id="monthlyDetail"><div class="empty">데이터를 불러오면 표시됩니다.</div></div>
+        <h2>📅 품목별 월별 상세<button type="button" class="card-toggle" id="cardToggle_monthly" onclick="toggleCardCollapse('monthly')">접기</button></h2>
+        <div id="cardBody_monthly">
+          <div id="monthlyDetail"><div class="empty">데이터를 불러오면 표시됩니다.</div></div>
+        </div>
       </div>
 
       <div class="card">
@@ -307,6 +313,23 @@ let records = [];      // normalized [{date, product, amount, qty, customer, cos
 function activeRecords(){ return records.filter(r => r.included !== false && matchesSelectedFile(r.fileId)); }
 let manualAdStatus = JSON.parse(localStorage.getItem('salesai_manual_ad_status') || '{}'); // { "product||YYYY-MM": 'on'|'off' }
 let openMonthlyDetails = new Set(); // 펼쳐진 품목별 월별 상세 <details>의 상품명 (재렌더링 시에도 펼침 상태 유지)
+
+// ---------- 카드 접기/펼치기 (데이터 검색, 품목별 월별 상세처럼 세로로 긴 카드용) ----------
+let collapsedCards = JSON.parse(localStorage.getItem('salesai_collapsed_cards') || '{}'); // { search: true, monthly: true, ... }
+function applyCardCollapse(key){
+  const collapsed = !!collapsedCards[key];
+  const body = document.getElementById('cardBody_' + key);
+  const btn = document.getElementById('cardToggle_' + key);
+  if(!body || !btn) return;
+  body.style.display = collapsed ? 'none' : '';
+  btn.textContent = collapsed ? '펼치기' : '접기';
+}
+function toggleCardCollapse(key){
+  collapsedCards[key] = !collapsedCards[key];
+  localStorage.setItem('salesai_collapsed_cards', JSON.stringify(collapsedCards));
+  applyCardCollapse(key);
+}
+['search', 'monthly'].forEach(applyCardCollapse);
 let uploadedFiles = []; // [{id, fileName, hidden, file}] — 파일을 추가할 때마다(또는 수기 입력 시) 쌓이는 이력
 let nextFileId = 1;
 let pendingFile = null;     // 파일 선택 직후 ~ 데이터 적용 전까지 임시 보관된 File 객체(재매핑용)
@@ -644,9 +667,9 @@ function renderUploadedFiles(){
     const selected = selectedFileId === f.id;
     return `
     <div class="file-item${f.hidden ? ' hidden' : ''}${selected ? ' selected' : ''}">
-      <button type="button" class="file-item-name" onclick="editUploadedFile(${JSON.stringify(f.id)})" title="클릭해서 이 데이터만 보기 (다시 누르면 전체 보기)">📄 ${escapeHtml(f.fileName)}${counts ? ' — ' + counts : ''}</button>
-      <button type="button" class="file-item-toggle" onclick="toggleFileHidden(${JSON.stringify(f.id)})" title="${f.hidden ? '다시 포함' : '계산에서 숨기기'}">${f.hidden ? '🚫' : '👁'}</button>
-      <button type="button" class="file-item-del" onclick="deleteUploadedFile(${JSON.stringify(f.id)})" title="이 데이터 삭제">×</button>
+      <button type="button" class="file-item-name" onclick="editUploadedFile(${escapeHtml(JSON.stringify(f.id))})" title="클릭해서 이 데이터만 보기 (다시 누르면 전체 보기)">📄 ${escapeHtml(f.fileName)}${counts ? ' — ' + counts : ''}</button>
+      <button type="button" class="file-item-toggle" onclick="toggleFileHidden(${escapeHtml(JSON.stringify(f.id))})" title="${f.hidden ? '다시 포함' : '계산에서 숨기기'}">${f.hidden ? '🚫' : '👁'}</button>
+      <button type="button" class="file-item-del" onclick="deleteUploadedFile(${escapeHtml(JSON.stringify(f.id))})" title="이 데이터 삭제">×</button>
     </div>`;
   }).join('');
 }
