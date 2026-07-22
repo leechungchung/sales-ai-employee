@@ -1950,15 +1950,13 @@ function renderSearchResults(){
             return `<tr>${showPlatform ? `<td>${escapeHtml(r.platformName||'-')}</td>` : ''}
               <td><input type="date" id="editSalesDate_${idx}" value="${r.date}" style="padding:4px 6px;font-size:12px;" /></td>
               <td><input type="text" id="editSalesProduct_${idx}" value="${escapeHtml(r.product)}" style="padding:4px 6px;font-size:12px;" /></td>
-              <td><input type="text" id="editSalesCustomer_${idx}" value="${escapeHtml(r.customer||'')}" style="padding:4px 6px;font-size:12px;" /></td>
+              <td><input type="text" id="editSalesCustomer_${idx}" value="${escapeHtml(r.customer||'')}" style="padding:4px 6px;font-size:12px;min-width:90px;" /></td>
               <td><input type="number" id="editSalesAmount_${idx}" value="${r.amount}" style="padding:4px 6px;font-size:12px;width:90px;" /></td>
               <td><input type="number" id="editSalesQty_${idx}" value="${r.qty != null ? r.qty : 1}" min="1" style="padding:4px 6px;font-size:12px;width:60px;" /></td>
               <td><input type="number" id="editSalesCost_${idx}" value="${r.cost != null ? r.cost : ''}" placeholder="선택" style="padding:4px 6px;font-size:12px;width:80px;" /></td>
               <td><input type="number" id="editSalesAd_${idx}" value="${r.adAmount != null ? r.adAmount : ''}" placeholder="선택" style="padding:4px 6px;font-size:12px;width:80px;" /></td>
               <td><input type="text" id="editSalesAdChannel_${idx}" value="${escapeHtml(r.adChannel||'')}" placeholder="선택" style="padding:4px 6px;font-size:12px;width:80px;" /></td>
-              <td>-</td>
-              <td><button type="button" class="btn-primary" style="padding:3px 8px;font-size:11px;" onclick="saveSalesRecordEdit(${idx})">저장</button></td>
-              <td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="cancelEditSalesRecord()">취소</button></td>
+              <td colspan="3" style="white-space:nowrap;"><button type="button" class="btn-primary" style="padding:3px 8px;font-size:11px;" onclick="saveSalesRecordEdit(${idx})">저장</button> <button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="cancelEditSalesRecord()">취소</button></td>
             </tr>`;
           }
           const off = r.included === false;
