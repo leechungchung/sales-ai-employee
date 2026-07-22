@@ -108,7 +108,7 @@
   svg text{fill:var(--muted);font-size:10px;}
   .bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
   .bar-row .rank{width:20px;flex-shrink:0;text-align:right;font-size:12px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums;}
-  .bar-row .name{width:150px;font-size:12.5px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bar-row .name{width:170px;font-size:12.5px;flex-shrink:0;overflow:hidden;line-height:1.45;}
   .bar-track{flex:1;height:14px;background:#eeeae0;border-radius:99px;overflow:hidden;box-shadow:inset 0 1px 2px rgba(38,33,72,.06);}
   .bar-fill{height:100%;background:linear-gradient(90deg,#8b80f7,var(--accent) 70%,var(--accent2));border-radius:99px;box-shadow:0 1px 3px rgba(92,81,218,.35);}
   .bar-val{width:150px;text-align:right;font-size:12px;color:var(--muted);flex-shrink:0;font-variant-numeric:tabular-nums;white-space:nowrap;}
@@ -195,6 +195,12 @@
   .bar-row:nth-child(3) .bar-fill{animation-delay:.1s;}
   .bar-row:nth-child(4) .bar-fill{animation-delay:.15s;}
   .bar-row:nth-child(n+5) .bar-fill{animation-delay:.2s;}
+  .insight-item{display:flex;gap:11px;align-items:flex-start;padding:11px 13px;border:1px solid #e8e3ef;border-radius:12px;margin-bottom:8px;background:linear-gradient(165deg,#ffffff 30%,#f7f5fd 100%);box-shadow:var(--shadow-sm);}
+  .insight-item .insight-icon{font-size:18px;line-height:1.3;}
+  .goal-box{margin:0 0 14px;padding:11px 13px;border:1px solid #e8e3ef;border-radius:12px;background:linear-gradient(165deg,#ffffff 30%,#f7f5fd 100%);}
+  .goal-track{height:10px;background:#eeeae0;border-radius:99px;overflow:hidden;margin-top:9px;box-shadow:inset 0 1px 2px rgba(38,33,72,.06);}
+  .goal-fill{height:100%;background:linear-gradient(90deg,#8b80f7,var(--accent) 70%,var(--accent2));border-radius:99px;transform-origin:left;animation:barIn .7s cubic-bezier(.22,.7,.3,1) both;}
+  .goal-fill.behind{background:linear-gradient(90deg,#f0a35e,#e07b39);}
   @keyframes drawLine{to{stroke-dashoffset:0;}}
   .chart-wrap polyline{stroke-dasharray:1;stroke-dashoffset:1;animation:drawLine .9s ease-out .15s forwards;}
   @keyframes dotIn{to{opacity:1;}}
@@ -222,6 +228,11 @@
         <h1>매출관리 AI 직원</h1>
         <p>Commerce AI Company · 운영팀 · 담당업무: 매출·광고비 데이터 분석 및 리포트</p>
       </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button type="button" class="btn-ghost" style="font-size:12px;" onclick="exportBackup()" title="모든 플랫폼의 데이터·설정을 JSON 파일 하나로 내려받습니다">💾 전체 백업</button>
+      <button type="button" class="btn-ghost" style="font-size:12px;" onclick="document.getElementById('restoreFile').click()" title="백업 JSON 파일로 복원합니다 (현재 데이터를 덮어씀)">복원</button>
+      <input type="file" id="restoreFile" accept=".json,application/json" style="display:none;" onchange="importBackup(this.files[0])" />
     </div>
   </header>
 
@@ -319,6 +330,11 @@
 
     <!-- RIGHT: 리포트 -->
     <div>
+      <div class="card" id="insightCard" style="display:none;">
+        <h2>📌 오늘의 판단 <span class="n">(데이터가 말해주는 다음 행동)</span></h2>
+        <div id="insightList"></div>
+      </div>
+
       <div class="card">
         <h2>📊 매출 KPI <span class="n" id="periodLabel"></span></h2>
         <div class="kpis">
@@ -328,6 +344,7 @@
           <div class="kpi"><div class="v" id="kAvg">-</div><div class="l">평균 객단가</div></div>
           <div class="kpi"><div class="v" id="kTrend">-</div><div class="l">직전 기간 대비</div></div>
         </div>
+        <div id="goalArea"></div>
         <div id="chartArea" class="chart-wrap"></div>
       </div>
 
@@ -369,6 +386,16 @@
       <div class="card">
         <h2>🏆 상품별 매출 순위 <span class="n" id="topProductsCount"></span></h2>
         <div id="topProducts"><div class="empty">데이터를 불러오면 표시됩니다.</div></div>
+      </div>
+
+      <div class="card" id="repeatCard" style="display:none;">
+        <h2>👥 재구매 고객 <span class="n">(구매자명 기반 단골 분석)</span></h2>
+        <div id="repeatArea"></div>
+      </div>
+
+      <div class="card" id="weekdayCard" style="display:none;">
+        <h2>📆 요일별 매출 패턴 <span class="n">(하루 평균 기준)</span></h2>
+        <div id="weekdayArea"></div>
       </div>
 
       <div class="card">
@@ -415,6 +442,95 @@ function matchesSelectedFile(fileId){
 }
 let records = [];      // normalized [{date, product, amount, qty, customer, cost, adAmount, adChannel, included, fileId}] — included===false는 계산에서 제외(소프트 OFF); cost(개당 원가)·adAmount(광고비)·adChannel(채널)은 모두 선택 항목으로, 없으면 null/빈 문자열
 function activeRecords(){ return records.filter(r => r.included !== false && matchesSelectedFile(r.fileId)); }
+
+// ---------- 전체 백업 / 복원 ----------
+// 모든 데이터가 localStorage에만 있으므로, salesai 접두사가 붙은 키 전부를 JSON 하나로
+// 내보내고 그대로 되살린다. 브라우저 교체·캐시 삭제·PC 이동에 대비한 안전장치.
+function exportBackup(){
+  const data = {};
+  for(let i = 0; i < localStorage.length; i++){
+    const k = localStorage.key(i);
+    if(k && k.startsWith('salesai')) data[k] = localStorage.getItem(k);
+  }
+  if(!Object.keys(data).length){ alert('백업할 데이터가 없습니다.'); return; }
+  const payload = { app: 'sales-ai-employee', version: 1, exportedAt: new Date().toISOString(), data };
+  const d = new Date();
+  const stamp = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  download(`매출관리_백업_${stamp}.json`, JSON.stringify(payload), 'application/json;charset=utf-8');
+}
+function importBackup(file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const payload = JSON.parse(reader.result);
+      if(!payload || payload.app !== 'sales-ai-employee' || !payload.data) throw new Error('format');
+      const when = payload.exportedAt ? payload.exportedAt.slice(0,10) + ' 백업본으로 ' : '';
+      if(!confirm(`${when}복원하면 현재 브라우저의 모든 매출관리 데이터를 덮어씁니다. 계속할까요?`)) return;
+      Object.keys(localStorage).filter(k => k.startsWith('salesai')).forEach(k => localStorage.removeItem(k));
+      Object.entries(payload.data).forEach(([k,v]) => localStorage.setItem(k, v));
+      alert('복원이 완료되었습니다. 페이지를 새로 고칩니다.');
+      location.reload();
+    } catch(e){
+      alert('백업 파일을 읽을 수 없습니다. "💾 전체 백업"으로 내려받은 JSON 파일이 맞는지 확인해주세요.');
+    }
+  };
+  reader.readAsText(file);
+  document.getElementById('restoreFile').value = '';
+}
+
+// ---------- 월 매출 목표 ----------
+let salesGoals = JSON.parse(localStorage.getItem('salesai_goals') || '{}'); // { [platformId]: 월 목표 금액 }
+function setSalesGoal(){
+  if(activePlatformId === '__all__'){ alert('전체보기의 목표는 각 플랫폼 목표의 합계로 계산됩니다. 플랫폼 탭에서 설정해주세요.'); return; }
+  const current = salesGoals[activePlatformId] || '';
+  const input = prompt('이번 달 매출 목표 금액을 입력하세요 (숫자만 · 비우면 목표 제거)', current);
+  if(input === null) return;
+  const val = Number(String(input).replace(/[^0-9]/g, ''));
+  if(!val) delete salesGoals[activePlatformId];
+  else salesGoals[activePlatformId] = val;
+  localStorage.setItem('salesai_goals', JSON.stringify(salesGoals));
+  if(lastReport) renderGoal(lastReport);
+}
+function currentGoalAmount(){
+  if(activePlatformId === '__all__'){
+    const sum = platforms.filter(isPlatformActive).reduce((s,p) => s + (salesGoals[p.id] || 0), 0);
+    return sum || null;
+  }
+  return salesGoals[activePlatformId] || null;
+}
+// 데이터의 마지막 달을 "이번 달"로 보고, 그 달의 경과일 기준으로 월말 페이스를 추정한다
+// (오늘 날짜 기준이 아니라 데이터 기준이라 지난달 데이터를 볼 때도 자연스럽게 동작).
+function renderGoal(r){
+  const el = document.getElementById('goalArea');
+  if(!r || !r.dates.length){ el.innerHTML = ''; return; }
+  const goal = currentGoalAmount();
+  const lastDate = r.dates[r.dates.length - 1];
+  const month = lastDate.slice(0,7);
+  const monthRevenue = r.dates.filter(d => d.startsWith(month)).reduce((s,d) => s + r.byDate[d], 0);
+  const [y,m] = month.split('-').map(Number);
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const elapsed = Math.max(1, Number(lastDate.slice(8,10)) || 1);
+  const projected = Math.round(monthRevenue / elapsed * daysInMonth);
+  if(!goal){
+    el.innerHTML = `<div class="note" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px;">
+      ${month} 매출 ${won(monthRevenue)} · 이 속도면 월말 약 ${won(projected)}
+      <button type="button" class="btn-ghost" style="font-size:11px;padding:3px 9px;margin-left:auto;" onclick="setSalesGoal()">🎯 월 목표 설정</button></div>`;
+    return;
+  }
+  const pct = Math.min(100, monthRevenue / goal * 100);
+  const projPct = projected / goal * 100;
+  el.innerHTML = `
+    <div class="goal-box">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <b style="font-size:13px;">🎯 ${month} 목표 ${won(goal)}</b>
+        <span class="note" style="margin:0;">현재 ${won(monthRevenue)} (${pct.toFixed(1)}%)</span>
+        <span class="note" style="margin:0 0 0 auto;">이 속도면 월말 약 ${won(projected)} — 목표의 ${projPct.toFixed(0)}% ${projPct >= 100 ? '✅' : '⚠'}</span>
+        <button type="button" class="btn-ghost" style="font-size:11px;padding:3px 9px;" onclick="setSalesGoal()">수정</button>
+      </div>
+      <div class="goal-track"><div class="goal-fill${projPct < 100 ? ' behind' : ''}" style="width:${pct.toFixed(1)}%"></div></div>
+    </div>`;
+}
 let manualAdStatus = JSON.parse(localStorage.getItem('salesai_manual_ad_status') || '{}'); // { "product||YYYY-MM": 'on'|'off' }
 let openMonthlyDetails = new Set(); // 펼쳐진 품목별 월별 상세 <details>의 상품명 (재렌더링 시에도 펼침 상태 유지)
 
@@ -601,6 +717,10 @@ function deletePlatform(id){
 
 function clearReportUI(){
   lastReport = null;
+  document.getElementById('insightCard').style.display = 'none';
+  document.getElementById('repeatCard').style.display = 'none';
+  document.getElementById('weekdayCard').style.display = 'none';
+  document.getElementById('goalArea').innerHTML = '';
   document.getElementById('periodLabel').textContent = '';
   document.getElementById('kTotal').textContent = '-';
   document.getElementById('kOrders').textContent = '-';
@@ -1439,7 +1559,179 @@ function computeAndRenderReport(){
     hasCostData, totalCost, grossProfit, operatingProfit, missingCostProducts,
     monthly: computeMonthlyBreakdown()
   };
+  lastReport.insightData = computeInsights(lastReport);
   renderReport();
+}
+
+// ---------- 자동 인사이트: 숫자를 "다음 행동"으로 바꾸는 판단 엔진 ----------
+// 각 판단은 반드시 (판정 기준 + 근거 숫자 + 권장 행동)을 함께 담는다.
+// - 역마진: 원가·광고비 반영 영업이익 < 0 → 가격/원가 재검토
+// - 광고 손익분기: 상품별 ROAS < 손익분기 ROAS(1÷마진율) → 광고 중단 검토
+// - 자연판매: 광고 OFF 달 평균 매출 ≥ ON 달의 80% → 광고비 절감 가능
+// - 급성장/급감: 기존 이상 탐지 결과 → 재고 확보 / 원인 확인
+function computeInsights(r){
+  const recs = activeRecords();
+  const perProd = {};
+  recs.forEach(rec => {
+    const p = perProd[rec.product] = perProd[rec.product] || { revenue:0, qty:0, cost:0, hasCost:false, missingCost:false, adSpend:0 };
+    p.revenue += rec.amount; p.qty += rec.qty || 1;
+    if(rec.cost != null){ p.cost += rec.cost * (rec.qty || 1); p.hasCost = true; } else p.missingCost = true;
+    if(rec.adAmount != null) p.adSpend += rec.adAmount;
+  });
+  const monthsCount = r.monthly ? Math.max(1, r.monthly.months.length) : 1;
+  const insights = [];  // {icon, impact(원 단위 추정), title, detail}
+  const badges = {};    // 상품명 → [{cls, label, title}]
+  const addBadge = (prod, cls, label, title) => { (badges[prod] = badges[prod] || []).push({ cls, label, title }); };
+
+  Object.entries(perProd).forEach(([name, p]) => {
+    if(p.revenue <= 0) return;
+    // 판단 1: 역마진 — 팔수록 손해
+    if(p.hasCost && !p.missingCost){
+      const op = p.revenue - p.cost - p.adSpend;
+      if(op < 0){
+        const perUnit = Math.round(op / Math.max(1, p.qty));
+        addBadge(name, 'neg', '⚠ 역마진', `원가·광고비 반영 누적 ${won(op)}`);
+        insights.push({ icon:'⚠', impact: Math.abs(op),
+          title: `'${name}' 역마진 — 팔수록 손해입니다`,
+          detail: `원가·광고비를 빼면 누적 ${won(op)} (개당 약 ${won(perUnit)}). 판매가 인상 또는 원가 재협상이 필요합니다.` });
+      }
+    }
+    // 판단 2: 광고 손익분기 — 이 상품은 ROAS 몇 배부터 남는 장사인가
+    if(p.adSpend > 0){
+      const roasP = p.revenue / p.adSpend;
+      let breakEven = 1;
+      if(p.hasCost && !p.missingCost && p.revenue > p.cost){
+        breakEven = 1 / ((p.revenue - p.cost) / p.revenue); // 1 ÷ 마진율
+      }
+      if(roasP < breakEven){
+        const monthlyAd = p.adSpend / monthsCount;
+        addBadge(name, 'neg', '💸 광고 재검토', `ROAS ${roasP.toFixed(2)}배 < 손익분기 ${breakEven.toFixed(1)}배`);
+        insights.push({ icon:'💸', impact: monthlyAd,
+          title: `'${name}' 광고 중단 검토 — 광고비가 이익을 넘습니다`,
+          detail: `ROAS ${roasP.toFixed(2)}배${breakEven > 1.001 ? `, 이 상품은 마진 구조상 ${breakEven.toFixed(1)}배 이상이어야 남습니다` : ' (1배 미만: 광고비보다 매출이 적음)'}. 중단하면 월 약 ${won(monthlyAd)} 절감됩니다.` });
+      } else if(roasP >= breakEven * 2){
+        addBadge(name, 'pos', '🎯 광고 효자', `ROAS ${roasP.toFixed(2)}배 — 손익분기(${breakEven.toFixed(1)}배)의 2배 이상. 유지/증액 검토`);
+      }
+    }
+  });
+
+  // 판단 3: 자연판매 — 광고 없이도 팔리는 상품 (월별 ON/OFF 평균 비교 기반)
+  (r.monthly?.perProduct || []).forEach(p => {
+    if(!p.onOff) return;
+    const { avgOn, avgOff } = p.onOff;
+    const prod = perProd[p.product];
+    const monthlyAd = prod && prod.adSpend > 0 ? prod.adSpend / monthsCount : 0;
+    if(avgOff >= avgOn * 0.8){
+      addBadge(p.product, 'on', '🌱 자연판매', `광고 OFF 달 평균 ${won(avgOff)} — ON 달(${won(avgOn)})의 80% 이상`);
+      insights.push({ icon:'🌱', impact: monthlyAd,
+        title: `'${p.product}' 광고 없이도 팔립니다`,
+        detail: `광고 OFF 달 평균 매출 ${won(avgOff)}로 ON 달(${won(avgOn)})과 비슷합니다.${monthlyAd ? ` 광고를 줄이면 월 약 ${won(monthlyAd)}을 아낄 수 있습니다.` : ' 광고비를 다른 상품에 배분하는 것을 검토하세요.'}` });
+    }
+  });
+
+  // 판단 4: 급성장/급감 — 기존 이상 탐지를 행동 제안으로 변환
+  r.anomalies.forEach(a => {
+    const rev = perProd[a.product]?.revenue || 0;
+    if(a.type === '급증'){
+      addBadge(a.product, 'pos', '🚀 급성장', `최근 3일 평균 +${a.changePct.toFixed(0)}%`);
+      insights.push({ icon:'🚀', impact: rev * 0.1,
+        title: `'${a.product}' 급성장 +${a.changePct.toFixed(0)}%`,
+        detail: `최근 3일 평균 매출이 이전 대비 급증했습니다. 품절되기 전에 재고 확보를 검토하세요.` });
+    } else {
+      addBadge(a.product, 'neg', '📉 급감', `최근 3일 평균 ${a.changePct.toFixed(0)}%`);
+      insights.push({ icon:'📉', impact: rev * 0.1,
+        title: `'${a.product}' 매출 급감 ${a.changePct.toFixed(0)}%`,
+        detail: `품절, 리뷰 이슈, 경쟁 상품 가격 변동 여부를 확인해보세요.` });
+    }
+  });
+
+  insights.sort((a,b) => b.impact - a.impact);
+  // 판단에 필요한 데이터가 비어 있으면 뭘 채우면 되는지 안내
+  const hints = [];
+  const vals = Object.values(perProd);
+  if(vals.some(p => !p.hasCost || p.missingCost)) hints.push('원가를 입력하면 역마진·광고 손익분기 판정이 정확해집니다.');
+  if(!vals.some(p => p.adSpend > 0)) hints.push('광고비를 입력하면 상품별 광고 유지/중단 판단이 가능해집니다.');
+  return { insights: insights.slice(0, 3), badges, hints };
+}
+
+function insightBadgeHtml(product){
+  const badges = lastReport?.insightData?.badges?.[product];
+  if(!badges) return '';
+  return badges.map(b => `<span class="pill ${b.cls}" title="${escapeHtml(b.title)}" style="font-size:9.5px;padding:1px 6px;margin-left:4px;vertical-align:1px;">${b.label}</span>`).join('');
+}
+
+function renderInsights(ins){
+  const card = document.getElementById('insightCard');
+  const list = document.getElementById('insightList');
+  if(!ins || (!ins.insights.length && !ins.hints.length)){ card.style.display = 'none'; list.innerHTML = ''; return; }
+  card.style.display = '';
+  list.innerHTML = ins.insights.map(i => `
+    <div class="insight-item">
+      <div class="insight-icon">${i.icon}</div>
+      <div><b style="font-size:13px;">${escapeHtml(i.title)}</b><div class="note" style="margin-top:3px;">${escapeHtml(i.detail)}</div></div>
+    </div>`).join('')
+    + (ins.hints.length ? `<div class="note" style="margin-top:${ins.insights.length ? 8 : 0}px;">💡 ${ins.hints.map(escapeHtml).join(' · ')}</div>` : '');
+}
+
+// ---------- 재구매 고객 (구매자명이 입력된 데이터 기반) ----------
+function renderRepeatCustomers(){
+  const card = document.getElementById('repeatCard');
+  const el = document.getElementById('repeatArea');
+  const recs = activeRecords().filter(r => (r.customer || '').trim());
+  if(recs.length < 2){ card.style.display = 'none'; el.innerHTML = ''; return; }
+  card.style.display = '';
+  const byCust = {};
+  recs.forEach(r => {
+    const c = byCust[r.customer] = byCust[r.customer] || { count:0, amount:0, last:'' };
+    c.count++; c.amount += r.amount;
+    if(r.date > c.last) c.last = r.date;
+  });
+  const customers = Object.entries(byCust);
+  const repeaters = customers.filter(([,c]) => c.count >= 2);
+  const totalRevenue = customers.reduce((s,[,c]) => s + c.amount, 0);
+  const repeatRevenue = repeaters.reduce((s,[,c]) => s + c.amount, 0);
+  const vip = customers.sort((a,b) => b[1].amount - a[1].amount).slice(0, 10);
+  el.innerHTML = `
+    <div class="kpis ad" style="margin-bottom:12px;">
+      <div class="kpi"><div class="v">${customers.length.toLocaleString('ko-KR')}명</div><div class="l">구매 고객 수</div></div>
+      <div class="kpi"><div class="v">${(repeaters.length / customers.length * 100).toFixed(1)}%</div><div class="l">재구매율 (2회 이상)</div></div>
+      <div class="kpi"><div class="v">${won(repeatRevenue)}</div><div class="l">재구매 고객 매출</div></div>
+      <div class="kpi"><div class="v">${totalRevenue ? (repeatRevenue / totalRevenue * 100).toFixed(1) : 0}%</div><div class="l">재구매 고객 매출 비중</div></div>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>#</th><th>구매자</th><th>구매 횟수</th><th>총 구매액</th><th>마지막 구매일</th></tr></thead>
+      <tbody>${vip.map(([name,c],i) => `<tr><td>${i+1}</td><td>${escapeHtml(name)}${c.count >= 2 ? ' <span class="pill pos" style="font-size:9.5px;padding:1px 6px;">단골</span>' : ''}</td><td>${c.count}회</td><td>${won(c.amount)}</td><td>${c.last}</td></tr>`).join('')}</tbody>
+    </table></div>
+    <p class="note">구매자명이 입력된 데이터만 집계됩니다(컬럼 매핑에서 "구매자명/회원명"을 지정하세요). 같은 사람이 다른 이름·ID로 들어오면 별도 고객으로 계산됩니다.</p>`;
+}
+
+// ---------- 요일별 매출 패턴 ----------
+function renderWeekdayPattern(r){
+  const card = document.getElementById('weekdayCard');
+  const el = document.getElementById('weekdayArea');
+  if(!r || r.dates.length < 7){ card.style.display = 'none'; el.innerHTML = ''; return; }
+  const names = ['일','월','화','수','목','금','토'];
+  const sums = Array(7).fill(0), counts = Array(7).fill(0);
+  r.dates.forEach(d => {
+    const dt = new Date(d + 'T00:00:00');
+    if(isNaN(dt.getTime())) return;
+    sums[dt.getDay()] += r.byDate[d];
+    counts[dt.getDay()]++;
+  });
+  const avgs = sums.map((s,i) => counts[i] ? s / counts[i] : 0);
+  const max = Math.max(...avgs);
+  if(!(max > 0)){ card.style.display = 'none'; el.innerHTML = ''; return; }
+  card.style.display = '';
+  const activeDays = avgs.filter((v,i) => counts[i]);
+  const overall = activeDays.reduce((s,v) => s + v, 0) / Math.max(1, activeDays.length);
+  const bestIdx = avgs.indexOf(max);
+  el.innerHTML = [1,2,3,4,5,6,0].map(i => `
+    <div class="bar-row">
+      <div class="name" style="width:34px;${i===0 ? 'color:var(--red);' : i===6 ? 'color:var(--accent);' : ''}">${names[i]}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(avgs[i] / max * 100).toFixed(1)}%;${i === bestIdx ? '' : 'opacity:.7;'}"></div></div>
+      <div class="bar-val">${counts[i] ? won(avgs[i]) : '-'}<span class="bar-qty"> · ${counts[i]}일</span></div>
+    </div>`).join('')
+    + `<p class="note">${names[bestIdx]}요일 매출이 요일 평균 대비 ${overall ? '+' + ((max / overall - 1) * 100).toFixed(0) : 0}% 높습니다 — 광고·프로모션 집행 요일을 정할 때 참고하세요.</p>`;
 }
 
 // ---------- 품목별 월별 상세 (광고 ON/OFF 비교) ----------
@@ -1523,6 +1815,10 @@ function setAdStatus(product, month, value){
 
 function renderReport(){
   const r = lastReport;
+  renderInsights(r.insightData);
+  renderGoal(r);
+  renderRepeatCustomers();
+  renderWeekdayPattern(r);
   document.getElementById('periodLabel').textContent = `(${r.dates[0]} ~ ${r.dates[r.dates.length-1]}, ${r.dates.length}일)`
     + (lastExcluded.count ? ` · 취소/반품 등 ${lastExcluded.count}건 제외됨` : '');
   document.getElementById('kTotal').textContent = won(r.totalAmount);
@@ -1625,7 +1921,7 @@ function renderTopProducts(list){
   const rowHtml = (name, amt, rank) => `
     <div class="bar-row">
       <div class="rank">${rank}</div>
-      <div class="name" title="${escapeHtml(name)}">${escapeHtml(name)}</div>
+      <div class="name" title="${escapeHtml(name)}">${escapeHtml(name)}${insightBadgeHtml(name)}</div>
       <div class="bar-track"><div class="bar-fill" style="width:${(amt/maxP*100).toFixed(1)}%"></div></div>
       <div class="bar-val">${won(amt)}${qtyMap[name] != null ? `<span class="bar-qty"> · ${qtyMap[name].toLocaleString('ko-KR')}개</span>` : ''}</div>
     </div>`;
@@ -1672,7 +1968,7 @@ function renderMonthlyDetail(m){
     return `
       <details class="prod-item" data-product="${escapeHtml(p.product)}" ${openMonthlyDetails.has(p.product) ? 'open' : ''}>
         <summary>
-          <span class="pname">${escapeHtml(p.product)}</span>
+          <span class="pname">${escapeHtml(p.product)}${insightBadgeHtml(p.product)}</span>
           <span class="prev">총매출 ${won(p.totalRevenue)}${showProfit ? ` · 순이익 ${won(p.totalProfit)}` : ''}</span>
         </summary>
         <div class="prod-body">
