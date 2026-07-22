@@ -89,7 +89,7 @@
   .map-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
   .map-row > *{min-width:0;}
   .btn-row > *{min-width:0;}
-  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px;}
   @media (max-width:700px){.kpis{grid-template-columns:repeat(2,1fr);}}
   .kpi{
     position:relative;overflow:hidden;
@@ -111,7 +111,8 @@
   .bar-row .name{width:150px;font-size:12.5px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .bar-track{flex:1;height:14px;background:#eeeae0;border-radius:99px;overflow:hidden;box-shadow:inset 0 1px 2px rgba(38,33,72,.06);}
   .bar-fill{height:100%;background:linear-gradient(90deg,#8b80f7,var(--accent) 70%,var(--accent2));border-radius:99px;box-shadow:0 1px 3px rgba(92,81,218,.35);}
-  .bar-val{width:110px;text-align:right;font-size:12px;color:var(--muted);flex-shrink:0;font-variant-numeric:tabular-nums;}
+  .bar-val{width:150px;text-align:right;font-size:12px;color:var(--muted);flex-shrink:0;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .bar-qty{font-size:11px;opacity:.75;}
   .alert{background:rgba(212,63,79,.06);border:1px solid rgba(212,63,79,.28);border-left:3px solid var(--red);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:13px;}
   .alert.none{background:rgba(30,156,98,.06);border-color:rgba(30,156,98,.28);border-left-color:var(--green);color:var(--green);}
   .ai-comment{font-size:13.5px;line-height:1.7;white-space:pre-wrap;background:linear-gradient(165deg,#fbfaf7,#f5f2ea);border:1px solid var(--border);border-radius:12px;padding:15px;}
@@ -174,6 +175,31 @@
   .keyword-chip.type-platform{border-left-color:var(--accent2);}
   .keyword-chip button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:0 2px;line-height:1;font-family:inherit;}
   .keyword-chip button:hover{color:var(--red);}
+  @keyframes cardIn{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
+  .card{animation:cardIn .5s cubic-bezier(.22,.7,.3,1) both;}
+  .card:nth-of-type(2){animation-delay:.06s;}
+  .card:nth-of-type(3){animation-delay:.12s;}
+  .card:nth-of-type(4){animation-delay:.18s;}
+  .card:nth-of-type(5){animation-delay:.24s;}
+  .card:nth-of-type(6){animation-delay:.3s;}
+  .card:nth-of-type(n+7){animation-delay:.36s;}
+  @keyframes kpiPop{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+  .kpi{animation:kpiPop .45s cubic-bezier(.22,.7,.3,1) both;}
+  .kpis .kpi:nth-child(2){animation-delay:.05s;}
+  .kpis .kpi:nth-child(3){animation-delay:.1s;}
+  .kpis .kpi:nth-child(4){animation-delay:.15s;}
+  .kpis .kpi:nth-child(5){animation-delay:.2s;}
+  @keyframes barIn{from{transform:scaleX(0);}to{transform:scaleX(1);}}
+  .bar-fill{transform-origin:left;animation:barIn .7s cubic-bezier(.22,.7,.3,1) both;}
+  .bar-row:nth-child(2) .bar-fill{animation-delay:.05s;}
+  .bar-row:nth-child(3) .bar-fill{animation-delay:.1s;}
+  .bar-row:nth-child(4) .bar-fill{animation-delay:.15s;}
+  .bar-row:nth-child(n+5) .bar-fill{animation-delay:.2s;}
+  @keyframes fadeDown{from{opacity:0;transform:translateY(-5px);}to{opacity:1;transform:none;}}
+  .suggest-box{animation:fadeDown .18s ease both;}
+  .prod-item .prod-body{animation:fadeDown .22s ease both;}
+  .keyword-chip{animation:fadeDown .2s ease both;}
+  @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;}}
   ::-webkit-scrollbar{width:10px;height:10px;}
   ::-webkit-scrollbar-track{background:transparent;}
   ::-webkit-scrollbar-thumb{background:#d6cfc2;border-radius:99px;border:2px solid #f3efe7;}
@@ -292,6 +318,7 @@
         <div class="kpis">
           <div class="kpi"><div class="v" id="kTotal">-</div><div class="l">총 매출</div></div>
           <div class="kpi"><div class="v" id="kOrders">-</div><div class="l">총 주문(라인) 수</div></div>
+          <div class="kpi"><div class="v" id="kQty">-</div><div class="l">총 판매 수량</div></div>
           <div class="kpi"><div class="v" id="kAvg">-</div><div class="l">평균 객단가</div></div>
           <div class="kpi"><div class="v" id="kTrend">-</div><div class="l">직전 기간 대비</div></div>
         </div>
@@ -424,7 +451,14 @@ function isPlatformActive(p){ return p.active !== false; }
 
 function savePlatformData(){
   if(!activePlatformId || activePlatformId === '__all__') return;
-  localStorage.setItem(platformDataKey(activePlatformId), JSON.stringify({ records, lastExcluded, uploadedFiles }));
+  const files = uploadedFiles.map(f => ({ id: f.id, fileName: f.fileName, hidden: f.hidden, raw: f.raw || null, presetName: f.presetName }));
+  try {
+    localStorage.setItem(platformDataKey(activePlatformId), JSON.stringify({ records, lastExcluded, uploadedFiles: files }));
+  } catch(e) {
+    // 용량 초과 시 원본 표(raw)만 빼고 저장 — 데이터는 보존되고 새로고침 후 재매핑만 제한됨
+    const slim = files.map(f => ({ ...f, raw: null }));
+    try { localStorage.setItem(platformDataKey(activePlatformId), JSON.stringify({ records, lastExcluded, uploadedFiles: slim })); } catch(e2) {}
+  }
 }
 
 // 예전 저장 형식과의 호환: 원가(costRecords/costMap)와 광고비(adRecords)를 매출과 별도 배열로 저장하던 방식에서,
@@ -466,7 +500,7 @@ function migrateLegacyDataIntoRecords(d){
 function normalizeUploadedFiles(raw){
   if(!raw) return [];
   if(Array.isArray(raw)){
-    return raw.map((f, idx) => ({ id: f.id ?? (idx + 1), fileName: f.fileName || '(파일명 확인 불가)', hidden: f.hidden || false, file: null }));
+    return raw.map((f, idx) => ({ id: f.id ?? (idx + 1), fileName: f.fileName || '(파일명 확인 불가)', hidden: f.hidden || false, file: null, raw: f.raw || null, presetName: f.presetName }));
   }
   const merged = [];
   ['sales','ad','cost'].forEach(type => {
@@ -563,6 +597,7 @@ function clearReportUI(){
   document.getElementById('periodLabel').textContent = '';
   document.getElementById('kTotal').textContent = '-';
   document.getElementById('kOrders').textContent = '-';
+  document.getElementById('kQty').textContent = '-';
   document.getElementById('kAvg').textContent = '-';
   document.getElementById('kTrend').textContent = '-';
   document.getElementById('chartArea').innerHTML = '';
@@ -774,11 +809,18 @@ async function editUploadedFile(fileId){
   document.getElementById('mapSection').style.display = 'none';
   if(selectedFileId == null || selectedFileId === MANUAL_FILE_ID) return; // 편집할 원본 파일 없음(수기 입력이거나 선택 해제)
   const file = uploadedFiles.find(f => f.id === fileId);
-  if(!file || !file.file) return; // 새로고침 등으로 원본 파일이 없으면 보기 필터만 동작
+  if(!file) return;
+  if(!file.file && !file.raw) return; // 원본 파일도 저장된 표도 없으면 보기 필터만 동작
   editingFileId = fileId;
-  pendingFile = file.file;
+  pendingFile = file.file || null;
   pendingFileName = file.fileName;
-  await handleFileUpload(file.file, (table) => { rawTable = table; showMapping(); });
+  if(file.file){
+    await handleFileUpload(file.file, (table) => { rawTable = table; showMapping(); });
+  } else {
+    // 새로고침 후: localStorage에 저장해 둔 원본 표로 컬럼 매핑을 다시 연다.
+    rawTable = { headers: file.raw.headers, rows: file.raw.rows };
+    showMapping();
+  }
   document.getElementById('mapSection').scrollIntoView({ block: 'center', behavior: 'smooth' });
 }
 
@@ -831,7 +873,7 @@ function addManualSalesRecord(){
   document.getElementById('manualSalesAd').value = '';
   document.getElementById('manualSalesAdChannel').value = '';
   records.push({
-    date, product, amount: finalAmount, qty, customer,
+    date, product, amount: finalAmount, unitPrice: amountTypes.manual === 'unit' ? amount : null, qty, customer,
     cost: cost != null ? Math.abs(cost) : null,
     adAmount: adAmount != null ? Math.abs(adAmount) : null,
     adChannel,
@@ -1207,6 +1249,7 @@ function applySalesFromRawTable(fileId){
       date: toISODate(r[di]),
       product: r[pi] || '(상품명없음)',
       amount: amountTypes.map === 'unit' ? toNumber(r[ai]) * qty : toNumber(r[ai]),
+      unitPrice: amountTypes.map === 'unit' ? toNumber(r[ai]) : null,
       qty,
       customer: cui > -1 ? (r[cui] || '') : '',
       cost: cost != null ? Math.abs(cost) : null,
@@ -1240,7 +1283,10 @@ function applyMapping(){
 
   applySalesFromRawTable(fileId);
 
-  const fileEntry = { id: fileId, fileName: pendingFileName || '(파일명 확인 불가)', hidden: false, file: pendingFile, presetName: lastAppliedPresetName || '직접 매핑' };
+  // 원본 표를 함께 저장해 두면 새로고침 후에도 파일 클릭 → 컬럼 재매핑이 가능하다.
+  // 너무 큰 파일은 localStorage 용량을 아끼기 위해 제외(그 경우 재매핑은 세션 안에서만 동작).
+  const rawForStorage = rawTable && rawTable.rows.length <= 5000 ? { headers: rawTable.headers, rows: rawTable.rows } : null;
+  const fileEntry = { id: fileId, fileName: pendingFileName || '(파일명 확인 불가)', hidden: false, file: pendingFile, raw: rawForStorage, presetName: lastAppliedPresetName || '직접 매핑' };
   const existingIdx = uploadedFiles.findIndex(f => f.id === fileId);
   if(existingIdx > -1) uploadedFiles[existingIdx] = fileEntry; else uploadedFiles.push(fileEntry);
   renderUploadedFiles();
@@ -1279,6 +1325,7 @@ function computeAndRenderReport(){
   const dates = Object.keys(byDate).sort();
   const totalAmount = records.reduce((s,r)=>s+r.amount,0);
   const totalOrders = records.length;
+  const totalQty = records.reduce((s,r)=>s+(r.qty||1),0);
   const avgOrder = totalAmount/totalOrders;
 
   // 기간 비교: 최근 N일 vs 그 직전 N일 (N = 최대 7일, 데이터가 적으면 절반)
@@ -1346,7 +1393,11 @@ function computeAndRenderReport(){
 
   // 상품별 합계 (전체 순위)
   const byProduct = {};
-  records.forEach(r => { byProduct[r.product] = (byProduct[r.product]||0) + r.amount; });
+  const byProductQty = {};
+  records.forEach(r => {
+    byProduct[r.product] = (byProduct[r.product]||0) + r.amount;
+    byProductQty[r.product] = (byProductQty[r.product]||0) + (r.qty||1);
+  });
   const topProducts = Object.entries(byProduct).sort((a,b)=>b[1]-a[1]);
 
   // 이상 탐지: 상품별 최근 3일 평균 vs 그 이전 7일 평균, 40% 이상 하락 시 경고
@@ -1376,7 +1427,7 @@ function computeAndRenderReport(){
   });
 
   lastReport = {
-    dates, byDate, totalAmount, totalOrders, avgOrder, trendPct, topProducts, anomalies,
+    dates, byDate, totalAmount, totalOrders, totalQty, byProductQty, avgOrder, trendPct, topProducts, anomalies,
     hasAdData, totalAdSpend, roas, adRatio, netAmount, adTrendPct, roasTrendPct, adAlerts,
     hasCostData, totalCost, grossProfit, operatingProfit, missingCostProducts,
     monthly: computeMonthlyBreakdown()
@@ -1470,6 +1521,7 @@ function renderReport(){
     + (lastExcluded.count ? ` · 취소/반품 등 ${lastExcluded.count}건 제외됨` : '');
   document.getElementById('kTotal').textContent = won(r.totalAmount);
   document.getElementById('kOrders').textContent = r.totalOrders.toLocaleString('ko-KR')+'건';
+  document.getElementById('kQty').textContent = r.totalQty.toLocaleString('ko-KR')+'개';
   document.getElementById('kAvg').textContent = won(r.avgOrder);
   const trendEl = document.getElementById('kTrend');
   if(r.trendPct===null){ trendEl.textContent='-'; trendEl.className='v'; }
@@ -1563,12 +1615,13 @@ function renderTopProducts(list){
   const container = document.getElementById('topProducts');
   if(!list.length){ container.innerHTML = '<div class="empty">데이터 없음</div>'; return; }
   const maxP = list[0][1];
+  const qtyMap = (lastReport && lastReport.byProductQty) || {};
   const rowHtml = (name, amt, rank) => `
     <div class="bar-row">
       <div class="rank">${rank}</div>
       <div class="name" title="${escapeHtml(name)}">${escapeHtml(name)}</div>
       <div class="bar-track"><div class="bar-fill" style="width:${(amt/maxP*100).toFixed(1)}%"></div></div>
-      <div class="bar-val">${won(amt)}</div>
+      <div class="bar-val">${won(amt)}${qtyMap[name] != null ? `<span class="bar-qty"> · ${qtyMap[name].toLocaleString('ko-KR')}개</span>` : ''}</div>
     </div>`;
   const visible = list.slice(0, TOP_PRODUCTS_PAGE).map(([n,a],i)=>rowHtml(n,a,i+1)).join('');
   const rest = list.slice(TOP_PRODUCTS_PAGE).map(([n,a],i)=>rowHtml(n,a,i+1+TOP_PRODUCTS_PAGE)).join('');
@@ -1601,6 +1654,7 @@ function renderMonthlyDetail(m){
       <tr>
         <td>${x.month}</td>
         <td>${won(x.revenue)}</td>
+        <td>${x.qty.toLocaleString('ko-KR')}개</td>
         <td>${x.cost===null?'-':won(x.cost)}</td>
         <td>${x.adSpend===null?'-':won(x.adSpend)}</td>
         <td>${(x.cost!==null || x.adSpend!==null) ? won(x.profit) : '-'}</td>
@@ -1617,7 +1671,7 @@ function renderMonthlyDetail(m){
         <div class="prod-body">
           <div class="table-wrap">
             <table>
-              <thead><tr><th>월</th><th>매출</th><th>원가</th><th>광고비</th><th>순이익</th><th>광고상태</th></tr></thead>
+              <thead><tr><th>월</th><th>매출</th><th>수량</th><th>원가</th><th>광고비</th><th>순이익</th><th>광고상태</th></tr></thead>
               <tbody>${monthRows}</tbody>
             </table>
           </div>
@@ -1633,7 +1687,7 @@ function ruleBasedComment(r){
   if(lastExcluded.count){
     lines.push(`취소/반품 등 ${lastExcluded.count}건(${lastExcluded.statuses.join(', ')})은 매출 집계에서 제외했습니다.`);
   }
-  lines.push(`총 매출 ${won(r.totalAmount)}, 총 주문 ${r.totalOrders}건, 평균 객단가 ${won(r.avgOrder)}입니다.`);
+  lines.push(`총 매출 ${won(r.totalAmount)}, 총 주문 ${r.totalOrders}건(판매 수량 ${r.totalQty.toLocaleString('ko-KR')}개), 평균 객단가 ${won(r.avgOrder)}입니다.`);
   if(r.trendPct !== null){
     lines.push(`최근 기간 매출은 직전 기간 대비 ${r.trendPct>=0?'증가':'감소'}했습니다 (${r.trendPct>=0?'+':''}${r.trendPct.toFixed(1)}%).`);
   }
@@ -1875,18 +1929,31 @@ function cancelEditSalesRecord(){
   renderSearchResults();
 }
 
+// 수정 모드에서 개당 단가·수량·합계를 연동: 단가나 수량을 고치면 합계가 자동 계산되고,
+// 합계를 직접 고치면 단가 연동이 풀린다(단가 칸이 비워짐).
+function syncEditAmount(idx){
+  const u = parseFloat(document.getElementById('editSalesUnit_'+idx).value);
+  if(isNaN(u)) return;
+  const q = parseFloat(document.getElementById('editSalesQty_'+idx).value) || 1;
+  document.getElementById('editSalesAmount_'+idx).value = u * q;
+}
+function onEditAmountInput(idx){
+  document.getElementById('editSalesUnit_'+idx).value = '';
+}
+
 function saveSalesRecordEdit(idx){
   const date = document.getElementById('editSalesDate_'+idx).value;
   const product = document.getElementById('editSalesProduct_'+idx).value.trim();
   const customer = document.getElementById('editSalesCustomer_'+idx).value.trim();
   const amount = toNumber(document.getElementById('editSalesAmount_'+idx).value);
+  const unitPrice = toNumberOrNull(document.getElementById('editSalesUnit_'+idx).value);
   const qty = toNumber(document.getElementById('editSalesQty_'+idx).value) || 1;
   const cost = toNumberOrNull(document.getElementById('editSalesCost_'+idx).value);
   const adAmount = toNumberOrNull(document.getElementById('editSalesAd_'+idx).value);
   const adChannel = document.getElementById('editSalesAdChannel_'+idx).value.trim();
   if(!date || !product || isNaN(amount)){ alert('날짜, 상품명, 매출액은 필수입니다.'); return; }
   records[idx] = {
-    ...records[idx], date, product, customer, amount, qty,
+    ...records[idx], date, product, customer, amount, unitPrice, qty,
     cost: cost != null ? Math.abs(cost) : null,
     adAmount: adAmount != null ? Math.abs(adAmount) : null,
     adChannel
@@ -1951,8 +2018,9 @@ function renderSearchResults(){
               <td><input type="date" id="editSalesDate_${idx}" value="${r.date}" style="padding:4px 6px;font-size:12px;" /></td>
               <td><input type="text" id="editSalesProduct_${idx}" value="${escapeHtml(r.product)}" style="padding:4px 6px;font-size:12px;" /></td>
               <td><input type="text" id="editSalesCustomer_${idx}" value="${escapeHtml(r.customer||'')}" style="padding:4px 6px;font-size:12px;min-width:90px;" /></td>
-              <td><input type="number" id="editSalesAmount_${idx}" value="${r.amount}" style="padding:4px 6px;font-size:12px;width:90px;" /></td>
-              <td><input type="number" id="editSalesQty_${idx}" value="${r.qty != null ? r.qty : 1}" min="1" style="padding:4px 6px;font-size:12px;width:60px;" /></td>
+              <td><input type="number" id="editSalesAmount_${idx}" value="${r.amount}" oninput="onEditAmountInput(${idx})" title="합계 매출액" style="padding:4px 6px;font-size:12px;width:90px;" />
+                <input type="number" id="editSalesUnit_${idx}" value="${r.unitPrice != null ? r.unitPrice : ''}" placeholder="개당 단가" oninput="syncEditAmount(${idx})" title="개당 단가 — 입력하면 단가 × 수량으로 매출액이 자동 계산됩니다" style="padding:4px 6px;font-size:12px;width:90px;margin-top:4px;" /></td>
+              <td><input type="number" id="editSalesQty_${idx}" value="${r.qty != null ? r.qty : 1}" min="1" oninput="syncEditAmount(${idx})" style="padding:4px 6px;font-size:12px;width:60px;" /></td>
               <td><input type="number" id="editSalesCost_${idx}" value="${r.cost != null ? r.cost : ''}" placeholder="선택" style="padding:4px 6px;font-size:12px;width:80px;" /></td>
               <td><input type="number" id="editSalesAd_${idx}" value="${r.adAmount != null ? r.adAmount : ''}" placeholder="선택" style="padding:4px 6px;font-size:12px;width:80px;" /></td>
               <td><input type="text" id="editSalesAdChannel_${idx}" value="${escapeHtml(r.adChannel||'')}" placeholder="선택" style="padding:4px 6px;font-size:12px;width:80px;" /></td>
@@ -1960,7 +2028,7 @@ function renderSearchResults(){
             </tr>`;
           }
           const off = r.included === false;
-          return `<tr style="${off ? 'opacity:.5;' : ''}">${showPlatform ? `<td>${escapeHtml(r.platformName||'-')}</td>` : ''}<td>${r.date}</td><td>${escapeHtml(r.product)}</td><td>${escapeHtml(r.customer||'-')}</td><td>${won(r.amount)}</td><td>${r.qty != null ? r.qty : 1}</td><td>${r.cost != null ? won(r.cost) : '-'}</td><td>${r.adAmount != null ? won(r.adAmount) : '-'}</td><td>${escapeHtml(r.adChannel||'-')}</td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="toggleRecordIncluded(${idx})">${off ? 'OFF' : 'ON'}</button></td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="editSalesRecord(${idx})">수정</button></td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="deleteRecord(${idx})" title="삭제">🗑</button></td></tr>`;
+          return `<tr style="${off ? 'opacity:.5;' : ''}">${showPlatform ? `<td>${escapeHtml(r.platformName||'-')}</td>` : ''}<td>${r.date}</td><td>${escapeHtml(r.product)}</td><td>${escapeHtml(r.customer||'-')}</td><td>${won(r.amount)}${r.unitPrice != null ? `<div style="font-size:11px;color:var(--muted);">${won(r.unitPrice)}/개</div>` : ''}</td><td>${r.qty != null ? r.qty : 1}</td><td>${r.cost != null ? won(r.cost) : '-'}</td><td>${r.adAmount != null ? won(r.adAmount) : '-'}</td><td>${escapeHtml(r.adChannel||'-')}</td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="toggleRecordIncluded(${idx})">${off ? 'OFF' : 'ON'}</button></td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="editSalesRecord(${idx})">수정</button></td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="deleteRecord(${idx})" title="삭제">🗑</button></td></tr>`;
         }).join('')}</tbody>
       </table>
     </div>
@@ -1978,6 +2046,7 @@ ${lastExcluded.count ? `> 취소/반품 등 ${lastExcluded.count}건(${lastExclu
 ## KPI
 - 총 매출: ${won(r.totalAmount)}
 - 총 주문(라인) 수: ${r.totalOrders}건
+- 총 판매 수량: ${r.totalQty.toLocaleString('ko-KR')}개
 - 평균 객단가: ${won(r.avgOrder)}
 - 직전 기간 대비: ${r.trendPct===null?'-':(r.trendPct>=0?'+':'')+r.trendPct.toFixed(1)+'%'}
 
@@ -2001,8 +2070,8 @@ ${r.hasCostData ? `- 총 원가: ${won(r.totalCost)}
 ${r.missingCostProducts.length ? `- ⚠ 원가 미입력 품목(0원으로 계산됨): ${r.missingCostProducts.join(', ')}` : '- 모든 품목에 원가가 입력되었습니다.'}` : '- 원가 데이터가 입력되지 않았습니다.'}
 
 ## 품목별 월별 상세 (전체 품목)
-${(r.monthly && r.monthly.perProduct.length) ? `| 품목 | 월 | 매출 | 원가 | 광고비 | 순이익 | 광고상태 |\n|---|---|---|---|---|---|---|\n` +
-  r.monthly.perProduct.flatMap(p => p.monthly.map(x => `| ${p.product} | ${x.month} | ${won(x.revenue)} | ${x.cost===null?'-':won(x.cost)} | ${x.adSpend===null?'-':won(x.adSpend)} | ${(x.cost!==null||x.adSpend!==null)?won(x.profit):'-'} | ${x.adOn===null?'-':(x.adOn?'ON':'OFF')} |`)).join('\n')
+${(r.monthly && r.monthly.perProduct.length) ? `| 품목 | 월 | 매출 | 수량 | 원가 | 광고비 | 순이익 | 광고상태 |\n|---|---|---|---|---|---|---|---|\n` +
+  r.monthly.perProduct.flatMap(p => p.monthly.map(x => `| ${p.product} | ${x.month} | ${won(x.revenue)} | ${x.qty}개 | ${x.cost===null?'-':won(x.cost)} | ${x.adSpend===null?'-':won(x.adSpend)} | ${(x.cost!==null||x.adSpend!==null)?won(x.profit):'-'} | ${x.adOn===null?'-':(x.adOn?'ON':'OFF')} |`)).join('\n')
   : '데이터 없음'}
 
 ## 코멘트
@@ -2020,7 +2089,7 @@ function exportHandoff(){
     generated_at: new Date().toISOString(),
     period: `${r.dates[0]}~${r.dates[r.dates.length-1]}`,
     excluded: lastExcluded,
-    kpi: { totalAmount: r.totalAmount, totalOrders: r.totalOrders, avgOrder: Math.round(r.avgOrder), trendPct: r.trendPct },
+    kpi: { totalAmount: r.totalAmount, totalOrders: r.totalOrders, totalQty: r.totalQty, avgOrder: Math.round(r.avgOrder), trendPct: r.trendPct },
     topProducts: r.topProducts.map(([n,a])=>({name:n, amount:a})),
     anomalies: r.anomalies,
     adSpend: r.hasAdData ? {
