@@ -505,7 +505,9 @@ function renderGoal(r){
   const el = document.getElementById('goalArea');
   if(!r || !r.dates.length){ el.innerHTML = ''; return; }
   const goal = currentGoalAmount();
-  const lastDate = r.dates[r.dates.length - 1];
+  // 날짜 형식이 아닌 값(잘못 매핑된 데이터)은 페이스 계산에서 제외
+  const lastDate = [...r.dates].reverse().find(d => /^\d{4}-\d{2}-\d{2}$/.test(d));
+  if(!lastDate){ el.innerHTML = ''; return; }
   const month = lastDate.slice(0,7);
   const monthRevenue = r.dates.filter(d => d.startsWith(month)).reduce((s,d) => s + r.byDate[d], 0);
   const [y,m] = month.split('-').map(Number);
