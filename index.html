@@ -249,8 +249,8 @@
       </div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
-      <button type="button" class="btn-ghost" style="font-size:12px;" onclick="exportBackup()" data-tip="모든 플랫폼의 데이터·설정을 JSON 파일 하나로 내려받습니다">💾 전체 백업</button>
-      <button type="button" class="btn-ghost" style="font-size:12px;" onclick="document.getElementById('restoreFile').click()" data-tip="백업 JSON 파일로 복원합니다 (현재 데이터를 덮어씁니다)">복원</button>
+      <button type="button" class="btn-ghost" style="font-size:12px;" onclick="exportBackup()" data-tip="모든 데이터를 파일 하나로 저장해요">💾 전체 백업</button>
+      <button type="button" class="btn-ghost" style="font-size:12px;" onclick="document.getElementById('restoreFile').click()" data-tip="백업 파일로 되돌려요 · 지금 데이터는 덮어써요">복원</button>
       <input type="file" id="restoreFile" accept=".json,application/json" style="display:none;" onchange="importBackup(this.files[0])" />
     </div>
   </header>
@@ -350,7 +350,7 @@
     <!-- RIGHT: 리포트 -->
     <div>
       <div class="card" id="insightCard" style="display:none;">
-        <h2>📌 오늘의 판단 <span class="n">(데이터가 말해주는 다음 행동)</span></h2>
+        <h2>📌 오늘의 판단 <span class="n">(지금 하면 좋은 것들)</span></h2>
         <div id="insightList"></div>
       </div>
 
@@ -360,8 +360,8 @@
           <div class="kpi"><div class="v" id="kTotal">-</div><div class="l">총 매출</div></div>
           <div class="kpi"><div class="v" id="kOrders">-</div><div class="l">총 주문(라인) 수</div></div>
           <div class="kpi"><div class="v" id="kQty">-</div><div class="l">총 판매 수량</div></div>
-          <div class="kpi" data-tip="주문 1건당 평균 매출액입니다"><div class="v" id="kAvg">-</div><div class="l">평균 객단가</div></div>
-          <div class="kpi" data-tip="최근 기간 매출을 그 직전 같은 길이의 기간과 비교한 증감입니다"><div class="v" id="kTrend">-</div><div class="l">직전 기간 대비</div></div>
+          <div class="kpi" data-tip="주문 1건당 평균 매출이에요"><div class="v" id="kAvg">-</div><div class="l">평균 객단가</div></div>
+          <div class="kpi" data-tip="최근 기간을 직전 같은 기간과 비교했어요"><div class="v" id="kTrend">-</div><div class="l">직전 기간 대비</div></div>
         </div>
         <div id="goalArea"></div>
         <div id="chartArea" class="chart-wrap"></div>
@@ -381,31 +381,31 @@
       </div>
 
       <div class="card">
-        <h2>📢 광고 효율 <span class="n">(광고가 제값을 하고 있는지)</span></h2>
+        <h2>📢 광고 효율 <span class="n">(광고, 제값 하고 있나요?)</span></h2>
         <div class="kpis ad" id="adKpis">
-          <div class="kpi" data-tip="기간 내 입력된 광고비의 총합입니다"><div class="v" id="kAdSpend">-</div><div class="l">광고비 합계</div></div>
-          <div class="kpi" data-tip="광고비가 매출로 몇 배가 되어 돌아왔는지입니다. 1배 미만이면 광고비만큼도 못 벌고 있다는 뜻입니다"><div class="v" id="kRoas">-</div><div class="l">광고 효율 (ROAS)</div></div>
-          <div class="kpi" data-tip="매출 중에서 광고비가 차지하는 비율입니다. 낮을수록 좋습니다"><div class="v" id="kAdRatio">-</div><div class="l">광고비율</div></div>
-          <div class="kpi" data-tip="매출에서 광고비를 뺀 금액입니다"><div class="v" id="kNetAmount">-</div><div class="l">광고비 빼고 남은 매출</div></div>
+          <div class="kpi" data-tip="기간 동안 쓴 광고비 전체예요"><div class="v" id="kAdSpend">-</div><div class="l">광고비 합계</div></div>
+          <div class="kpi" data-tip="광고비가 매출로 몇 배가 되어 돌아왔는지예요. 1배보다 작으면 광고비만큼도 못 번 거예요"><div class="v" id="kRoas">-</div><div class="l">광고 효율 (ROAS)</div></div>
+          <div class="kpi" data-tip="매출에서 광고비가 차지하는 비율이에요. 낮을수록 좋아요"><div class="v" id="kAdRatio">-</div><div class="l">광고비율</div></div>
+          <div class="kpi" data-tip="매출에서 광고비를 뺀 금액이에요"><div class="v" id="kNetAmount">-</div><div class="l">광고비 빼고 남은 매출</div></div>
         </div>
         <p class="note" id="adPlainNote" style="margin:-6px 0 12px;"></p>
-        <div id="adAlertBox"><div class="empty">광고비 데이터를 불러오면 광고가 제값을 하는지 자동으로 판정해 드립니다.</div></div>
+        <div id="adAlertBox"><div class="empty">광고비를 입력하면 광고가 제값을 하는지 알려드려요.</div></div>
       </div>
 
       <div class="card">
         <h2>💰 원가 & 손익 <span class="n">(원가 데이터 기반)</span></h2>
         <div class="kpis ad" id="costKpis">
-          <div class="kpi" data-tip="판매된 수량 × 개당 원가의 합입니다"><div class="v" id="kTotalCost">-</div><div class="l">총 원가</div></div>
-          <div class="kpi" data-tip="매출에서 원가만 뺀 이익입니다 (광고비는 아직 빼기 전)"><div class="v" id="kGrossProfit">-</div><div class="l">매출총이익 (매출-원가)</div></div>
-          <div class="kpi" data-tip="원가와 광고비를 모두 뺀, 실제로 남는 돈입니다"><div class="v" id="kOperatingProfit">-</div><div class="l">영업이익 (-광고비)</div></div>
-          <div class="kpi" data-tip="매출 100원 중 실제로 몇 원이 남는지입니다"><div class="v" id="kOperatingMargin">-</div><div class="l">영업이익률</div></div>
+          <div class="kpi" data-tip="판 수량 × 개당 원가예요"><div class="v" id="kTotalCost">-</div><div class="l">총 원가</div></div>
+          <div class="kpi" data-tip="원가만 뺀 이익이에요. 광고비는 아직 안 뺐어요"><div class="v" id="kGrossProfit">-</div><div class="l">매출총이익 (매출-원가)</div></div>
+          <div class="kpi" data-tip="원가와 광고비를 다 빼고 실제로 남는 돈이에요"><div class="v" id="kOperatingProfit">-</div><div class="l">영업이익 (-광고비)</div></div>
+          <div class="kpi" data-tip="매출 100원 중 실제로 남는 돈이에요"><div class="v" id="kOperatingMargin">-</div><div class="l">영업이익률</div></div>
         </div>
-        <div id="costAlertBox"><div class="empty">원가 데이터를 불러오면 매출총이익·영업이익이 표시됩니다.</div></div>
+        <div id="costAlertBox"><div class="empty">원가를 입력하면 실제로 남는 돈을 계산해드려요.</div></div>
       </div>
 
       <div class="card">
         <h2>🏆 상품별 매출 순위 <span class="n" id="topProductsCount"></span></h2>
-        <div id="topProducts"><div class="empty">데이터를 불러오면 표시됩니다.</div></div>
+        <div id="topProducts"><div class="empty">데이터를 올리면 보여드려요.</div></div>
       </div>
 
       <div class="card" id="repeatCard" style="display:none;">
@@ -421,13 +421,13 @@
       <div class="card">
         <h2>📅 품목별 월별 상세<button type="button" class="card-toggle" id="cardToggle_monthly" onclick="toggleCardCollapse('monthly')">접기</button></h2>
         <div id="cardBody_monthly">
-          <div id="monthlyDetail"><div class="empty">데이터를 불러오면 표시됩니다.</div></div>
+          <div id="monthlyDetail"><div class="empty">데이터를 올리면 보여드려요.</div></div>
         </div>
       </div>
 
       <div class="card">
         <h2>⚠️ 이상 징후 탐지</h2>
-        <div id="anomalyBox"><div class="empty">데이터를 불러오면 표시됩니다.</div></div>
+        <div id="anomalyBox"><div class="empty">데이터를 올리면 보여드려요.</div></div>
       </div>
 
       <div class="card">
@@ -581,7 +581,7 @@ function renderGoal(r){
             value="${currentGoalAmount() || ''}" onkeydown="onGoalInputKey(event)" />
           <button type="button" class="btn-primary" style="font-size:11.5px;padding:6px 13px;" onclick="saveGoalEdit()">저장</button>
           <button type="button" class="btn-ghost" style="font-size:11.5px;padding:6px 13px;" onclick="cancelGoalEdit()">취소</button>
-          <span class="note" style="margin:0 0 0 auto;">비우고 저장하면 목표가 제거됩니다</span>
+          <span class="note" style="margin:0 0 0 auto;">비우면 목표가 사라져요</span>
         </div>
       </div>`;
     return;
@@ -593,8 +593,8 @@ function renderGoal(r){
         <div class="goal-head">
           <span class="goal-title">🎯 ${month}</span>
           <b class="goal-nums">${won(monthRevenue)}</b>
-          <span class="note" style="margin:0;">이 속도면 월말 약 ${won(projected)}</span>
-          <button type="button" class="btn-ghost" style="font-size:11.5px;padding:5px 13px;margin-left:auto;" onclick="startGoalEdit()" data-tip="월 목표 금액을 설정하면 달성률 게이지와 월말 페이스 예측이 표시됩니다">월 목표 설정</button>
+          <span class="note" style="margin:0;">이대로면 월말엔 약 ${won(projected)}</span>
+          <button type="button" class="btn-ghost" style="font-size:11.5px;padding:5px 13px;margin-left:auto;" onclick="startGoalEdit()" data-tip="목표를 정하면 달성률과 월말 예상을 보여드려요">월 목표 설정</button>
         </div>
       </div>`;
     return;
@@ -608,7 +608,7 @@ function renderGoal(r){
         <span class="goal-title">🎯 ${month} 목표</span>
         <b class="goal-nums">${won(monthRevenue)}<span class="goal-sep">/</span>${won(goal)}</b>
         <span class="goal-pct">${pct.toFixed(1)}%</span>
-        <span class="goal-pace ${onPace ? 'ok' : 'warn'}" data-tip="지금까지의 하루 평균 매출(경과 ${elapsed}일 기준)이 월말(${daysInMonth}일)까지 이어질 때의 예상치입니다">${onPace ? '✓' : '!'} 월말 예상 ${won(projected)} · 목표의 ${projPct.toFixed(0)}%</span>
+        <span class="goal-pace ${onPace ? 'ok' : 'warn'}" data-tip="지금 속도가 월말까지 이어진다고 가정한 예상이에요 (경과 ${elapsed}일 기준)">${onPace ? '✓' : '!'} 월말 예상 ${won(projected)} · 목표의 ${projPct.toFixed(0)}%</span>
         <button type="button" class="goal-edit-btn" onclick="startGoalEdit()">수정</button>
       </div>
       <div class="goal-track"><div class="goal-fill${onPace ? '' : ' behind'}" style="width:${pct.toFixed(1)}%"></div></div>
@@ -817,16 +817,16 @@ function clearReportUI(){
   document.getElementById('kAdRatio').textContent = '-';
   document.getElementById('kNetAmount').textContent = '-';
   document.getElementById('adPlainNote').innerHTML = '';
-  document.getElementById('adAlertBox').innerHTML = '<div class="empty">광고비 데이터를 불러오면 광고가 제값을 하는지 자동으로 판정해 드립니다.</div>';
+  document.getElementById('adAlertBox').innerHTML = '<div class="empty">광고비를 입력하면 광고가 제값을 하는지 알려드려요.</div>';
   document.getElementById('kTotalCost').textContent = '-';
   document.getElementById('kGrossProfit').textContent = '-';
   document.getElementById('kOperatingProfit').textContent = '-';
   document.getElementById('kOperatingMargin').textContent = '-';
-  document.getElementById('costAlertBox').innerHTML = '<div class="empty">원가 데이터를 불러오면 매출총이익·영업이익이 표시됩니다.</div>';
+  document.getElementById('costAlertBox').innerHTML = '<div class="empty">원가를 입력하면 실제로 남는 돈을 계산해드려요.</div>';
   document.getElementById('topProductsCount').textContent = '';
-  document.getElementById('topProducts').innerHTML = '<div class="empty">데이터를 불러오면 표시됩니다.</div>';
-  document.getElementById('monthlyDetail').innerHTML = '<div class="empty">데이터를 불러오면 표시됩니다.</div>';
-  document.getElementById('anomalyBox').innerHTML = '<div class="empty">데이터를 불러오면 표시됩니다.</div>';
+  document.getElementById('topProducts').innerHTML = '<div class="empty">데이터를 올리면 보여드려요.</div>';
+  document.getElementById('monthlyDetail').innerHTML = '<div class="empty">데이터를 올리면 보여드려요.</div>';
+  document.getElementById('anomalyBox').innerHTML = '<div class="empty">데이터를 올리면 보여드려요.</div>';
   document.getElementById('aiComment').textContent = '데이터를 불러오면 자동으로 요약 코멘트를 작성합니다.';
 }
 
@@ -1571,7 +1571,7 @@ function computeAndRenderReport(){
       roas = totalAmount / totalAdSpend;
       adRatio = (totalAdSpend / totalAmount) * 100;
     } else {
-      adAlerts.push('입력된 광고비 합계가 0원입니다. 값을 확인해주세요.');
+      adAlerts.push('광고비가 0원으로 입력돼 있어요. 값을 확인해 주세요.');
     }
     if(recentDates.length && prevDates.length){
       const recentAd = recentDates.reduce((s,d)=>s+(adByDate[d]||0),0);
@@ -1584,13 +1584,13 @@ function computeAndRenderReport(){
       }
     }
     if(roas !== null && roas < 1){
-      adAlerts.push(`⚠ 광고비만큼도 못 벌고 있습니다 — 광고비 1만원을 쓰면 매출이 ${Math.round(roas*10000).toLocaleString('ko-KR')}원뿐입니다. 캠페인 점검이 필요합니다.`);
+      adAlerts.push(`⚠ 광고비만큼도 못 벌고 있어요 — 1만원을 쓰면 ${Math.round(roas*10000).toLocaleString('ko-KR')}원 돌아와요. 광고를 점검해 보세요.`);
     }
     if(roasTrendPct !== null && roasTrendPct <= -30){
-      adAlerts.push(`⚠ 광고 효율(ROAS)이 직전 기간 대비 ${roasTrendPct.toFixed(1)}% 하락했습니다.`);
+      adAlerts.push(`⚠ 광고 효율이 직전보다 ${roasTrendPct.toFixed(1)}% 떨어졌어요.`);
     }
     if(adTrendPct !== null && adTrendPct >= 50 && (trendPct===null || trendPct < 20)){
-      adAlerts.push(`⚠ 광고비는 ${adTrendPct.toFixed(1)}% 증가했지만 매출 증가폭은 그에 못 미칩니다. 광고 효율을 점검해주세요.`);
+      adAlerts.push(`⚠ 광고비는 ${adTrendPct.toFixed(1)}% 늘었는데, 매출은 그만큼 늘지 않았어요.`);
     }
   }
 
@@ -1676,10 +1676,10 @@ function computeInsights(r){
       const op = p.revenue - p.cost - p.adSpend;
       if(op < 0){
         const perUnit = Math.round(op / Math.max(1, p.qty));
-        addBadge(name, 'neg', '⚠ 역마진', `팔수록 손해 — 원가·광고비 반영 누적 ${won(op)}`);
+        addBadge(name, 'neg', '⚠ 역마진', `팔수록 손해예요 · 누적 ${won(op)}`);
         insights.push({ icon:'⚠', impact: Math.abs(op), product: name,
-          title: `'${name}' 역마진 — 팔수록 손해입니다`,
-          detail: `원가·광고비를 빼면 누적 ${won(op)} (개당 약 ${won(perUnit)}). 판매가 인상 또는 원가 재협상이 필요합니다.`,
+          title: `'${name}', 팔수록 손해예요`,
+          detail: `팔 때마다 약 ${won(Math.abs(perUnit))}씩 손해예요. 지금까지 ${won(op)}이에요. 가격을 올리거나 원가를 낮춰보세요.`,
           evidence: [
             ['총 매출', won(p.revenue)],
             ['총 원가 (개당 원가 × 수량)', '- ' + won(p.cost)],
@@ -1701,23 +1701,23 @@ function computeInsights(r){
         const monthlyAd = p.adSpend / monthsCount;
         const earned = Math.round(roasP * 10000).toLocaleString('ko-KR');
         const needed = Math.round(breakEven * 10000).toLocaleString('ko-KR');
-        addBadge(name, 'neg', '💸 광고 재검토', `광고를 해도 남는 게 없음 — 광고비 1만원당 매출 ${earned}원 (본전은 ${needed}원)`);
+        addBadge(name, 'neg', '💸 광고 재검토', `광고를 해도 남는 게 없어요 · 1만원 → ${earned}원 (본전 ${needed}원)`);
         insights.push({ icon:'💸', impact: monthlyAd, product: name,
-          title: `'${name}' 광고 중단 검토 — 광고를 해도 남는 게 없습니다`,
-          detail: `광고비 1만원을 쓰면 매출이 ${earned}원 나옵니다. ${breakEven > 1.001 ? `원가를 빼고 본전이 되려면 1만원당 ${needed}원은 나와야 하는데 그에 못 미칩니다` : '광고비만큼도 매출이 나오지 않습니다'}. 광고를 중단하면 월 약 ${won(monthlyAd)}이 절약됩니다.`,
+          title: `'${name}', 광고를 멈춰볼까요?`,
+          detail: `광고비 1만원을 쓰면 매출 ${earned}원이 돌아와요. ${breakEven > 1.001 ? `본전이 되려면 ${needed}원은 나와야 해요` : '광고비만큼도 안 나와요'}. 멈추면 매달 약 ${won(monthlyAd)} 아낄 수 있어요.`,
           evidence: [
             ['총 매출', won(p.revenue)],
             ['총 광고비', won(p.adSpend)],
             ['광고 효율', `광고비 1만원당 매출 ${earned}원 (ROAS ${roasP.toFixed(2)}배)`],
             ...(marginRate != null ? [
               ['마진율 (매출에서 원가 뺀 비율)', (marginRate*100).toFixed(1) + '%'],
-              ['본전 기준', `광고비 1만원당 매출 ${needed}원 이상이어야 이익`]
-            ] : [['본전 기준', '광고비 1만원당 매출 10,000원 (원가 미입력이라 광고비 대비 매출로만 판정)']]),
+              ['본전 기준', `1만원당 ${needed}원 이상 나와야 이익이에요`]
+            ] : [['본전 기준', '1만원당 10,000원 (원가가 없어서 광고비 대비 매출로만 봤어요)']]),
             ['분석 기간', monthsCount + '개월 → 월평균 광고비 ' + won(p.adSpend / monthsCount)]
           ] });
       } else if(roasP >= breakEven * 2){
         const earned = Math.round(roasP * 10000).toLocaleString('ko-KR');
-        addBadge(name, 'pos', '🎯 광고 효자', `광고가 확실히 돈이 됨 — 광고비 1만원당 매출 ${earned}원 (본전의 2배 이상)`);
+        addBadge(name, 'pos', '🎯 광고 효자', `광고가 확실히 돈이 돼요 · 1만원 → ${earned}원`);
       }
     }
   });
@@ -1729,14 +1729,14 @@ function computeInsights(r){
     const prod = perProd[p.product];
     const monthlyAd = prod && prod.adSpend > 0 ? prod.adSpend / monthsCount : 0;
     if(avgOff >= avgOn * 0.8){
-      addBadge(p.product, 'on', '🌱 자연판매', `광고 없이도 팔림 — OFF 달 평균 ${won(avgOff)} (ON 달의 80% 이상)`);
+      addBadge(p.product, 'on', '🌱 자연판매', `광고 없이도 팔려요 · 광고 쉰 달 평균 ${won(avgOff)}`);
       insights.push({ icon:'🌱', impact: monthlyAd, product: p.product,
-        title: `'${p.product}' 광고 없이도 팔립니다`,
-        detail: `광고 OFF 달 평균 매출 ${won(avgOff)}로 ON 달(${won(avgOn)})과 비슷합니다.${monthlyAd ? ` 광고를 줄이면 월 약 ${won(monthlyAd)}을 아낄 수 있습니다.` : ' 광고비를 다른 상품에 배분하는 것을 검토하세요.'}`,
+        title: `'${p.product}', 광고 없이도 팔려요`,
+        detail: `광고를 쉰 달에도 평균 ${won(avgOff)}씩 팔렸어요. 광고한 달(${won(avgOn)})과 비슷해요.${monthlyAd ? ` 광고를 줄이면 매달 약 ${won(monthlyAd)} 아낄 수 있어요.` : ' 광고비를 다른 상품에 써보세요.'}`,
         evidence: [
-          ['광고 ON 달 (' + p.onOff.onMonths.length + '개월)', p.onOff.onMonths.join(', ') + ' → 평균 ' + won(avgOn)],
-          ['광고 OFF 달 (' + p.onOff.offMonths.length + '개월)', p.onOff.offMonths.join(', ') + ' → 평균 ' + won(avgOff)],
-          ['OFF ÷ ON 비율', avgOn > 0 ? (avgOff / avgOn * 100).toFixed(0) + '% (80% 이상이면 자연판매로 판정)' : '-'],
+          ['광고한 달 (' + p.onOff.onMonths.length + '개월)', p.onOff.onMonths.join(', ') + ' → 평균 ' + won(avgOn)],
+          ['광고 쉰 달 (' + p.onOff.offMonths.length + '개월)', p.onOff.offMonths.join(', ') + ' → 평균 ' + won(avgOff)],
+          ['OFF ÷ ON 비율', avgOn > 0 ? (avgOff / avgOn * 100).toFixed(0) + '% (80% 넘으면 자연판매로 봐요)' : '-'],
           ...(monthlyAd ? [['월평균 광고비', won(monthlyAd)]] : [])
         ] });
     }
@@ -1748,18 +1748,18 @@ function computeInsights(r){
     const evidence = [
       [`최근 ${a.recentDays}일 하루 평균`, won(a.recentAvg)],
       [`이전 ${a.priorDays}일 하루 평균`, won(a.priorAvg)],
-      ['변화율', (a.changePct >= 0 ? '+' : '') + a.changePct.toFixed(1) + '% (기준: +80% 급증 / -40% 급감)']
+      ['변화율', (a.changePct >= 0 ? '+' : '') + a.changePct.toFixed(1) + '% (+80%면 급증, -40%면 급감으로 봐요)']
     ];
     if(a.type === '급증'){
-      addBadge(a.product, 'pos', '🚀 급성장', `최근 매출 급증 — 3일 평균 +${a.changePct.toFixed(0)}%`);
+      addBadge(a.product, 'pos', '🚀 급성장', `요즘 잘 팔려요 · 3일 평균 +${a.changePct.toFixed(0)}%`);
       insights.push({ icon:'🚀', impact: rev * 0.1, product: a.product, evidence,
-        title: `'${a.product}' 급성장 +${a.changePct.toFixed(0)}%`,
-        detail: `최근 3일 평균 매출이 이전 대비 급증했습니다. 품절되기 전에 재고 확보를 검토하세요.` });
+        title: `'${a.product}', 갑자기 잘 팔려요 (+${a.changePct.toFixed(0)}%)`,
+        detail: `최근 3일 매출이 이전보다 크게 늘었어요. 품절 전에 재고를 확인해 보세요.` });
     } else {
-      addBadge(a.product, 'neg', '📉 급감', `최근 매출 급감 — 3일 평균 ${a.changePct.toFixed(0)}%`);
+      addBadge(a.product, 'neg', '📉 급감', `매출이 줄고 있어요 · 3일 평균 ${a.changePct.toFixed(0)}%`);
       insights.push({ icon:'📉', impact: rev * 0.1, product: a.product, evidence,
-        title: `'${a.product}' 매출 급감 ${a.changePct.toFixed(0)}%`,
-        detail: `품절, 리뷰 이슈, 경쟁 상품 가격 변동 여부를 확인해보세요.` });
+        title: `'${a.product}', 매출이 줄고 있어요 (${a.changePct.toFixed(0)}%)`,
+        detail: `품절이나 리뷰, 경쟁 상품 가격을 확인해 보세요.` });
     }
   });
 
@@ -1767,8 +1767,8 @@ function computeInsights(r){
   // 판단에 필요한 데이터가 비어 있으면 뭘 채우면 되는지 안내
   const hints = [];
   const vals = Object.values(perProd);
-  if(vals.some(p => !p.hasCost || p.missingCost)) hints.push('원가를 입력하면 역마진·광고 손익분기 판정이 정확해집니다.');
-  if(!vals.some(p => p.adSpend > 0)) hints.push('광고비를 입력하면 상품별 광고 유지/중단 판단이 가능해집니다.');
+  if(vals.some(p => !p.hasCost || p.missingCost)) hints.push('원가를 입력하면 손해 보는 상품까지 찾아드려요.');
+  if(!vals.some(p => p.adSpend > 0)) hints.push('광고비를 입력하면 광고를 계속할지도 판단해드려요.');
   return { insights: insights.slice(0, 3), badges, hints };
 }
 
@@ -1784,7 +1784,7 @@ function renderInsights(ins){
   if(!ins || (!ins.insights.length && !ins.hints.length)){ card.style.display = 'none'; list.innerHTML = ''; return; }
   card.style.display = '';
   list.innerHTML = ins.insights.map((i, n) => `
-    <div class="insight-item" onclick="toggleInsightEvidence(${n})" data-tip="클릭하면 판단 근거가 되는 데이터를 보여줍니다">
+    <div class="insight-item" onclick="toggleInsightEvidence(${n})" data-tip="누르면 계산 근거를 보여드려요">
       <div class="insight-icon">${i.icon}</div>
       <div style="flex:1;min-width:0;">
         <b style="font-size:13px;">${escapeHtml(i.title)}</b>
@@ -1793,7 +1793,7 @@ function renderInsights(ins){
           <table>
             <tbody>${(i.evidence || []).map(([label, value]) => `<tr><td style="color:var(--muted);white-space:nowrap;">${escapeHtml(label)}</td><td style="font-weight:600;">${escapeHtml(value)}</td></tr>`).join('')}</tbody>
           </table>
-          ${i.product ? `<button type="button" class="btn-ghost" style="font-size:11px;padding:4px 10px;margin-top:8px;" onclick="event.stopPropagation();showInsightProduct(${n})">🔍 '${escapeHtml(i.product)}' 원본 데이터 보기</button>` : ''}
+          ${i.product ? `<button type="button" class="btn-ghost" style="font-size:11px;padding:4px 10px;margin-top:8px;" onclick="event.stopPropagation();showInsightProduct(${n})">🔍 '${escapeHtml(i.product)}' 데이터 보기</button>` : ''}
         </div>
       </div>
       <span class="insight-caret" id="insightCaret_${n}">▾</span>
@@ -1856,7 +1856,7 @@ function renderRepeatCustomers(){
       <thead><tr><th>#</th><th>구매자</th><th>구매 횟수</th><th>총 구매액</th><th>마지막 구매일</th></tr></thead>
       <tbody>${vip.map(([name,c],i) => `<tr><td>${i+1}</td><td>${escapeHtml(name)}${c.count >= 2 ? ' <span class="pill pos" style="font-size:9.5px;padding:1px 6px;">단골</span>' : ''}</td><td>${c.count}회</td><td>${won(c.amount)}</td><td>${c.last}</td></tr>`).join('')}</tbody>
     </table></div>
-    <p class="note">구매자명이 입력된 데이터만 집계됩니다(컬럼 매핑에서 "구매자명/회원명"을 지정하세요). 같은 사람이 다른 이름·ID로 들어오면 별도 고객으로 계산됩니다.</p>`;
+    <p class="note">구매자명이 있는 데이터만 집계해요. 같은 사람이 다른 이름으로 들어오면 따로 계산돼요.</p>`;
 }
 
 // ---------- 요일별 매출 패턴 ----------
@@ -1885,7 +1885,7 @@ function renderWeekdayPattern(r){
       <div class="bar-track"><div class="bar-fill" style="width:${(avgs[i] / max * 100).toFixed(1)}%;${i === bestIdx ? '' : 'opacity:.7;'}"></div></div>
       <div class="bar-val">${counts[i] ? won(avgs[i]) : '-'}<span class="bar-qty"> · ${counts[i]}일</span></div>
     </div>`).join('')
-    + `<p class="note">${names[bestIdx]}요일 매출이 요일 평균 대비 ${overall ? '+' + ((max / overall - 1) * 100).toFixed(0) : 0}% 높습니다 — 광고·프로모션 집행 요일을 정할 때 참고하세요.</p>`;
+    + `<p class="note">${names[bestIdx]}요일에 평균보다 ${overall ? ((max / overall - 1) * 100).toFixed(0) : 0}% 더 팔려요. 광고 요일을 정할 때 참고해 보세요.</p>`;
 }
 
 // ---------- 품목별 월별 상세 (광고 ON/OFF 비교) ----------
@@ -2015,7 +2015,7 @@ function renderReport(){
     document.getElementById('kAdRatio').textContent = '-';
     document.getElementById('kNetAmount').textContent = '-';
     document.getElementById('adPlainNote').innerHTML = '';
-    document.getElementById('adAlertBox').innerHTML = '<div class="empty">광고비 데이터를 불러오면 광고가 제값을 하는지 자동으로 판정해 드립니다.</div>';
+    document.getElementById('adAlertBox').innerHTML = '<div class="empty">광고비를 입력하면 광고가 제값을 하는지 알려드려요.</div>';
   } else {
     document.getElementById('kAdSpend').textContent = won(r.totalAdSpend);
     document.getElementById('kRoas').textContent = r.roas===null ? '-' : r.roas.toFixed(2)+'배';
@@ -2023,11 +2023,11 @@ function renderReport(){
     document.getElementById('kNetAmount').textContent = won(r.netAmount);
     document.getElementById('adPlainNote').innerHTML = r.roas === null ? '' :
       (r.roas >= 1
-        ? `쉽게 말해: 지금 광고비 <b>1만원</b>을 쓰면 매출 <b>${Math.round(r.roas*10000).toLocaleString('ko-KR')}원</b>이 나오고 있습니다.`
-        : `쉽게 말해: 지금 광고비 <b>1만원</b>을 써도 매출이 <b>${Math.round(r.roas*10000).toLocaleString('ko-KR')}원</b>뿐입니다 — 광고비만큼도 못 벌고 있는 상태입니다.`);
+        ? `광고비 <b>1만원</b>이 매출 <b>${Math.round(r.roas*10000).toLocaleString('ko-KR')}원</b>으로 돌아오고 있어요.`
+        : `광고비 <b>1만원</b>을 써도 <b>${Math.round(r.roas*10000).toLocaleString('ko-KR')}원</b>밖에 안 돌아와요. 광고비만큼도 못 벌고 있어요.`);
     document.getElementById('adAlertBox').innerHTML = r.adAlerts.length
       ? r.adAlerts.map(a=>`<div class="alert">${a}</div>`).join('')
-      : '<div class="alert none">✓ 광고 효율에 특이 이상 징후가 발견되지 않았습니다.</div>';
+      : '<div class="alert none">✓ 광고 효율, 문제없어요.</div>';
   }
 
   // 원가 & 손익
@@ -2036,7 +2036,7 @@ function renderReport(){
     document.getElementById('kGrossProfit').textContent = '-';
     document.getElementById('kOperatingProfit').textContent = '-';
     document.getElementById('kOperatingMargin').textContent = '-';
-    document.getElementById('costAlertBox').innerHTML = '<div class="empty">원가 데이터를 불러오면 매출총이익·영업이익이 표시됩니다.</div>';
+    document.getElementById('costAlertBox').innerHTML = '<div class="empty">원가를 입력하면 실제로 남는 돈을 계산해드려요.</div>';
   } else {
     document.getElementById('kTotalCost').textContent = won(r.totalCost);
     document.getElementById('kGrossProfit').textContent = won(r.grossProfit);
@@ -2044,8 +2044,8 @@ function renderReport(){
     const margin = r.totalAmount>0 ? (r.operatingProfit/r.totalAmount*100) : null;
     document.getElementById('kOperatingMargin').textContent = margin===null ? '-' : margin.toFixed(1)+'%';
     document.getElementById('costAlertBox').innerHTML = r.missingCostProducts.length
-      ? `<div class="alert">⚠ 원가가 입력되지 않은 품목 ${r.missingCostProducts.length}건(${r.missingCostProducts.map(escapeHtml).join(', ')})은 원가 0원으로 계산되어 이익이 과대평가될 수 있습니다.</div>`
-      : '<div class="alert none">✓ 모든 품목에 원가가 입력되었습니다.</div>';
+      ? `<div class="alert">⚠ 원가가 없는 품목 ${r.missingCostProducts.length}개(${r.missingCostProducts.map(escapeHtml).join(', ')})는 0원으로 계산했어요. 이익이 실제보다 커 보일 수 있어요.</div>`
+      : '<div class="alert none">✓ 모든 품목에 원가가 입력돼 있어요.</div>';
   }
 
   // 품목별 월별 상세
@@ -2056,7 +2056,7 @@ function renderReport(){
 
   // anomalies
   if(!r.anomalies.length){
-    document.getElementById('anomalyBox').innerHTML = '<div class="alert none">✓ 특이 이상 징후가 발견되지 않았습니다.</div>';
+    document.getElementById('anomalyBox').innerHTML = '<div class="alert none">✓ 이상 징후가 없어요.</div>';
   } else {
     document.getElementById('anomalyBox').innerHTML = r.anomalies.map(a=>`
       <div class="alert">⚠ <b>${escapeHtml(a.product)}</b> — 최근 매출이 직전 대비 ${a.type} (${a.changePct>=0?'+':''}${a.changePct.toFixed(1)}%)。
@@ -2118,8 +2118,8 @@ function renderMonthlyDetail(m){
         <td>${x.adSpend===null?'-':won(x.adSpend)}</td>
         <td>${(x.cost!==null || x.adSpend!==null) ? won(x.profit) : '-'}</td>
         <td style="white-space:nowrap;">
-          <button type="button" class="pill ad-status-btn ${x.adOn === true ? 'on' : 'unset'}" data-product="${escapeHtml(p.product)}" data-month="${x.month}" data-set="on" data-tip="광고를 켠 달로 지정 (다시 누르면 해제)">ON</button>
-          <button type="button" class="pill ad-status-btn ${x.adOn === false ? 'off' : 'unset'}" data-product="${escapeHtml(p.product)}" data-month="${x.month}" data-set="off" data-tip="광고를 끈 달로 지정 (다시 누르면 해제)">OFF</button>
+          <button type="button" class="pill ad-status-btn ${x.adOn === true ? 'on' : 'unset'}" data-product="${escapeHtml(p.product)}" data-month="${x.month}" data-set="on" data-tip="광고한 달로 표시해요 · 다시 누르면 해제">ON</button>
+          <button type="button" class="pill ad-status-btn ${x.adOn === false ? 'off' : 'unset'}" data-product="${escapeHtml(p.product)}" data-month="${x.month}" data-set="off" data-tip="광고 쉰 달로 표시해요 · 다시 누르면 해제">OFF</button>
         </td>
       </tr>
     `;
@@ -2473,14 +2473,14 @@ function renderSearchResults(){
     matches = matches.filter(r => searchInclusionFilter === 'on' ? r.included !== false : r.included === false);
   }
   const isFiltered = activeSearchKeywords.size || term || searchInclusionFilter !== 'all';
-  if(!records.length){ el.innerHTML = '<div class="empty">불러온 매출 데이터가 없습니다.</div>'; return; }
+  if(!records.length){ el.innerHTML = '<div class="empty">아직 데이터가 없어요.</div>'; return; }
   const totalAmount = matches.reduce((s,r)=> s + (r.included === false ? 0 : r.amount), 0);
   // ON/OFF 필터 버튼은 결과 헤더 라인에 함께 그린다(결과가 0건이어도 항상 접근 가능해야 함)
   const headerLine = `
     <div style="display:flex;align-items:center;gap:8px;margin:0 0 6px;">
       <span class="note" style="margin:0;">${matches.length
         ? `${matches.length}건${isFiltered ? ' 일치' : ''} · ON 합계 ${won(totalAmount)}`
-        : (isFiltered ? '일치하는 데이터가 없습니다.' : '표시할 데이터가 없습니다.')}</span>
+        : (isFiltered ? '일치하는 데이터가 없어요.' : '표시할 데이터가 없어요.')}</span>
       <button type="button" class="btn-ghost" onclick="cycleSearchInclusionFilter()" style="font-size:11px;padding:3px 9px;margin-left:auto;flex-shrink:0;">${SEARCH_INCLUSION_LABELS[searchInclusionFilter]}</button>
     </div>`;
   if(!matches.length){ el.innerHTML = headerLine; return; }
