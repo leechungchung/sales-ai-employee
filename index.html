@@ -215,8 +215,14 @@
   .insight-caret{color:var(--muted);font-size:12px;flex-shrink:0;transition:transform .2s ease;align-self:center;}
   .insight-evidence{margin-top:9px;padding:9px 11px;background:#fff;border:1px solid var(--border);border-radius:9px;animation:fadeDown .2s ease both;}
   .insight-evidence table{font-size:12px;}
-  .insight-evidence td{padding:4px 10px 4px 0;border-bottom:1px solid #f2eee5;}
+  .insight-evidence td{padding:5px 10px 5px 6px;border-bottom:1px solid #f2eee5;}
+  .insight-evidence td:first-child{color:var(--muted);}
+  .insight-evidence td:last-child{font-weight:600;}
   .insight-evidence tr:last-child td{border-bottom:none;}
+  .insight-evidence tr.ev-key td{background:rgba(92,81,218,.07);}
+  .insight-evidence tr.ev-key td:first-child{color:var(--text);font-weight:700;border-radius:7px 0 0 7px;}
+  .insight-evidence tr.ev-key td:last-child{color:var(--accent);font-weight:800;font-size:12.5px;border-radius:0 7px 7px 0;}
+  .ev-key-badge{display:inline-block;background:linear-gradient(135deg,#7a6ff5,var(--accent2));color:#fff;font-size:9.5px;font-weight:700;padding:1.5px 7px;border-radius:999px;margin-right:7px;vertical-align:1px;}
   .goal-box{margin:0 0 14px;padding:11px 13px;border:1px solid #e8e3ef;border-radius:12px;background:linear-gradient(165deg,#ffffff 30%,#f7f5fd 100%);}
   .goal-track{height:10px;background:#eeeae0;border-radius:99px;overflow:hidden;margin-top:9px;box-shadow:inset 0 1px 2px rgba(38,33,72,.06);}
   .goal-fill{height:100%;background:linear-gradient(90deg,#8b80f7,var(--accent) 70%,var(--accent2));border-radius:99px;transform-origin:left;animation:barIn .7s cubic-bezier(.22,.7,.3,1) both;}
@@ -1683,7 +1689,7 @@ function computeInsights(r){
             ['총 매출', won(p.revenue)],
             ['총 원가 (개당 원가 × 수량)', '- ' + won(p.cost)],
             ['광고비', '- ' + won(p.adSpend)],
-            ['= 영업이익', won(op)],
+            ['= 영업이익', won(op), true],
             ['판매 수량', p.qty.toLocaleString('ko-KR') + '개 → 개당 약 ' + won(perUnit)]
           ] });
       }
@@ -1708,11 +1714,11 @@ function computeInsights(r){
           evidence: [
             ['총 매출', won(p.revenue)],
             ['총 광고비', won(p.adSpend)],
-            ['광고 효율', `광고비 1만원당 매출 ${earned}원 (ROAS ${roasP.toFixed(2)}배)`],
+            ['광고 효율', `광고비 1만원당 매출 ${earned}원 (ROAS ${roasP.toFixed(2)}배)`, true],
             ...(marginRate != null ? [
               ['마진율 (매출에서 원가 뺀 비율)', (marginRate*100).toFixed(1) + '%'],
-              ['본전 기준', `1만원당 ${needed}원 이상 나와야 이익이에요`]
-            ] : [['본전 기준', '1만원당 10,000원 (원가가 없어서 광고비 대비 매출로만 봤어요)']]),
+              ['본전 기준', `1만원당 ${needed}원 이상 나와야 이익이에요`, true]
+            ] : [['본전 기준', '1만원당 10,000원 (원가가 없어서 광고비 대비 매출로만 봤어요)', true]]),
             ['분석 기간', monthsCount + '개월 → 월평균 광고비 ' + won(p.adSpend / monthsCount)]
           ] });
       } else if(roasP >= breakEven * 2){
@@ -1738,7 +1744,7 @@ function computeInsights(r){
         evidence: [
           ['광고한 달 (' + p.onOff.onMonths.length + '개월)', p.onOff.onMonths.join(', ') + ' → 평균 ' + won(avgOn)],
           ['광고 쉰 달 (' + p.onOff.offMonths.length + '개월)', p.onOff.offMonths.join(', ') + ' → 평균 ' + won(avgOff)],
-          ['OFF ÷ ON 비율', avgOn > 0 ? (avgOff / avgOn * 100).toFixed(0) + '% (80% 넘으면 자연판매로 봐요)' : '-'],
+          ['광고 쉰 달 ÷ 광고한 달', avgOn > 0 ? (avgOff / avgOn * 100).toFixed(0) + '% (80% 넘으면 자연판매로 봐요)' : '-', true],
           ...(monthlyAd ? [['월평균 광고비', won(monthlyAd)]] : [])
         ] });
     }
@@ -1750,7 +1756,7 @@ function computeInsights(r){
     const evidence = [
       [`최근 ${a.recentDays}일 하루 평균`, won(a.recentAvg)],
       [`이전 ${a.priorDays}일 하루 평균`, won(a.priorAvg)],
-      ['변화율', (a.changePct >= 0 ? '+' : '') + a.changePct.toFixed(1) + '% (+80%면 급증, -40%면 급감으로 봐요)']
+      ['변화율', (a.changePct >= 0 ? '+' : '') + a.changePct.toFixed(1) + '% (+80%면 급증, -40%면 급감으로 봐요)', true]
     ];
     if(a.type === '급증'){
       addBadge(a.product, 'pos', '🚀 급성장', `요즘 잘 팔려요.
@@ -1795,7 +1801,7 @@ function renderInsights(ins){
         <div class="note" style="margin-top:3px;">${sentenceBreak(escapeHtml(i.detail))}</div>
         <div class="insight-evidence" id="insightEvidence_${n}" style="display:none;">
           <table>
-            <tbody>${(i.evidence || []).map(([label, value]) => `<tr><td style="color:var(--muted);white-space:nowrap;">${escapeHtml(label)}</td><td style="font-weight:600;">${escapeHtml(value)}</td></tr>`).join('')}</tbody>
+            <tbody>${(i.evidence || []).map(([label, value, isKey]) => `<tr${isKey ? ' class="ev-key"' : ''}><td style="white-space:nowrap;">${isKey ? '<span class="ev-key-badge">핵심</span>' : ''}${escapeHtml(label)}</td><td>${escapeHtml(value)}</td></tr>`).join('')}</tbody>
           </table>
           ${i.product ? `<button type="button" class="btn-ghost" style="font-size:11px;padding:4px 10px;margin-top:8px;" onclick="event.stopPropagation();showInsightProduct(${n})">🔍 '${escapeHtml(i.product)}' 데이터 보기</button>` : ''}
         </div>
@@ -1812,6 +1818,12 @@ function toggleInsightEvidence(n){
   const open = ev.style.display === 'none';
   ev.style.display = open ? '' : 'none';
   if(caret) caret.style.transform = open ? 'rotate(180deg)' : '';
+  // 펼친 뒤에는 "누르면 근거를 보여드려요" 툴팁이 필요 없다 — 접으면 다시 살린다
+  const item = ev.closest('.insight-item');
+  if(item){
+    if(open){ item.removeAttribute('data-tip'); tooltipEl.classList.remove('show'); }
+    else item.setAttribute('data-tip', '누르면 계산 근거를 보여드려요.');
+  }
 }
 
 // 판단 카드에서 해당 상품의 원본 매출 데이터로 바로 이동 (검색창에 상품명을 넣고 검색 카드로 스크롤)
