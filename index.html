@@ -6,9 +6,9 @@
 <title>매출관리 AI 직원 · Commerce AI Company</title>
 <style>
   :root{
-    --bg:#0f1420; --panel:#171f30; --panel2:#1d2740; --border:#2a3550;
-    --text:#e7ecf7; --muted:#93a0bd; --accent:#5b8cff; --accent2:#7c5bff;
-    --green:#33c481; --yellow:#e8b73f; --red:#ef5d6a; --chip:#243252;
+    --bg:#151022; --panel:#1d1731; --panel2:#251d40; --border:#372e58;
+    --text:#ece8f7; --muted:#a49bc4; --accent:#8b76f5; --accent2:#c06ae0;
+    --green:#33c481; --yellow:#e8b73f; --red:#ef5d6a; --chip:#2b2348;
   }
   *{box-sizing:border-box;}
   body{margin:0;font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo",sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;}
@@ -84,8 +84,8 @@
   .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;}
   .pill.pos{background:rgba(51,196,129,.15);color:var(--green);}
   .pill.neg{background:rgba(239,93,106,.15);color:var(--red);}
-  .pill.on{background:rgba(91,140,255,.15);color:var(--accent);}
-  .pill.off{background:rgba(147,160,189,.15);color:var(--muted);}
+  .pill.on{background:rgba(139,118,245,.15);color:var(--accent);}
+  .pill.off{background:rgba(164,155,196,.15);color:var(--muted);}
   .pill.unset{background:transparent;color:var(--muted);border:1px dashed var(--border);}
   button.ad-status-btn{font-family:inherit;cursor:pointer;}
   button.ad-status-btn:hover{filter:brightness(1.25);}
@@ -1392,11 +1392,11 @@ function renderReport(){
   const dots = r.dates.map((d,i)=>{
     const x = pad + i*((w-2*pad)/Math.max(1,r.dates.length-1));
     const y = h-pad - (r.byDate[d]/max)*(h-2*pad);
-    return `<circle cx="${x}" cy="${y}" r="2.5" fill="#5b8cff"><title>${d}: ${won(r.byDate[d])}</title></circle>`;
+    return `<circle cx="${x}" cy="${y}" r="2.5" fill="#8b76f5"><title>${d}: ${won(r.byDate[d])}</title></circle>`;
   }).join('');
   document.getElementById('chartArea').innerHTML = `
     <svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
-      <polyline points="${pts}" fill="none" stroke="#5b8cff" stroke-width="2"/>
+      <polyline points="${pts}" fill="none" stroke="#8b76f5" stroke-width="2"/>
       ${dots}
       <text x="${pad}" y="${h-6}">${r.dates[0]}</text>
       <text x="${w-pad-60}" y="${h-6}">${r.dates[r.dates.length-1]}</text>
