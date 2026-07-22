@@ -6,9 +6,9 @@
 <title>매출관리 AI 직원 · Commerce AI Company</title>
 <style>
   :root{
-    --bg:#151022; --panel:#1d1731; --panel2:#251d40; --border:#372e58;
-    --text:#ece8f7; --muted:#a49bc4; --accent:#8b76f5; --accent2:#c06ae0;
-    --green:#33c481; --yellow:#e8b73f; --red:#ef5d6a; --chip:#2b2348;
+    --bg:#f6f4ef; --panel:#ffffff; --panel2:#f2efe8; --border:#e0dacd;
+    --text:#2b2836; --muted:#7d7690; --accent:#5c51da; --accent2:#473bbf;
+    --green:#1f9d63; --yellow:#b45309; --red:#d43f4f; --chip:#edeaf6;
   }
   *{box-sizing:border-box;}
   body{margin:0;font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo",sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;}
@@ -32,7 +32,7 @@
   input[type=text], input[type=file], input[type=number], input[type=date], textarea, select{
     width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:8px;
     color:var(--text);padding:9px 10px;font-size:13px;font-family:inherit;resize:vertical;
-    color-scheme:dark;
+    color-scheme:light;
   }
   textarea{min-height:70px;}
   button{cursor:pointer;border:none;border-radius:9px;padding:9px 14px;font-size:13px;font-weight:600;font-family:inherit;}
@@ -66,8 +66,8 @@
   .bar-track{flex:1;height:14px;background:var(--panel2);border-radius:99px;overflow:hidden;}
   .bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:99px;}
   .bar-val{width:110px;text-align:right;font-size:12px;color:var(--muted);flex-shrink:0;}
-  .alert{background:rgba(239,93,106,.08);border:1px solid rgba(239,93,106,.35);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:13px;}
-  .alert.none{background:rgba(51,196,129,.08);border-color:rgba(51,196,129,.35);color:var(--green);}
+  .alert{background:rgba(212,63,79,.07);border:1px solid rgba(212,63,79,.3);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:13px;}
+  .alert.none{background:rgba(31,157,99,.07);border-color:rgba(31,157,99,.3);color:var(--green);}
   .ai-comment{font-size:13.5px;line-height:1.7;white-space:pre-wrap;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:14px;}
   table{width:100%;border-collapse:collapse;font-size:12.5px;}
   th,td{text-align:left;padding:8px 8px;border-bottom:1px solid var(--border);vertical-align:top;}
@@ -82,13 +82,13 @@
   .prod-item summary .prev{font-size:12.5px;color:var(--muted);}
   .prod-item .prod-body{padding:10px 12px;}
   .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;}
-  .pill.pos{background:rgba(51,196,129,.15);color:var(--green);}
-  .pill.neg{background:rgba(239,93,106,.15);color:var(--red);}
-  .pill.on{background:rgba(139,118,245,.15);color:var(--accent);}
-  .pill.off{background:rgba(164,155,196,.15);color:var(--muted);}
+  .pill.pos{background:rgba(31,157,99,.12);color:var(--green);}
+  .pill.neg{background:rgba(212,63,79,.12);color:var(--red);}
+  .pill.on{background:rgba(92,81,218,.12);color:var(--accent);}
+  .pill.off{background:rgba(125,118,144,.13);color:var(--muted);}
   .pill.unset{background:transparent;color:var(--muted);border:1px dashed var(--border);}
   button.ad-status-btn{font-family:inherit;cursor:pointer;}
-  button.ad-status-btn:hover{filter:brightness(1.25);}
+  button.ad-status-btn:hover{filter:brightness(.93);}
   .platform-tabs{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0 16px;}
   .platform-tab{padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:var(--panel2);color:var(--muted);cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;}
   .platform-tab.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-color:transparent;}
@@ -100,7 +100,7 @@
   .platform-tab-toggle, .platform-tab-del{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:5px 7px;border-radius:6px;font-family:inherit;}
   .platform-tab-toggle:hover{background:var(--panel);color:var(--text);}
   .platform-tab-del:hover{background:var(--panel);color:var(--red);}
-  .suggest-box{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--panel2);border:1px solid var(--border);border-radius:8px;max-height:180px;overflow-y:auto;z-index:10;box-shadow:0 8px 20px rgba(0,0,0,.35);}
+  .suggest-box{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--panel2);border:1px solid var(--border);border-radius:8px;max-height:180px;overflow-y:auto;z-index:10;box-shadow:0 8px 20px rgba(43,40,54,.14);}
   .suggest-item{padding:8px 10px 8px 12px;font-size:12.5px;cursor:pointer;border-left:3px solid transparent;}
   .suggest-item:hover, .suggest-item.active{background:var(--panel);}
   .suggest-item.type-product{border-left-color:var(--accent);}
@@ -1392,11 +1392,11 @@ function renderReport(){
   const dots = r.dates.map((d,i)=>{
     const x = pad + i*((w-2*pad)/Math.max(1,r.dates.length-1));
     const y = h-pad - (r.byDate[d]/max)*(h-2*pad);
-    return `<circle cx="${x}" cy="${y}" r="2.5" fill="#8b76f5"><title>${d}: ${won(r.byDate[d])}</title></circle>`;
+    return `<circle cx="${x}" cy="${y}" r="2.5" fill="#5c51da"><title>${d}: ${won(r.byDate[d])}</title></circle>`;
   }).join('');
   document.getElementById('chartArea').innerHTML = `
     <svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
-      <polyline points="${pts}" fill="none" stroke="#8b76f5" stroke-width="2"/>
+      <polyline points="${pts}" fill="none" stroke="#5c51da" stroke-width="2"/>
       ${dots}
       <text x="${pad}" y="${h-6}">${r.dates[0]}</text>
       <text x="${w-pad-60}" y="${h-6}">${r.dates[r.dates.length-1]}</text>
