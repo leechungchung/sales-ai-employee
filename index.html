@@ -195,6 +195,12 @@
   .bar-row:nth-child(3) .bar-fill{animation-delay:.1s;}
   .bar-row:nth-child(4) .bar-fill{animation-delay:.15s;}
   .bar-row:nth-child(n+5) .bar-fill{animation-delay:.2s;}
+  @keyframes drawLine{to{stroke-dashoffset:0;}}
+  .chart-wrap polyline{stroke-dasharray:1;stroke-dashoffset:1;animation:drawLine .9s ease-out .15s forwards;}
+  @keyframes dotIn{to{opacity:1;}}
+  .chart-wrap circle{opacity:0;animation:dotIn .4s ease .7s forwards;}
+  .alert{animation:fadeDown .3s ease both;}
+  #searchResults tbody tr{animation:fadeDown .22s ease both;}
   @keyframes fadeDown{from{opacity:0;transform:translateY(-5px);}to{opacity:1;transform:none;}}
   .suggest-box{animation:fadeDown .18s ease both;}
   .prod-item .prod-body{animation:fadeDown .22s ease both;}
@@ -326,15 +332,13 @@
       </div>
 
       <div class="card">
-        <h2>🔍 데이터 검색 <span class="n">(품목명 · 구매자명 등)</span><button type="button" class="card-toggle" id="cardToggle_search" onclick="toggleCardCollapse('search')">접기</button></h2>
-        <div id="cardBody_search">
-          <div class="btn-row" style="margin-top:0;margin-bottom:8px;">
-            <button type="button" class="btn-ghost" id="searchInclusionBtn" onclick="cycleSearchInclusionFilter()" style="font-size:11px;padding:4px 8px;opacity:.75;">전체 보기</button>
-          </div>
-          <div style="position:relative;">
-            <input type="text" id="searchInput" placeholder="검색어 입력 후 아래 목록에서 클릭하세요 (예: 반팔티, 홍길동, 2026-06)" oninput="onSearchInput()" onkeydown="onSearchKeydown(event)" autocomplete="off" />
+        <h2>🔍 데이터 검색
+          <div style="position:relative;flex:1;min-width:150px;max-width:420px;">
+            <input type="text" id="searchInput" placeholder="품목명 · 구매자명 · 날짜 검색" oninput="onSearchInput()" onkeydown="onSearchKeydown(event)" autocomplete="off" style="padding:6px 11px;font-size:12.5px;font-weight:400;" />
             <div id="searchSuggestBox" class="suggest-box" style="display:none;"></div>
           </div>
+          <button type="button" class="card-toggle" id="cardToggle_search" onclick="toggleCardCollapse('search')">접기</button></h2>
+        <div id="cardBody_search">
           <div id="searchKeywords" class="keyword-chips"></div>
           <div id="searchResults" style="margin-top:10px;"></div>
         </div>
@@ -416,6 +420,8 @@ let openMonthlyDetails = new Set(); // 펼쳐진 품목별 월별 상세 <detail
 
 // ---------- 카드 접기/펼치기 (데이터 검색, 품목별 월별 상세처럼 세로로 긴 카드용) ----------
 let collapsedCards = JSON.parse(localStorage.getItem('salesai_collapsed_cards') || '{}'); // { search: true, monthly: true, ... }
+// 데이터 검색 카드는 기본 접힘 — 사용자가 직접 펼친/접은 적이 있으면(저장값 존재) 그 선택을 따른다.
+if(!('search' in collapsedCards)) collapsedCards.search = true;
 function applyCardCollapse(key){
   const collapsed = !!collapsedCards[key];
   const body = document.getElementById('cardBody_' + key);
@@ -910,7 +916,7 @@ function saveFormatPreset(){
 document.getElementById('monthlyDetail').addEventListener('click', (e) => {
   const btn = e.target.closest('.ad-status-btn');
   if(!btn) return;
-  toggleAdStatus(btn.dataset.product, btn.dataset.month);
+  setAdStatus(btn.dataset.product, btn.dataset.month, btn.dataset.set);
 });
 // details의 toggle 이벤트는 버블링되지 않으므로 capture 단계에서 위임 처리
 document.getElementById('monthlyDetail').addEventListener('toggle', (e) => {
@@ -1492,21 +1498,19 @@ function computeMonthlyBreakdown(){
   return { months, hasAdProduct: hasAd, hasCost, perProduct };
 }
 
-function toggleAdStatus(product, month){
+// ON/OFF 버튼을 직접 누르는 방식: 이미 그 상태인 버튼을 다시 누르면 지정이 해제된다
+// (광고비 데이터로 자동 판별된 달은 해제 시 자동 판별값으로 돌아가고, 데이터가 없는 달은
+// 아무것도 지정되지 않은 상태가 되어 ON/OFF 평균 비교에서 빠진다).
+function setAdStatus(product, month, value){
   const key = product + '||' + month;
   const p = lastReport?.monthly?.perProduct.find(pp => pp.product === product);
   const x = p?.monthly.find(mm => mm.month === month);
-  const hasAutoValue = x ? x.adSpend !== null : false;
+  const current = x ? x.adOn : null; // 화면에 보이는 상태 (자동 판별 + 수동 지정 반영)
 
-  if(hasAutoValue){
-    // 광고비 데이터로 이미 판별된 달은 현재 화면에 보이는 상태의 반대로 한 번에 전환합니다.
-    manualAdStatus[key] = x.adOn ? 'off' : 'on';
+  if((value === 'on' && current === true) || (value === 'off' && current === false)){
+    delete manualAdStatus[key];
   } else {
-    // 광고비 데이터가 아예 없는 달만 미지정 → ON → OFF → 미지정 순으로 순환합니다.
-    const current = manualAdStatus[key];
-    if(current === 'on') manualAdStatus[key] = 'off';
-    else if(current === 'off') delete manualAdStatus[key];
-    else manualAdStatus[key] = 'on';
+    manualAdStatus[key] = value;
   }
   localStorage.setItem('salesai_manual_ad_status', JSON.stringify(manualAdStatus));
   if(!records.length) return;
@@ -1545,7 +1549,7 @@ function renderReport(){
   }).join('');
   document.getElementById('chartArea').innerHTML = `
     <svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
-      <polyline points="${pts}" fill="none" stroke="#5c51da" stroke-width="2"/>
+      <polyline points="${pts}" fill="none" stroke="#5c51da" stroke-width="2" pathLength="1"/>
       ${dots}
       <text x="${pad}" y="${h-6}">${r.dates[0]}</text>
       <text x="${w-pad-60}" y="${h-6}">${r.dates[r.dates.length-1]}</text>
@@ -1648,8 +1652,6 @@ function renderMonthlyDetail(m){
   el.innerHTML = m.perProduct.map(p=>{
     const showProfit = p.hasCostForProduct || p.hasAdColumn;
     const monthRows = p.monthly.map(x=>{
-      const statusLabel = x.adOn === null ? '미지정' : (x.adOn ? 'ON' : 'OFF');
-      const statusClass = x.adOn === null ? 'unset' : (x.adOn ? 'on' : 'off');
       return `
       <tr>
         <td>${x.month}</td>
@@ -1658,7 +1660,10 @@ function renderMonthlyDetail(m){
         <td>${x.cost===null?'-':won(x.cost)}</td>
         <td>${x.adSpend===null?'-':won(x.adSpend)}</td>
         <td>${(x.cost!==null || x.adSpend!==null) ? won(x.profit) : '-'}</td>
-        <td><button type="button" class="pill ad-status-btn ${statusClass}" data-product="${escapeHtml(p.product)}" data-month="${x.month}" title="클릭해서 광고 ON/OFF를 직접 지정하세요">${statusLabel}</button></td>
+        <td style="white-space:nowrap;">
+          <button type="button" class="pill ad-status-btn ${x.adOn === true ? 'on' : 'unset'}" data-product="${escapeHtml(p.product)}" data-month="${x.month}" data-set="on" title="광고를 켠 달로 지정 (다시 누르면 해제)">ON</button>
+          <button type="button" class="pill ad-status-btn ${x.adOn === false ? 'off' : 'unset'}" data-product="${escapeHtml(p.product)}" data-month="${x.month}" data-set="off" title="광고를 끈 달로 지정 (다시 누르면 해제)">OFF</button>
+        </td>
       </tr>
     `;
     }).join('');
@@ -1782,6 +1787,12 @@ function onSearchInput(){
   const term = document.getElementById('searchInput').value.trim().toLowerCase();
   const box = document.getElementById('searchSuggestBox');
   suggestHighlightIndex = -1;
+  // 접힌 상태에서 검색을 시작하면 결과가 보이도록 카드를 자동으로 펼친다
+  if(term && collapsedCards.search){
+    collapsedCards.search = false;
+    localStorage.setItem('salesai_collapsed_cards', JSON.stringify(collapsedCards));
+    applyCardCollapse('search');
+  }
   if(!term){
     box.style.display = 'none';
     box.innerHTML = '';
@@ -1901,7 +1912,12 @@ const SEARCH_INCLUSION_LABELS = { all: '전체 보기', on: 'ON만 보기', off:
 
 function cycleSearchInclusionFilter(){
   searchInclusionFilter = searchInclusionFilter === 'all' ? 'on' : searchInclusionFilter === 'on' ? 'off' : 'all';
-  document.getElementById('searchInclusionBtn').textContent = SEARCH_INCLUSION_LABELS[searchInclusionFilter];
+  renderSearchResults(); // 버튼 라벨은 결과 헤더 라인에서 함께 다시 그려진다
+}
+
+let searchRowsExpanded = false;
+function toggleSearchRows(){
+  searchRowsExpanded = !searchRowsExpanded;
   renderSearchResults();
 }
 
@@ -2001,16 +2017,25 @@ function renderSearchResults(){
   }
   const isFiltered = activeSearchKeywords.size || term || searchInclusionFilter !== 'all';
   if(!records.length){ el.innerHTML = '<div class="empty">불러온 매출 데이터가 없습니다.</div>'; return; }
-  if(!matches.length){ el.innerHTML = `<div class="empty">${isFiltered ? '일치하는 데이터가 없습니다.' : '표시할 데이터가 없습니다.'}</div>`; return; }
   const totalAmount = matches.reduce((s,r)=> s + (r.included === false ? 0 : r.amount), 0);
-  const MAX_ROWS = 200;
-  const shown = matches.slice(0, MAX_ROWS);
+  // ON/OFF 필터 버튼은 결과 헤더 라인에 함께 그린다(결과가 0건이어도 항상 접근 가능해야 함)
+  const headerLine = `
+    <div style="display:flex;align-items:center;gap:8px;margin:0 0 6px;">
+      <span class="note" style="margin:0;">${matches.length
+        ? `${matches.length}건${isFiltered ? ' 일치' : ''} · ON 합계 ${won(totalAmount)}`
+        : (isFiltered ? '일치하는 데이터가 없습니다.' : '표시할 데이터가 없습니다.')}</span>
+      <button type="button" class="btn-ghost" onclick="cycleSearchInclusionFilter()" style="font-size:11px;padding:3px 9px;margin-left:auto;flex-shrink:0;">${SEARCH_INCLUSION_LABELS[searchInclusionFilter]}</button>
+    </div>`;
+  if(!matches.length){ el.innerHTML = headerLine; return; }
+  const DEFAULT_ROWS = 5, MAX_ROWS = 200;
+  const shown = matches.slice(0, searchRowsExpanded ? MAX_ROWS : DEFAULT_ROWS);
+  const hiddenCount = Math.min(matches.length, MAX_ROWS) - DEFAULT_ROWS;
   const showPlatform = vals.platformNames.size > 0;
   el.innerHTML = `
-    <p class="note">${matches.length}건${isFiltered ? ' 일치' : ''} · ON 합계 ${won(totalAmount)}${matches.length > MAX_ROWS ? ` (최근 ${MAX_ROWS}건만 표시)` : ''}</p>
+    ${headerLine}
     <div class="table-wrap">
       <table>
-        <thead><tr>${showPlatform ? '<th>플랫폼</th>' : ''}<th>날짜</th><th>상품명</th><th>구매자</th><th>매출액</th><th>수량</th><th>원가</th><th>광고비</th><th>채널</th><th>상태</th><th colspan="2"></th></tr></thead>
+        <thead><tr>${showPlatform ? '<th>플랫폼</th>' : ''}<th>날짜</th><th>상품명</th><th>구매자</th><th>매출액</th><th>단가</th><th>수량</th><th>원가</th><th>광고비</th><th>채널</th><th>상태</th><th colspan="2"></th></tr></thead>
         <tbody>${shown.map(r => {
           const idx = records.indexOf(r);
           if(idx === editingSalesIndex){
@@ -2018,8 +2043,8 @@ function renderSearchResults(){
               <td><input type="date" id="editSalesDate_${idx}" value="${r.date}" style="padding:4px 6px;font-size:12px;" /></td>
               <td><input type="text" id="editSalesProduct_${idx}" value="${escapeHtml(r.product)}" style="padding:4px 6px;font-size:12px;" /></td>
               <td><input type="text" id="editSalesCustomer_${idx}" value="${escapeHtml(r.customer||'')}" style="padding:4px 6px;font-size:12px;min-width:90px;" /></td>
-              <td><input type="number" id="editSalesAmount_${idx}" value="${r.amount}" oninput="onEditAmountInput(${idx})" title="합계 매출액" style="padding:4px 6px;font-size:12px;width:90px;" />
-                <input type="number" id="editSalesUnit_${idx}" value="${r.unitPrice != null ? r.unitPrice : ''}" placeholder="개당 단가" oninput="syncEditAmount(${idx})" title="개당 단가 — 입력하면 단가 × 수량으로 매출액이 자동 계산됩니다" style="padding:4px 6px;font-size:12px;width:90px;margin-top:4px;" /></td>
+              <td><input type="number" id="editSalesAmount_${idx}" value="${r.amount}" oninput="onEditAmountInput(${idx})" title="합계 매출액" style="padding:4px 6px;font-size:12px;width:90px;" /></td>
+              <td><input type="number" id="editSalesUnit_${idx}" value="${r.unitPrice != null ? r.unitPrice : ''}" placeholder="단가" oninput="syncEditAmount(${idx})" title="개당 단가 — 입력하면 단가 × 수량으로 매출액이 자동 계산됩니다" style="padding:4px 6px;font-size:12px;width:80px;" /></td>
               <td><input type="number" id="editSalesQty_${idx}" value="${r.qty != null ? r.qty : 1}" min="1" oninput="syncEditAmount(${idx})" style="padding:4px 6px;font-size:12px;width:60px;" /></td>
               <td><input type="number" id="editSalesCost_${idx}" value="${r.cost != null ? r.cost : ''}" placeholder="선택" style="padding:4px 6px;font-size:12px;width:80px;" /></td>
               <td><input type="number" id="editSalesAd_${idx}" value="${r.adAmount != null ? r.adAmount : ''}" placeholder="선택" style="padding:4px 6px;font-size:12px;width:80px;" /></td>
@@ -2028,10 +2053,11 @@ function renderSearchResults(){
             </tr>`;
           }
           const off = r.included === false;
-          return `<tr style="${off ? 'opacity:.5;' : ''}">${showPlatform ? `<td>${escapeHtml(r.platformName||'-')}</td>` : ''}<td>${r.date}</td><td>${escapeHtml(r.product)}</td><td>${escapeHtml(r.customer||'-')}</td><td>${won(r.amount)}${r.unitPrice != null ? `<div style="font-size:11px;color:var(--muted);">${won(r.unitPrice)}/개</div>` : ''}</td><td>${r.qty != null ? r.qty : 1}</td><td>${r.cost != null ? won(r.cost) : '-'}</td><td>${r.adAmount != null ? won(r.adAmount) : '-'}</td><td>${escapeHtml(r.adChannel||'-')}</td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="toggleRecordIncluded(${idx})">${off ? 'OFF' : 'ON'}</button></td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="editSalesRecord(${idx})">수정</button></td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="deleteRecord(${idx})" title="삭제">🗑</button></td></tr>`;
+          return `<tr style="${off ? 'opacity:.5;' : ''}">${showPlatform ? `<td>${escapeHtml(r.platformName||'-')}</td>` : ''}<td>${r.date}</td><td>${escapeHtml(r.product)}</td><td>${escapeHtml(r.customer||'-')}</td><td>${won(r.amount)}</td><td>${r.unitPrice != null ? won(r.unitPrice) : '-'}</td><td>${r.qty != null ? r.qty : 1}</td><td>${r.cost != null ? won(r.cost) : '-'}</td><td>${r.adAmount != null ? won(r.adAmount) : '-'}</td><td>${escapeHtml(r.adChannel||'-')}</td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="toggleRecordIncluded(${idx})">${off ? 'OFF' : 'ON'}</button></td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="editSalesRecord(${idx})">수정</button></td><td><button type="button" class="btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="deleteRecord(${idx})" title="삭제">🗑</button></td></tr>`;
         }).join('')}</tbody>
       </table>
     </div>
+    ${hiddenCount > 0 ? `<div class="btn-row"><button type="button" class="btn-ghost" onclick="toggleSearchRows()">${searchRowsExpanded ? '접기' : `더보기 (${hiddenCount}개 더)`}</button>${searchRowsExpanded && matches.length > MAX_ROWS ? `<span class="note" style="margin:0;align-self:center;">최근 ${MAX_ROWS}건만 표시</span>` : ''}</div>` : ''}
   `;
 }
 
