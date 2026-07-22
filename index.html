@@ -195,8 +195,14 @@
   .bar-row:nth-child(3) .bar-fill{animation-delay:.1s;}
   .bar-row:nth-child(4) .bar-fill{animation-delay:.15s;}
   .bar-row:nth-child(n+5) .bar-fill{animation-delay:.2s;}
-  .insight-item{display:flex;gap:11px;align-items:flex-start;padding:11px 13px;border:1px solid #e8e3ef;border-radius:12px;margin-bottom:8px;background:linear-gradient(165deg,#ffffff 30%,#f7f5fd 100%);box-shadow:var(--shadow-sm);}
+  .insight-item{display:flex;gap:11px;align-items:flex-start;padding:11px 13px;border:1px solid #e8e3ef;border-radius:12px;margin-bottom:8px;background:linear-gradient(165deg,#ffffff 30%,#f7f5fd 100%);box-shadow:var(--shadow-sm);cursor:pointer;transition:box-shadow .15s ease,border-color .15s ease;}
+  .insight-item:hover{border-color:#c9c1ec;box-shadow:var(--shadow-md);}
   .insight-item .insight-icon{font-size:18px;line-height:1.3;}
+  .insight-caret{color:var(--muted);font-size:12px;flex-shrink:0;transition:transform .2s ease;align-self:center;}
+  .insight-evidence{margin-top:9px;padding:9px 11px;background:#fff;border:1px solid var(--border);border-radius:9px;animation:fadeDown .2s ease both;}
+  .insight-evidence table{font-size:12px;}
+  .insight-evidence td{padding:4px 10px 4px 0;border-bottom:1px solid #f2eee5;}
+  .insight-evidence tr:last-child td{border-bottom:none;}
   .goal-box{margin:0 0 14px;padding:11px 13px;border:1px solid #e8e3ef;border-radius:12px;background:linear-gradient(165deg,#ffffff 30%,#f7f5fd 100%);}
   .goal-track{height:10px;background:#eeeae0;border-radius:99px;overflow:hidden;margin-top:9px;box-shadow:inset 0 1px 2px rgba(38,33,72,.06);}
   .goal-fill{height:100%;background:linear-gradient(90deg,#8b80f7,var(--accent) 70%,var(--accent2));border-radius:99px;transform-origin:left;animation:barIn .7s cubic-bezier(.22,.7,.3,1) both;}
@@ -1548,9 +1554,9 @@ function computeAndRenderReport(){
     if(priorAvg > 0){
       const changePct = ((recentAvg - priorAvg)/priorAvg)*100;
       if(changePct <= -40){
-        anomalies.push({product:p, changePct, type:'급감'});
+        anomalies.push({product:p, changePct, type:'급감', recentAvg, priorAvg, recentDays: recent.length, priorDays: prior.length});
       } else if(changePct >= 80){
-        anomalies.push({product:p, changePct, type:'급증'});
+        anomalies.push({product:p, changePct, type:'급증', recentAvg, priorAvg, recentDays: recent.length, priorDays: prior.length});
       }
     }
   });
@@ -1592,27 +1598,45 @@ function computeInsights(r){
       const op = p.revenue - p.cost - p.adSpend;
       if(op < 0){
         const perUnit = Math.round(op / Math.max(1, p.qty));
-        addBadge(name, 'neg', '⚠ 역마진', `원가·광고비 반영 누적 ${won(op)}`);
-        insights.push({ icon:'⚠', impact: Math.abs(op),
+        addBadge(name, 'neg', '⚠ 역마진', `팔수록 손해 — 원가·광고비 반영 누적 ${won(op)}`);
+        insights.push({ icon:'⚠', impact: Math.abs(op), product: name,
           title: `'${name}' 역마진 — 팔수록 손해입니다`,
-          detail: `원가·광고비를 빼면 누적 ${won(op)} (개당 약 ${won(perUnit)}). 판매가 인상 또는 원가 재협상이 필요합니다.` });
+          detail: `원가·광고비를 빼면 누적 ${won(op)} (개당 약 ${won(perUnit)}). 판매가 인상 또는 원가 재협상이 필요합니다.`,
+          evidence: [
+            ['총 매출', won(p.revenue)],
+            ['총 원가 (개당 원가 × 수량)', '- ' + won(p.cost)],
+            ['광고비', '- ' + won(p.adSpend)],
+            ['= 영업이익', won(op)],
+            ['판매 수량', p.qty.toLocaleString('ko-KR') + '개 → 개당 약 ' + won(perUnit)]
+          ] });
       }
     }
     // 판단 2: 광고 손익분기 — 이 상품은 ROAS 몇 배부터 남는 장사인가
     if(p.adSpend > 0){
       const roasP = p.revenue / p.adSpend;
-      let breakEven = 1;
+      let breakEven = 1, marginRate = null;
       if(p.hasCost && !p.missingCost && p.revenue > p.cost){
-        breakEven = 1 / ((p.revenue - p.cost) / p.revenue); // 1 ÷ 마진율
+        marginRate = (p.revenue - p.cost) / p.revenue;
+        breakEven = 1 / marginRate; // 1 ÷ 마진율
       }
       if(roasP < breakEven){
         const monthlyAd = p.adSpend / monthsCount;
-        addBadge(name, 'neg', '💸 광고 재검토', `ROAS ${roasP.toFixed(2)}배 < 손익분기 ${breakEven.toFixed(1)}배`);
-        insights.push({ icon:'💸', impact: monthlyAd,
+        addBadge(name, 'neg', '💸 광고 재검토', `광고비가 이익보다 큼 — ROAS ${roasP.toFixed(2)}배 < 손익분기 ${breakEven.toFixed(1)}배`);
+        insights.push({ icon:'💸', impact: monthlyAd, product: name,
           title: `'${name}' 광고 중단 검토 — 광고비가 이익을 넘습니다`,
-          detail: `ROAS ${roasP.toFixed(2)}배${breakEven > 1.001 ? `, 이 상품은 마진 구조상 ${breakEven.toFixed(1)}배 이상이어야 남습니다` : ' (1배 미만: 광고비보다 매출이 적음)'}. 중단하면 월 약 ${won(monthlyAd)} 절감됩니다.` });
+          detail: `ROAS ${roasP.toFixed(2)}배${breakEven > 1.001 ? `, 이 상품은 마진 구조상 ${breakEven.toFixed(1)}배 이상이어야 남습니다` : ' (1배 미만: 광고비보다 매출이 적음)'}. 중단하면 월 약 ${won(monthlyAd)} 절감됩니다.`,
+          evidence: [
+            ['총 매출', won(p.revenue)],
+            ['총 광고비', won(p.adSpend)],
+            ['ROAS = 매출 ÷ 광고비', roasP.toFixed(2) + '배'],
+            ...(marginRate != null ? [
+              ['마진율 = (매출-원가) ÷ 매출', (marginRate*100).toFixed(1) + '%'],
+              ['손익분기 ROAS = 1 ÷ 마진율', breakEven.toFixed(1) + '배']
+            ] : [['손익분기 기준', '1배 (원가 미입력 → 광고비 대비 매출 기준)']]),
+            ['분석 기간', monthsCount + '개월 → 월평균 광고비 ' + won(p.adSpend / monthsCount)]
+          ] });
       } else if(roasP >= breakEven * 2){
-        addBadge(name, 'pos', '🎯 광고 효자', `ROAS ${roasP.toFixed(2)}배 — 손익분기(${breakEven.toFixed(1)}배)의 2배 이상. 유지/증액 검토`);
+        addBadge(name, 'pos', '🎯 광고 효자', `광고 효율 매우 좋음 — ROAS ${roasP.toFixed(2)}배 (손익분기 ${breakEven.toFixed(1)}배의 2배 이상)`);
       }
     }
   });
@@ -1624,24 +1648,35 @@ function computeInsights(r){
     const prod = perProd[p.product];
     const monthlyAd = prod && prod.adSpend > 0 ? prod.adSpend / monthsCount : 0;
     if(avgOff >= avgOn * 0.8){
-      addBadge(p.product, 'on', '🌱 자연판매', `광고 OFF 달 평균 ${won(avgOff)} — ON 달(${won(avgOn)})의 80% 이상`);
-      insights.push({ icon:'🌱', impact: monthlyAd,
+      addBadge(p.product, 'on', '🌱 자연판매', `광고 없이도 팔림 — OFF 달 평균 ${won(avgOff)} (ON 달의 80% 이상)`);
+      insights.push({ icon:'🌱', impact: monthlyAd, product: p.product,
         title: `'${p.product}' 광고 없이도 팔립니다`,
-        detail: `광고 OFF 달 평균 매출 ${won(avgOff)}로 ON 달(${won(avgOn)})과 비슷합니다.${monthlyAd ? ` 광고를 줄이면 월 약 ${won(monthlyAd)}을 아낄 수 있습니다.` : ' 광고비를 다른 상품에 배분하는 것을 검토하세요.'}` });
+        detail: `광고 OFF 달 평균 매출 ${won(avgOff)}로 ON 달(${won(avgOn)})과 비슷합니다.${monthlyAd ? ` 광고를 줄이면 월 약 ${won(monthlyAd)}을 아낄 수 있습니다.` : ' 광고비를 다른 상품에 배분하는 것을 검토하세요.'}`,
+        evidence: [
+          ['광고 ON 달 (' + p.onOff.onMonths.length + '개월)', p.onOff.onMonths.join(', ') + ' → 평균 ' + won(avgOn)],
+          ['광고 OFF 달 (' + p.onOff.offMonths.length + '개월)', p.onOff.offMonths.join(', ') + ' → 평균 ' + won(avgOff)],
+          ['OFF ÷ ON 비율', avgOn > 0 ? (avgOff / avgOn * 100).toFixed(0) + '% (80% 이상이면 자연판매로 판정)' : '-'],
+          ...(monthlyAd ? [['월평균 광고비', won(monthlyAd)]] : [])
+        ] });
     }
   });
 
   // 판단 4: 급성장/급감 — 기존 이상 탐지를 행동 제안으로 변환
   r.anomalies.forEach(a => {
     const rev = perProd[a.product]?.revenue || 0;
+    const evidence = [
+      [`최근 ${a.recentDays}일 하루 평균`, won(a.recentAvg)],
+      [`이전 ${a.priorDays}일 하루 평균`, won(a.priorAvg)],
+      ['변화율', (a.changePct >= 0 ? '+' : '') + a.changePct.toFixed(1) + '% (기준: +80% 급증 / -40% 급감)']
+    ];
     if(a.type === '급증'){
-      addBadge(a.product, 'pos', '🚀 급성장', `최근 3일 평균 +${a.changePct.toFixed(0)}%`);
-      insights.push({ icon:'🚀', impact: rev * 0.1,
+      addBadge(a.product, 'pos', '🚀 급성장', `최근 매출 급증 — 3일 평균 +${a.changePct.toFixed(0)}%`);
+      insights.push({ icon:'🚀', impact: rev * 0.1, product: a.product, evidence,
         title: `'${a.product}' 급성장 +${a.changePct.toFixed(0)}%`,
         detail: `최근 3일 평균 매출이 이전 대비 급증했습니다. 품절되기 전에 재고 확보를 검토하세요.` });
     } else {
-      addBadge(a.product, 'neg', '📉 급감', `최근 3일 평균 ${a.changePct.toFixed(0)}%`);
-      insights.push({ icon:'📉', impact: rev * 0.1,
+      addBadge(a.product, 'neg', '📉 급감', `최근 매출 급감 — 3일 평균 ${a.changePct.toFixed(0)}%`);
+      insights.push({ icon:'📉', impact: rev * 0.1, product: a.product, evidence,
         title: `'${a.product}' 매출 급감 ${a.changePct.toFixed(0)}%`,
         detail: `품절, 리뷰 이슈, 경쟁 상품 가격 변동 여부를 확인해보세요.` });
     }
@@ -1659,7 +1694,7 @@ function computeInsights(r){
 function insightBadgeHtml(product){
   const badges = lastReport?.insightData?.badges?.[product];
   if(!badges) return '';
-  return badges.map(b => `<span class="pill ${b.cls}" title="${escapeHtml(b.title)}" style="font-size:9.5px;padding:1px 6px;margin-left:4px;vertical-align:1px;">${b.label}</span>`).join('');
+  return badges.map(b => `<span class="pill ${b.cls}" title="${escapeHtml(b.title)}" style="font-size:9.5px;padding:1px 6px;margin-left:4px;vertical-align:1px;cursor:help;">${b.label}</span>`).join('');
 }
 
 function renderInsights(ins){
@@ -1667,12 +1702,48 @@ function renderInsights(ins){
   const list = document.getElementById('insightList');
   if(!ins || (!ins.insights.length && !ins.hints.length)){ card.style.display = 'none'; list.innerHTML = ''; return; }
   card.style.display = '';
-  list.innerHTML = ins.insights.map(i => `
-    <div class="insight-item">
+  list.innerHTML = ins.insights.map((i, n) => `
+    <div class="insight-item" onclick="toggleInsightEvidence(${n})" title="클릭하면 판단 근거가 되는 데이터를 보여줍니다">
       <div class="insight-icon">${i.icon}</div>
-      <div><b style="font-size:13px;">${escapeHtml(i.title)}</b><div class="note" style="margin-top:3px;">${escapeHtml(i.detail)}</div></div>
+      <div style="flex:1;min-width:0;">
+        <b style="font-size:13px;">${escapeHtml(i.title)}</b>
+        <div class="note" style="margin-top:3px;">${escapeHtml(i.detail)}</div>
+        <div class="insight-evidence" id="insightEvidence_${n}" style="display:none;">
+          <table>
+            <tbody>${(i.evidence || []).map(([label, value]) => `<tr><td style="color:var(--muted);white-space:nowrap;">${escapeHtml(label)}</td><td style="font-weight:600;">${escapeHtml(value)}</td></tr>`).join('')}</tbody>
+          </table>
+          ${i.product ? `<button type="button" class="btn-ghost" style="font-size:11px;padding:4px 10px;margin-top:8px;" onclick="event.stopPropagation();showInsightProduct(${n})">🔍 '${escapeHtml(i.product)}' 원본 데이터 보기</button>` : ''}
+        </div>
+      </div>
+      <span class="insight-caret" id="insightCaret_${n}">▾</span>
     </div>`).join('')
     + (ins.hints.length ? `<div class="note" style="margin-top:${ins.insights.length ? 8 : 0}px;">💡 ${ins.hints.map(escapeHtml).join(' · ')}</div>` : '');
+}
+
+function toggleInsightEvidence(n){
+  const ev = document.getElementById('insightEvidence_' + n);
+  const caret = document.getElementById('insightCaret_' + n);
+  if(!ev) return;
+  const open = ev.style.display === 'none';
+  ev.style.display = open ? '' : 'none';
+  if(caret) caret.style.transform = open ? 'rotate(180deg)' : '';
+}
+
+// 판단 카드에서 해당 상품의 원본 매출 데이터로 바로 이동 (검색창에 상품명을 넣고 검색 카드로 스크롤)
+function showInsightProduct(n){
+  const i = lastReport?.insightData?.insights?.[n];
+  if(!i || !i.product) return;
+  const input = document.getElementById('searchInput');
+  input.value = i.product;
+  document.getElementById('searchSuggestBox').style.display = 'none';
+  if(collapsedCards.search){
+    collapsedCards.search = false;
+    localStorage.setItem('salesai_collapsed_cards', JSON.stringify(collapsedCards));
+    applyCardCollapse('search');
+  }
+  searchRowsExpanded = true;
+  renderSearchResults();
+  document.getElementById('cardBody_search').scrollIntoView({ block: 'center', behavior: 'smooth' });
 }
 
 // ---------- 재구매 고객 (구매자명이 입력된 데이터 기반) ----------
