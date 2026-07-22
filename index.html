@@ -196,7 +196,7 @@
   .bar-row:nth-child(3) .bar-fill{animation-delay:.1s;}
   .bar-row:nth-child(4) .bar-fill{animation-delay:.15s;}
   .bar-row:nth-child(n+5) .bar-fill{animation-delay:.2s;}
-  .tooltip{position:fixed;z-index:1000;max-width:320px;background:#2b2836;color:#f7f5fc;font-size:13.5px;font-weight:500;line-height:1.6;padding:11px 14px;border-radius:11px;box-shadow:0 10px 28px rgba(38,33,72,.35);opacity:0;pointer-events:none;transition:opacity .13s ease, transform .13s ease;transform:translateY(3px);word-break:keep-all;overflow-wrap:break-word;}
+  .tooltip{position:fixed;z-index:1000;max-width:320px;background:#2b2836;color:#f7f5fc;font-size:13.5px;font-weight:500;line-height:1.6;padding:11px 14px;border-radius:11px;box-shadow:0 10px 28px rgba(38,33,72,.35);opacity:0;pointer-events:none;transition:opacity .13s ease, transform .13s ease;transform:translateY(3px);word-break:keep-all;overflow-wrap:break-word;white-space:pre-line;}
   .tooltip.show{opacity:1;transform:none;}
   .goal-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
   .goal-title{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.02em;white-space:nowrap;}
@@ -251,7 +251,7 @@
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
       <button type="button" class="btn-ghost" style="font-size:12px;" onclick="exportBackup()" data-tip="모든 데이터를 파일 하나로 저장해요">💾 전체 백업</button>
-      <button type="button" class="btn-ghost" style="font-size:12px;" onclick="document.getElementById('restoreFile').click()" data-tip="백업 파일로 되돌려요 · 지금 데이터는 덮어써요">복원</button>
+      <button type="button" class="btn-ghost" style="font-size:12px;" onclick="document.getElementById('restoreFile').click()" data-tip="백업 파일로 되돌려요&#10;지금 데이터는 덮어써요">복원</button>
       <input type="file" id="restoreFile" accept=".json,application/json" style="display:none;" onchange="importBackup(this.files[0])" />
     </div>
   </header>
@@ -426,10 +426,6 @@
         </div>
       </div>
 
-      <div class="card">
-        <h2>⚠️ 이상 징후 탐지</h2>
-        <div id="anomalyBox"><div class="empty">데이터를 올리면 보여드려요.</div></div>
-      </div>
 
       <div class="card">
         <h2>📝 코멘트</h2>
@@ -827,7 +823,6 @@ function clearReportUI(){
   document.getElementById('topProductsCount').textContent = '';
   document.getElementById('topProducts').innerHTML = '<div class="empty">데이터를 올리면 보여드려요.</div>';
   document.getElementById('monthlyDetail').innerHTML = '<div class="empty">데이터를 올리면 보여드려요.</div>';
-  document.getElementById('anomalyBox').innerHTML = '<div class="empty">데이터를 올리면 보여드려요.</div>';
   document.getElementById('aiComment').textContent = '데이터를 불러오면 자동으로 요약 코멘트를 작성합니다.';
 }
 
@@ -1677,7 +1672,8 @@ function computeInsights(r){
       const op = p.revenue - p.cost - p.adSpend;
       if(op < 0){
         const perUnit = Math.round(op / Math.max(1, p.qty));
-        addBadge(name, 'neg', '⚠ 역마진', `팔수록 손해예요 · 누적 ${won(op)}`);
+        addBadge(name, 'neg', '⚠ 역마진', `팔수록 손해예요
+누적 ${won(op)}`);
         insights.push({ icon:'⚠', impact: Math.abs(op), product: name,
           title: `'${name}', 팔수록 손해예요`,
           detail: `팔 때마다 약 ${won(Math.abs(perUnit))}씩 손해예요. 지금까지 ${won(op)}이에요. 가격을 올리거나 원가를 낮춰보세요.`,
@@ -1702,7 +1698,8 @@ function computeInsights(r){
         const monthlyAd = p.adSpend / monthsCount;
         const earned = Math.round(roasP * 10000).toLocaleString('ko-KR');
         const needed = Math.round(breakEven * 10000).toLocaleString('ko-KR');
-        addBadge(name, 'neg', '💸 광고 재검토', `광고를 해도 남는 게 없어요 · 1만원 → ${earned}원 (본전 ${needed}원)`);
+        addBadge(name, 'neg', '💸 광고 재검토', `광고를 해도 남는 게 없어요
+1만원 → ${earned}원 (본전 ${needed}원)`);
         insights.push({ icon:'💸', impact: monthlyAd, product: name,
           title: `'${name}', 광고를 멈춰볼까요?`,
           detail: `광고비 1만원을 쓰면 매출 ${earned}원이 돌아와요. ${breakEven > 1.001 ? `본전이 되려면 ${needed}원은 나와야 해요` : '광고비만큼도 안 나와요'}. 멈추면 매달 약 ${won(monthlyAd)} 아낄 수 있어요.`,
@@ -1718,7 +1715,8 @@ function computeInsights(r){
           ] });
       } else if(roasP >= breakEven * 2){
         const earned = Math.round(roasP * 10000).toLocaleString('ko-KR');
-        addBadge(name, 'pos', '🎯 광고 효자', `광고가 확실히 돈이 돼요 · 1만원 → ${earned}원`);
+        addBadge(name, 'pos', '🎯 광고 효자', `광고가 확실히 돈이 돼요
+1만원 → ${earned}원`);
       }
     }
   });
@@ -1730,7 +1728,8 @@ function computeInsights(r){
     const prod = perProd[p.product];
     const monthlyAd = prod && prod.adSpend > 0 ? prod.adSpend / monthsCount : 0;
     if(avgOff >= avgOn * 0.8){
-      addBadge(p.product, 'on', '🌱 자연판매', `광고 없이도 팔려요 · 광고 쉰 달 평균 ${won(avgOff)}`);
+      addBadge(p.product, 'on', '🌱 자연판매', `광고 없이도 팔려요
+광고 쉰 달 평균 ${won(avgOff)}`);
       insights.push({ icon:'🌱', impact: monthlyAd, product: p.product,
         title: `'${p.product}', 광고 없이도 팔려요`,
         detail: `광고를 쉰 달에도 평균 ${won(avgOff)}씩 팔렸어요. 광고한 달(${won(avgOn)})과 비슷해요.${monthlyAd ? ` 광고를 줄이면 매달 약 ${won(monthlyAd)} 아낄 수 있어요.` : ' 광고비를 다른 상품에 써보세요.'}`,
@@ -1752,12 +1751,14 @@ function computeInsights(r){
       ['변화율', (a.changePct >= 0 ? '+' : '') + a.changePct.toFixed(1) + '% (+80%면 급증, -40%면 급감으로 봐요)']
     ];
     if(a.type === '급증'){
-      addBadge(a.product, 'pos', '🚀 급성장', `요즘 잘 팔려요 · 3일 평균 +${a.changePct.toFixed(0)}%`);
+      addBadge(a.product, 'pos', '🚀 급성장', `요즘 잘 팔려요
+3일 평균 +${a.changePct.toFixed(0)}%`);
       insights.push({ icon:'🚀', impact: rev * 0.1, product: a.product, evidence,
         title: `'${a.product}', 갑자기 잘 팔려요 (+${a.changePct.toFixed(0)}%)`,
         detail: `최근 3일 매출이 이전보다 크게 늘었어요. 품절 전에 재고를 확인해 보세요.` });
     } else {
-      addBadge(a.product, 'neg', '📉 급감', `매출이 줄고 있어요 · 3일 평균 ${a.changePct.toFixed(0)}%`);
+      addBadge(a.product, 'neg', '📉 급감', `매출이 줄고 있어요
+3일 평균 ${a.changePct.toFixed(0)}%`);
       insights.push({ icon:'📉', impact: rev * 0.1, product: a.product, evidence,
         title: `'${a.product}', 매출이 줄고 있어요 (${a.changePct.toFixed(0)}%)`,
         detail: `품절이나 리뷰, 경쟁 상품 가격을 확인해 보세요.` });
@@ -2055,15 +2056,7 @@ function renderReport(){
   // top products (전체 순위, 더보기로 펼쳐보기)
   renderTopProducts(r.topProducts);
 
-  // anomalies
-  if(!r.anomalies.length){
-    document.getElementById('anomalyBox').innerHTML = '<div class="alert none">✓ 이상 징후가 없어요.</div>';
-  } else {
-    document.getElementById('anomalyBox').innerHTML = r.anomalies.map(a=>`
-      <div class="alert">⚠ <b>${escapeHtml(a.product)}</b> — 최근 매출이 직전 대비 ${a.type} (${a.changePct>=0?'+':''}${a.changePct.toFixed(1)}%)。
-      ${a.type==='급감' ? '품절, 노출순위 하락, 광고 중단 여부를 확인해주세요.' : '재고 소진 위험이 있으니 발주를 점검해주세요.'}</div>
-    `).join('');
-  }
+  // 이상 징후(급증/급감)는 별도 카드 없이 "오늘의 판단"과 상품 순위 배지로만 표시한다.
 
   // AI comment (rule-based baseline)
   buildAiComment();
@@ -2119,8 +2112,8 @@ function renderMonthlyDetail(m){
         <td>${x.adSpend===null?'-':won(x.adSpend)}</td>
         <td>${(x.cost!==null || x.adSpend!==null) ? won(x.profit) : '-'}</td>
         <td style="white-space:nowrap;">
-          <button type="button" class="pill ad-status-btn ${x.adOn === true ? 'on' : 'unset'}" data-product="${escapeHtml(p.product)}" data-month="${x.month}" data-set="on" data-tip="광고한 달로 표시해요 · 다시 누르면 해제">ON</button>
-          <button type="button" class="pill ad-status-btn ${x.adOn === false ? 'off' : 'unset'}" data-product="${escapeHtml(p.product)}" data-month="${x.month}" data-set="off" data-tip="광고 쉰 달로 표시해요 · 다시 누르면 해제">OFF</button>
+          <button type="button" class="pill ad-status-btn ${x.adOn === true ? 'on' : 'unset'}" data-product="${escapeHtml(p.product)}" data-month="${x.month}" data-set="on" data-tip="광고한 달로 표시해요&#10;다시 누르면 해제">ON</button>
+          <button type="button" class="pill ad-status-btn ${x.adOn === false ? 'off' : 'unset'}" data-product="${escapeHtml(p.product)}" data-month="${x.month}" data-set="off" data-tip="광고 쉰 달로 표시해요&#10;다시 누르면 해제">OFF</button>
         </td>
       </tr>
     `;
