@@ -195,6 +195,19 @@
   .bar-row:nth-child(3) .bar-fill{animation-delay:.1s;}
   .bar-row:nth-child(4) .bar-fill{animation-delay:.15s;}
   .bar-row:nth-child(n+5) .bar-fill{animation-delay:.2s;}
+  .tooltip{position:fixed;z-index:1000;max-width:270px;background:#2b2836;color:#f5f3fa;font-size:11.5px;font-weight:500;line-height:1.55;padding:8px 11px;border-radius:9px;box-shadow:0 10px 28px rgba(38,33,72,.35);opacity:0;pointer-events:none;transition:opacity .13s ease, transform .13s ease;transform:translateY(3px);}
+  .tooltip.show{opacity:1;transform:none;}
+  .goal-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .goal-title{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.02em;white-space:nowrap;}
+  .goal-nums{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em;}
+  .goal-nums .goal-sep{color:var(--muted);font-weight:400;margin:0 2px;}
+  .goal-pct{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;background:rgba(92,81,218,.1);color:var(--accent);}
+  .goal-pace{display:inline-flex;align-items:center;gap:5px;margin-left:auto;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;}
+  .goal-pace.ok{background:rgba(30,156,98,.1);color:var(--green);}
+  .goal-pace.warn{background:rgba(224,123,57,.12);color:#c2691f;}
+  .goal-edit-btn{background:transparent;border:none;color:var(--muted);font-size:11px;padding:3px 7px;border-radius:7px;cursor:pointer;font-family:inherit;}
+  .goal-edit-btn:hover{background:var(--chip);color:var(--accent);}
+  .goal-input{width:150px;padding:6px 10px;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;}
   .insight-item{display:flex;gap:11px;align-items:flex-start;padding:11px 13px;border:1px solid #e8e3ef;border-radius:12px;margin-bottom:8px;background:linear-gradient(165deg,#ffffff 30%,#f7f5fd 100%);box-shadow:var(--shadow-sm);cursor:pointer;transition:box-shadow .15s ease,border-color .15s ease;}
   .insight-item:hover{border-color:#c9c1ec;box-shadow:var(--shadow-md);}
   .insight-item .insight-icon{font-size:18px;line-height:1.3;}
@@ -236,8 +249,8 @@
       </div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
-      <button type="button" class="btn-ghost" style="font-size:12px;" onclick="exportBackup()" title="모든 플랫폼의 데이터·설정을 JSON 파일 하나로 내려받습니다">💾 전체 백업</button>
-      <button type="button" class="btn-ghost" style="font-size:12px;" onclick="document.getElementById('restoreFile').click()" title="백업 JSON 파일로 복원합니다 (현재 데이터를 덮어씀)">복원</button>
+      <button type="button" class="btn-ghost" style="font-size:12px;" onclick="exportBackup()" data-tip="모든 플랫폼의 데이터·설정을 JSON 파일 하나로 내려받습니다">💾 전체 백업</button>
+      <button type="button" class="btn-ghost" style="font-size:12px;" onclick="document.getElementById('restoreFile').click()" data-tip="백업 JSON 파일로 복원합니다 (현재 데이터를 덮어씁니다)">복원</button>
       <input type="file" id="restoreFile" accept=".json,application/json" style="display:none;" onchange="importBackup(this.files[0])" />
     </div>
   </header>
@@ -485,18 +498,54 @@ function importBackup(file){
   document.getElementById('restoreFile').value = '';
 }
 
+// ---------- 커스텀 툴팁 (data-tip 속성이 있는 요소에 스타일된 말풍선 표시) ----------
+const tooltipEl = document.createElement('div');
+tooltipEl.className = 'tooltip';
+if(document.body) document.body.appendChild(tooltipEl);
+else document.addEventListener('DOMContentLoaded', () => document.body.appendChild(tooltipEl));
+document.addEventListener('mouseover', (e) => {
+  const target = e.target.closest ? e.target.closest('[data-tip]') : null;
+  if(!target){ tooltipEl.classList.remove('show'); return; }
+  tooltipEl.textContent = target.dataset.tip;
+  tooltipEl.classList.add('show');
+  const r = target.getBoundingClientRect();
+  const tw = tooltipEl.offsetWidth, th = tooltipEl.offsetHeight;
+  let x = r.left + r.width / 2 - tw / 2;
+  x = Math.max(8, Math.min(x, window.innerWidth - tw - 8));
+  let y = r.top - th - 9;
+  if(y < 8) y = r.bottom + 9;
+  tooltipEl.style.left = x + 'px';
+  tooltipEl.style.top = y + 'px';
+});
+document.addEventListener('scroll', () => tooltipEl.classList.remove('show'), true);
+
 // ---------- 월 매출 목표 ----------
 let salesGoals = JSON.parse(localStorage.getItem('salesai_goals') || '{}'); // { [platformId]: 월 목표 금액 }
-function setSalesGoal(){
+let goalEditing = false;
+function startGoalEdit(){
   if(activePlatformId === '__all__'){ alert('전체보기의 목표는 각 플랫폼 목표의 합계로 계산됩니다. 플랫폼 탭에서 설정해주세요.'); return; }
-  const current = salesGoals[activePlatformId] || '';
-  const input = prompt('이번 달 매출 목표 금액을 입력하세요 (숫자만 · 비우면 목표 제거)', current);
-  if(input === null) return;
-  const val = Number(String(input).replace(/[^0-9]/g, ''));
+  goalEditing = true;
+  if(lastReport) renderGoal(lastReport);
+  const input = document.getElementById('goalInput');
+  if(input){ input.focus(); input.select(); }
+}
+function cancelGoalEdit(){
+  goalEditing = false;
+  if(lastReport) renderGoal(lastReport);
+}
+function saveGoalEdit(){
+  const input = document.getElementById('goalInput');
+  if(!input) return;
+  const val = Number(String(input.value).replace(/[^0-9]/g, ''));
   if(!val) delete salesGoals[activePlatformId];
   else salesGoals[activePlatformId] = val;
   localStorage.setItem('salesai_goals', JSON.stringify(salesGoals));
+  goalEditing = false;
   if(lastReport) renderGoal(lastReport);
+}
+function onGoalInputKey(e){
+  if(e.key === 'Enter') saveGoalEdit();
+  else if(e.key === 'Escape') cancelGoalEdit();
 }
 function currentGoalAmount(){
   if(activePlatformId === '__all__'){
@@ -520,23 +569,48 @@ function renderGoal(r){
   const daysInMonth = new Date(y, m, 0).getDate();
   const elapsed = Math.max(1, Number(lastDate.slice(8,10)) || 1);
   const projected = Math.round(monthRevenue / elapsed * daysInMonth);
+
+  // 목표 금액 입력 모드 (인라인 편집)
+  if(goalEditing){
+    el.innerHTML = `
+      <div class="goal-box">
+        <div class="goal-head">
+          <span class="goal-title">🎯 ${month} 목표</span>
+          <input type="text" id="goalInput" class="goal-input" inputmode="numeric" placeholder="예: 5000000"
+            value="${currentGoalAmount() || ''}" onkeydown="onGoalInputKey(event)" />
+          <button type="button" class="btn-primary" style="font-size:11.5px;padding:6px 13px;" onclick="saveGoalEdit()">저장</button>
+          <button type="button" class="btn-ghost" style="font-size:11.5px;padding:6px 13px;" onclick="cancelGoalEdit()">취소</button>
+          <span class="note" style="margin:0 0 0 auto;">비우고 저장하면 목표가 제거됩니다</span>
+        </div>
+      </div>`;
+    return;
+  }
+
   if(!goal){
-    el.innerHTML = `<div class="note" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px;">
-      ${month} 매출 ${won(monthRevenue)} · 이 속도면 월말 약 ${won(projected)}
-      <button type="button" class="btn-ghost" style="font-size:11px;padding:3px 9px;margin-left:auto;" onclick="setSalesGoal()">🎯 월 목표 설정</button></div>`;
+    el.innerHTML = `
+      <div class="goal-box">
+        <div class="goal-head">
+          <span class="goal-title">🎯 ${month}</span>
+          <b class="goal-nums">${won(monthRevenue)}</b>
+          <span class="note" style="margin:0;">이 속도면 월말 약 ${won(projected)}</span>
+          <button type="button" class="btn-ghost" style="font-size:11.5px;padding:5px 13px;margin-left:auto;" onclick="startGoalEdit()" data-tip="월 목표 금액을 설정하면 달성률 게이지와 월말 페이스 예측이 표시됩니다">월 목표 설정</button>
+        </div>
+      </div>`;
     return;
   }
   const pct = Math.min(100, monthRevenue / goal * 100);
   const projPct = projected / goal * 100;
+  const onPace = projPct >= 100;
   el.innerHTML = `
     <div class="goal-box">
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <b style="font-size:13px;">🎯 ${month} 목표 ${won(goal)}</b>
-        <span class="note" style="margin:0;">현재 ${won(monthRevenue)} (${pct.toFixed(1)}%)</span>
-        <span class="note" style="margin:0 0 0 auto;">이 속도면 월말 약 ${won(projected)} — 목표의 ${projPct.toFixed(0)}% ${projPct >= 100 ? '✅' : '⚠'}</span>
-        <button type="button" class="btn-ghost" style="font-size:11px;padding:3px 9px;" onclick="setSalesGoal()">수정</button>
+      <div class="goal-head">
+        <span class="goal-title">🎯 ${month} 목표</span>
+        <b class="goal-nums">${won(monthRevenue)}<span class="goal-sep">/</span>${won(goal)}</b>
+        <span class="goal-pct">${pct.toFixed(1)}%</span>
+        <span class="goal-pace ${onPace ? 'ok' : 'warn'}" data-tip="지금까지의 하루 평균 매출(경과 ${elapsed}일 기준)이 월말(${daysInMonth}일)까지 이어질 때의 예상치입니다">${onPace ? '✓' : '!'} 월말 예상 ${won(projected)} · 목표의 ${projPct.toFixed(0)}%</span>
+        <button type="button" class="goal-edit-btn" onclick="startGoalEdit()">수정</button>
       </div>
-      <div class="goal-track"><div class="goal-fill${projPct < 100 ? ' behind' : ''}" style="width:${pct.toFixed(1)}%"></div></div>
+      <div class="goal-track"><div class="goal-fill${onPace ? '' : ' behind'}" style="width:${pct.toFixed(1)}%"></div></div>
     </div>`;
 }
 let manualAdStatus = JSON.parse(localStorage.getItem('salesai_manual_ad_status') || '{}'); // { "product||YYYY-MM": 'on'|'off' }
@@ -1694,7 +1768,7 @@ function computeInsights(r){
 function insightBadgeHtml(product){
   const badges = lastReport?.insightData?.badges?.[product];
   if(!badges) return '';
-  return badges.map(b => `<span class="pill ${b.cls}" title="${escapeHtml(b.title)}" style="font-size:9.5px;padding:1px 6px;margin-left:4px;vertical-align:1px;cursor:help;">${b.label}</span>`).join('');
+  return badges.map(b => `<span class="pill ${b.cls}" data-tip="${escapeHtml(b.title)}" style="font-size:9.5px;padding:1px 6px;margin-left:4px;vertical-align:1px;cursor:help;">${b.label}</span>`).join('');
 }
 
 function renderInsights(ins){
@@ -1703,7 +1777,7 @@ function renderInsights(ins){
   if(!ins || (!ins.insights.length && !ins.hints.length)){ card.style.display = 'none'; list.innerHTML = ''; return; }
   card.style.display = '';
   list.innerHTML = ins.insights.map((i, n) => `
-    <div class="insight-item" onclick="toggleInsightEvidence(${n})" title="클릭하면 판단 근거가 되는 데이터를 보여줍니다">
+    <div class="insight-item" onclick="toggleInsightEvidence(${n})" data-tip="클릭하면 판단 근거가 되는 데이터를 보여줍니다">
       <div class="insight-icon">${i.icon}</div>
       <div style="flex:1;min-width:0;">
         <b style="font-size:13px;">${escapeHtml(i.title)}</b>
@@ -2032,8 +2106,8 @@ function renderMonthlyDetail(m){
         <td>${x.adSpend===null?'-':won(x.adSpend)}</td>
         <td>${(x.cost!==null || x.adSpend!==null) ? won(x.profit) : '-'}</td>
         <td style="white-space:nowrap;">
-          <button type="button" class="pill ad-status-btn ${x.adOn === true ? 'on' : 'unset'}" data-product="${escapeHtml(p.product)}" data-month="${x.month}" data-set="on" title="광고를 켠 달로 지정 (다시 누르면 해제)">ON</button>
-          <button type="button" class="pill ad-status-btn ${x.adOn === false ? 'off' : 'unset'}" data-product="${escapeHtml(p.product)}" data-month="${x.month}" data-set="off" title="광고를 끈 달로 지정 (다시 누르면 해제)">OFF</button>
+          <button type="button" class="pill ad-status-btn ${x.adOn === true ? 'on' : 'unset'}" data-product="${escapeHtml(p.product)}" data-month="${x.month}" data-set="on" data-tip="광고를 켠 달로 지정 (다시 누르면 해제)">ON</button>
+          <button type="button" class="pill ad-status-btn ${x.adOn === false ? 'off' : 'unset'}" data-product="${escapeHtml(p.product)}" data-month="${x.month}" data-set="off" data-tip="광고를 끈 달로 지정 (다시 누르면 해제)">OFF</button>
         </td>
       </tr>
     `;
