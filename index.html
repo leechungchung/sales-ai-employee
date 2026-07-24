@@ -348,7 +348,7 @@
         </details>
 
         <div class="btn-row" style="margin-top:8px;">
-          <button type="button" class="btn-ghost" style="font-size:11px;padding:4px 8px;opacity:.75;" onclick="downloadTemplate('sales')">매출 양식</button>
+          <button type="button" class="btn-ghost" style="font-size:11px;padding:4px 8px;opacity:.75;" onclick="downloadTemplate('sales')" data-tip="채워서 올릴 수 있는 빈 CSV 양식이에요. 매출액(합계)과 개당 단가 중 하나만 채우면 돼요.">매출 양식</button>
         </div>
       </div>
 
@@ -969,7 +969,9 @@ function deleteFormatPreset(){
 // ---------- 샘플 양식 다운로드 (우리가 쓰는 컬럼 구성을 담은 빈 CSV) ----------
 // 원가·광고비·채널은 모두 선택 컬럼입니다 — 비워두고 올려도 되고, 나중에 "데이터 검색"에서 건별로 채워넣어도 됩니다.
 const FILE_TEMPLATES = {
-  sales: { headers: ['날짜','상품명','매출액','수량','구매자','원가','광고비','채널'], rows: [['2026-06-06','예시 상품명','98730','1','홍길동','12000','14630','메타(인스타/페북)']], fileName: '매출데이터_양식.csv' }
+  // 매출액(합계)과 개당 단가 컬럼을 모두 담되, 둘 중 하나만 채우는 구조.
+  // 개당 단가를 채웠다면 컬럼 매핑에서 "개당 단가"를 선택하면 자동으로 단가 × 수량으로 계산된다.
+  sales: { headers: ['날짜','상품명','매출액','개당 단가','수량','구매자','원가','광고비','채널'], rows: [['2026-06-06','예시 상품명','98730','','1','홍길동','12000','14630','메타(인스타/페북)']], fileName: '매출데이터_양식.csv' }
 };
 
 function downloadTemplate(type){
