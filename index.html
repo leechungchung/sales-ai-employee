@@ -1435,7 +1435,20 @@ function toISODate(v){
 
 let lastExcluded = { count: 0, statuses: [] };
 // 주문상태 컬럼을 지정하면 이 키워드가 포함된 건은 매출 집계에서 자동으로 빠집니다.
-const DEFAULT_EXCLUDE_STATUSES = ['취소', '반품', '환불', '교환', '구매취소'];
+// 취소·반품으로 보고 매출에서 제외할 상태 키워드 (영문 포함, 대소문자 무시)
+const DEFAULT_EXCLUDE_STATUSES = ['취소', '반품', '환불', '교환', '구매취소', '철회', 'cancel', 'refund', 'return', 'exchange'];
+// 단, 아직 확정되지 않았거나(요청/신청/접수) 무산된(거부/거절/반려/불가/실패) 취소·반품은
+// 실제로는 판매가 유지된 것이므로 매출에 포함한다. "취소 철회"처럼 취소가 되돌려진 경우도 포함.
+const KEEP_STATUS_PATTERN = /(거부|거절|반려|불가|실패|요청|신청|접수|reject|denied|fail)/i;
+function isExcludedStatus(status){
+  const s = String(status || '').trim();
+  if(!s) return false;
+  const lower = s.toLowerCase();
+  if(!DEFAULT_EXCLUDE_STATUSES.some(ex => lower.includes(ex))) return false;
+  if(KEEP_STATUS_PATTERN.test(s)) return false;
+  if(/(취소|반품|환불|교환)\s*철회/.test(s)) return false; // 취소/반품을 되돌림 → 판매 유지
+  return true;
+}
 
 // 매출·원가·광고비를 모두 같은 매출 행에서 함께 읽어옵니다(원가·광고비·채널 컬럼은 선택 사항).
 function applySalesFromRawTable(fileId){
@@ -1457,8 +1470,7 @@ function applySalesFromRawTable(fileId){
   const newRecords = rawTable.rows.filter(r => r.length > 1).filter(r => {
     if(si < 0) return true;
     const status = (r[si] || '').trim();
-    const isExcluded = DEFAULT_EXCLUDE_STATUSES.some(ex => status.includes(ex));
-    if(isExcluded){ excludedCount++; excludedStatuses.add(status); return false; }
+    if(isExcludedStatus(status)){ excludedCount++; excludedStatuses.add(status); return false; }
     return true;
   }).map(r => {
     const cost = costi > -1 ? toNumberOrNull(r[costi]) : null;
